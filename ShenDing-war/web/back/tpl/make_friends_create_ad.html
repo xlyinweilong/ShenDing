@@ -1,0 +1,135 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">广告创建/更新</h1>
+</div>
+<div class="wrapper-md" ng-controller="MFCreateAdController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                创建/更新广告
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>入账时间<i class="text-danger">*</i></label>
+                    <p class="input-group" style="max-width: 350px">
+                        <input type="text" class="form-control no-border" placeholder="回款时间" datepicker-popup="yyyy-MM-dd" ng-model="payDate" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchGoodsList()">
+                    <div class="form-group" style="max-width: 350px">
+                        <label>业务员 <i class="text-danger">*</i><span class="label label-success" ng-show="checkedGoods != null">已选择:{{checkedGoods.name}} ({{checkedGoods.provinceStr}}) {{checkedGoods.typeString}} ({{checkedGoods.peopleCount}}人)</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchGoodsMsg" placeholder="输入平台，如：CC1、长春">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="goodsList != null && goodsListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="goodsList != null && goodsListTotalItems < 1 && !goodsListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="goodsList != null && goodsListTotalItems > 0 && !goodsListLoadingData">
+                            <a ng-repeat="ele in goodsList" class="list-group-item" ng-click="checkGoods(ele)">{{ele.name}} ({{ele.provinceStr}}) {{ele.typeString}} ({{ele.peopleCount}}人)</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>广告名称<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="输入广告名称，最多100个字" ng-model="ad.name">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>广告主微信</label>
+                    <input type="text" class="form-control" placeholder="广告主微信，没有可以不填" ng-model="ad.ownerWeChat">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>持续时间<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="ad.limitType" ng-init="ad.limitType = 'MONTH_1'">
+                        <option value="DAY_15">半月</option>
+                        <option ng-selected="ad.limitType == null || ad.limitType == 'MONTH_1'" value="MONTH_1">一月</option>
+                        <option value="MONTH_2">两月</option>
+                        <option value="MONTH_3">季度</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>级别<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="ad.adLevel" ng-init="ad.adLevel = 'PRIMARY_300'">
+                        <option  ng-selected="ad.adLevel == null || ad.adLevel == 'PRIMARY_300'" value="PRIMARY_300">300初级</option>
+                        <option value="SUPER_300">300高级</option>
+                        <option value="PRIMARY_400">400初级</option>
+                        <option value="SUPER_400">400高级</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>金额<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="金额" ng-model="ad.amount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>支付方式<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="ad.gatewayType" ng-init="ad.gatewayType = 'BANK_TRANSFER'">
+                        <option  ng-selected="ad.gatewayType == 'BANK_TRANSFER'" value="BANK_TRANSFER">银行汇款</option>
+                        <option value="ALIPAY">支付宝</option>
+                        <option value="POST_CARD">刷卡</option>
+                        <option value="WECHAT_PAY">微信支付</option>
+                        <option value="ICBC">工行</option>
+                        <option value="ABC">农行</option>
+                        <option value="CCBC">建行</option>
+                        <option value="CASH">现金支付</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>返还<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="返还" ng-model="ad.userBalanceAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>提成<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="提成" ng-model="ad.userAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <input type="text" class="form-control" placeholder="输入备注，最多100个字" ng-model="ad.remark">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>接/发<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="ad.sendType" ng-init="ad.sendType = 'SEND_AND_ACCEPT'">
+                        <option  ng-selected="ad.sendType == 'SEND_AND_ACCEPT'" value="SEND_AND_ACCEPT">自接自发</option>
+                        <option value="ACCEPT">接</option>
+                        <option value="SEND">发</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>类型<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="ad.categoryPlus">
+                        <option  ng-selected="ad.categoryPlus == 'NORMAL'" value="NORMAL">便民平台</option>
+                        <option value="AD_DEPARTMENT">广告部</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button class="btn btn-sm" type="button" ng-click="backPage()">返回</button>
+                <button type="button" class="btn btn-sm btn-primary" ng-click="submitForm()" ng-disabled="ad.submitting || ad.userAmount == null || ad.userAmount < 0 || ad.userBalanceAmount == null || ad.userBalanceAmount < 0 || ad.amount == null || ad.amount < 0 || ad.name == null || ad.name == '' || payDate == null" ng-class="{ 'active' : ad.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

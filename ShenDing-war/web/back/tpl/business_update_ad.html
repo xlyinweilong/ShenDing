@@ -1,0 +1,186 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">广告升级</h1>
+</div>
+<div class="wrapper-md" ng-controller="UpdateAdController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                广告详情
+            </div>
+            <div class="panel-body">
+                <div class="text-center" ng-show="ad == null">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="ad == null">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">名称</th>
+                            <th style="width:75%">详情</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>广告名称</td>
+                            <td>{{ad.name}}</td>
+                        </tr>
+                        <tr ng-if="ad.user != null">
+                            <td>业务员</td>
+                            <td><a href="{{ad.user.id}}">{{ad.user.name}}</a></td>
+                        </tr>
+                        <tr>
+                            <td>共计金额</td>
+                            <td>{{ad.totalAmount}}</td>
+                        </tr>
+                        <tr>
+                            <td>有效期</td>
+                            <td>开始：{{ad.startDate| date:"yyyy-MM-dd"}}&nbsp;&nbsp;结束：{{ad.endDate| date:"yyyy-MM-dd"}}</td>
+                        </tr>
+                        <tr>
+                            <td>共计手续费</td>
+                            <td>{{ad.fee}}</td>
+                        </tr>
+                        <tr>
+                            <td>支付方式</td>
+                            <td>{{ad.gatewayTypeStr}}</td>
+                        </tr>
+                        <tr ng-if="ad.ownerName != null">
+                            <td>广告主姓名</td>
+                            <td>{{ad.ownerName}}</td>
+                        </tr>
+                        <tr ng-if="ad.ownerMobile != null">
+                            <td>广告主手机</td>
+                            <td>{{ad.ownerMobile}}</td>
+                        </tr>
+                        <tr ng-if="ad.ownerWeChat != null">
+                            <td>广告主微信</td>
+                            <td>{{ad.ownerWeChat}}</td>
+                        </tr>
+                        <tr ng-if="ad.ownerOther != null">
+                            <td>广告主备注</td>
+                            <td>{{ad.ownerOther}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="row" ng-hide="list == null || totalItems < 1">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                广告平台详情
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped m-b-none">
+                    <thead>
+                        <tr>
+                            <th style="width:16%">平台名称</th>
+                            <th style="width:12%">平台当时的代理</th>
+                            <th style="width:12%">价格</th>
+                            <th style="width:12%">期限</th>
+                            <th style="width:12%">期限具体</th>
+                            <th style="width:12%">级别</th>
+                            <th style="width:12%">图片数量</th>
+                            <th style="width:12%">是否为赠送</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in list">
+                            <td>{{item.goods.name}}</td>
+                            <td>{{item.goodsUser.name}}</td>
+                            <td>{{item.amount}}</td>
+                            <td>{{item.limitTypeMean}}</td>
+                            <td>{{item.startDate| date:"yyyy-MM-dd"}}到{{item.endDate| date:"yyyy-MM-dd"}}</td>
+                            <td>{{item.typeStr}}</td>
+                            <td>{{item.picCount}}</td>
+                            <td>{{item.isGivingStr}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                升级广告 <span ng-show="totalAddAmount > 0">本次收款：{{totalAddAmount}}</span>
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group" ng-repeat="ele in list">
+                    <p>平台<i class="text-danger">*</i>  <span class="label label-success" ng-show="amount[$index] != null && amount[$index] > 0">需加金额:{{amount[$index]}}</span></p>
+                    <div class="col-lg-3">
+                        <div class="input-group">
+                            <span>{{ele.goods.name}}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-2">
+                        <p>
+                            <select class="form-control" ng-init="adPush[$index].pushType = ele.pushType" ng-model="adPush[$index].pushType" ng-change="setAmount($index)">
+                                <option ng-if="ele.pushType == 'PRIMARY'" value="PRIMARY">初</option>
+                                <option ng-if="ele.limitType != 'DAY_15'" value="SUPER">高</option>
+                            </select>
+                        </p>
+                    </div>
+                    <div class="col-lg-2">
+                        <p>
+                            <input type="text" class="form-control" placeholder="图片数量" ng-init="adPush[$index].picCount = ele.picCount" ng-model="adPush[$index].picCount" ng-change="setAmount($index)">
+                        </p>
+                    </div>
+                    <div class="col-lg-2">
+                        <p class="input-group">
+                            <input type="text" class="form-control no-border" placeholder="起始时间" datepicker-popup="yyyy-MM-dd" ng-model="adPush[$index].start" ng-init="adPush[$index].start = ele.startDate" is-open="startOpened[$index]" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" ng-click="startOpen($event, $index)"><i class="glyphicon glyphicon-calendar"></i></button>
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-lg-3">
+                        <p>
+                            <select class="form-control" ng-init="adPush[$index].limitType = ele.limitType" ng-model="adPush[$index].limitType" ng-change="setAmount($index)">
+                                <option ng-if="ele.limitType == 'DAY_15'"  value="DAY_15">半月</option>
+                                <option ng-if="ele.limitType == 'MONTH_1'" value="MONTH_1">一月</option>
+                                <option ng-if="ele.limitType != 'DAY_15' && ele.limitType != 'MONTH_3'" value="MONTH_2">两月</option>
+                                <option ng-if="ele.limitType != 'DAY_15'" value="MONTH_3">季度</option>
+                            </select>
+                        </p>
+                    </div>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>本次回款时间<i class="text-danger">*</i></label>
+                    <p class="input-group">
+                        <input type="text" class="form-control no-border" placeholder="回款时间" datepicker-popup="yyyy-MM-dd" ng-model="ad.newPayDate" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>本次手续费金额</label>
+                    <input type="text" class="form-control" placeholder="如:50，没有可以不填" ng-model="ad.addFee">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>本次支付方式<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="ad.newPayType">
+                        <option value="BANK_TRANSFER">银行汇款</option>
+                        <option value="ALIPAY">支付宝</option>
+                        <option value="POST_CARD">刷卡</option>
+                        <option value="WECHAT_PAY">微信支付</option>
+                        <option value="ICBC">工行</option>
+                        <option value="ABC">农行</option>
+                        <option value="CCBC">建行</option>
+                        <option value="CASH">现金支付</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button class="btn btn-sm" type="button" ng-click="backPage()">返回</button>
+                <button type="button" class="btn btn-sm btn-info" ng-click="submitForm()" ng-disabled="order.submitting || ad.newPayDate == null || totalAddAmount < 1" ng-class="{'active' : ad.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

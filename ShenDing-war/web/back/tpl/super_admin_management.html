@@ -1,0 +1,83 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">管理员管理</h1>
+</div>
+<div class="wrapper-md" ng-controller="SuperAdminController">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    管理员列表
+                </div>
+                <div class="panel-body">
+                    <div class="row wrapper">
+                        <div class="col-sm-5 m-b-xs">
+                            <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-disabled="adminList == null || adminListLoading || adminListLoadingData || totalItems < 1" ng-click="disableAdmin()">
+                                <i class="fa fa-lock"></i>
+                                禁用
+                            </button>
+                            <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="adminList == null || adminListLoading || adminListLoadingData" ng-click="getAdminList(1, true)">
+                                <i class="fa fa-refresh"></i>
+                                刷新
+                            </button>
+                        </div>
+                        <form role="form" name="form" ng-submit="getAdminList(1, false)">
+                            <div class="col-sm-7">
+                                <div class="input-group">
+                                    <input class="input-sm form-control" type="text" ng-model="adminSearch" placeholder="帐号或姓名">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-sm btn-default" ng-disabled="adminList == null || adminListLoading || adminListLoadingData" type="submit">搜索</button>
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="text-center" ng-show="adminList == null || adminListLoading">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <div class="text-center" ng-show="adminList != null && !adminListLoading && !roleListLoadingData && totalItems < 1">
+                        <alert type="warning">无数据</alert>
+                    </div>
+                    <table class="table table-striped m-b-none" ng-hide="adminList == null || adminListLoading || totalItems < 1 || adminListLoadingData">
+                        <thead>
+                            <tr>
+                                <th  style="width:5%"></th>
+                                <th  style="width:15%">帐号</th>
+                                <th  style="width:25%">名称</th>
+                                <th  style="width:25%">角色</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="admin in adminList">
+                                <td><label class="i-checks m-b-none"><input type="checkbox" name="lableIds" ng-model="admin.lableId"><i></i></label></td>
+                                <td>{{admin.account}}</td>
+                                <td>{{admin.name}}</td>
+                                <td>
+                                    <div class="text-center" ng-show="rolesLoading">
+                                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                                    </div>
+                                    <select ng-model="admin.sysRole.id" ng-hide="rolesLoading" name="admin_role" class="form-control">
+                                        <option ng-repeat="role in roles" value="{{role.id}}">{{role.name}}</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <footer class="panel-footer" ng-hide="adminList == null || adminListLoading || totalItems < 1">
+                        <div class="row">
+                            <div class="text-center">
+                                <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                            </div>
+                        </div>
+                    </footer>
+                    <button class="btn btn-sm btn-info" popover-trigger="mouseenter" popover="保存本页，不必选中" ng-disabled="adminFormSubmitting || adminListLoading || adminListLoadingData || totalItems < 1" ng-click="saveAdmin()" ng-class="{'active' : adminFormSubmitting}">
+                        <span class="text">保存</span>
+                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/ng-template" id="confirm.html">
+        <div ng-include="'/back/tpl/confirm.html'"></div>
+    </script>
+</div>

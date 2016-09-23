@@ -1,0 +1,83 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">大区统计</h1>
+</div>
+<div class="wrapper-md" ng-controller="MyNewOrderController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                加盟列表
+                <span class="label bg-warning pull-down m-t-xs" ng-if="totalAmount != null">小计:{{totalAmount}}</span>
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-5 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <div class="col-sm-7  m-b-xs">
+                        <div class="col-md-5">
+                            <label>开始日期</label>
+                            <p class="input-group">
+                                <input type="text" class="form-control" datepicker-popup="yyyy-MM-dd" ng-model="startDate" is-open="startDateOpened" datepicker-options="dateOptions">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" ng-click="openStart($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-5">
+                            <label>结束日期</label>
+                            <p class="input-group">
+                                <input type="text" class="form-control" datepicker-popup="yyyy-MM-dd" ng-model="endDate" is-open="endDateOpened" datepicker-options="dateOptions">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" ng-click="openEnd($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <p class="input-group">
+                                <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-click="pageChanged()">
+                                    <i class="fa fa-search"></i>
+                                    搜索
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:10%">用户</th>
+                            <th style="width:18%">售出平台</th>
+                            <th style="width:18%">代理数量</th>
+                            <th style="width:18%">加盟总金额</th>
+                            <th style="width:18%">广告数量</th>
+                            <th style="width:18%">广告金额</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td><a popover-trigger="mouseenter" popover="拥有平台：{{item.goodsTotalCount}}" class="text-info" href="/#/app/user/user_info/{{item.uid}}">{{item.username}}</a></td>
+                            <td>{{item.goodsCount}}</td>
+                            <td>{{item.agentUserCount}}</td>
+                            <td>{{item.orderAmount}}</td>
+                            <td>{{item.adCount}}</td>
+                            <td>{{item.adAmount}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

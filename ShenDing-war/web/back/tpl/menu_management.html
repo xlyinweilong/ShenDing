@@ -1,0 +1,156 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">菜单管理</h1>
+</div>
+<div class="wrapper-md" ng-controller="RootMenuController">
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    一级菜单
+                </div>
+                <div class="text-center" ng-show="lv1IndexMenuList == null || lv1Loading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="row wrapper" ng-hide="lv1IndexMenuList == null || lv1Loading">
+                    <div class="col-sm-5 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-primary btn-addon" ng-click="newMenu(1)">
+                            <i class="fa fa-plus"></i>
+                            添加
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-info btn-addon" ng-click="editMenu(1)">
+                            <i class="fa fa-edit"></i>
+                            修改
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-click="deleteMenu(1)">
+                            <i class="fa fa-trash-o"></i>
+                            删除
+                        </button>
+                    </div>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="lv1IndexMenuList == null || lv1Loading">
+                    <thead>
+                        <tr>
+                            <th  style="width:15%"></th>
+                            <th  style="width:25%">名称</th>
+                            <th  style="width:20%">类型</th>
+                            <th  style="width:20%">查看子集</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="menu in lv1IndexMenuList| orderBy : 'sortIndex'">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="lv1LableIds" ng-model="menu.lableId"><i></i></label></td>
+                            <td>{{menu.name}}</td>
+                            <td>
+                                <span class="label" ng-class="{'bg-success': menu.popedom == 'COMMON', 'bg-warning': menu.popedom == 'SUPER','bg-danger': menu.popedom == 'ROOT'}" title="{{menu.popedomStr}}">{{menu.popedomStr}}</span>
+                            </td>
+                            <td>
+                                <label class="i-switch">
+                                    <input type="checkbox" name="switch" ng-model="menu.switch" ng-click="clickSwitch(menu)">
+                                    <i></i>
+                                </label>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-sm-6" ng-show="showLv2MenuList">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    二级菜单
+                </div>
+                <div class="text-center" ng-show="lv2IndexMenuList == null || lv2Loading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="row wrapper" ng-hide="lv2IndexMenuList == null || lv2Loading">
+                    <div class="col-sm-5 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-primary btn-addon" ng-click="newMenu(2, switchPid)">
+                            <i class="fa fa-plus"></i>
+                            添加
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-info btn-addon" ng-click="editMenu(2, switchPid)">
+                            <i class="fa fa-edit"></i>
+                            修改
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-click="deleteMenu(2)">
+                            <i class="fa fa-trash-o"></i>
+                            删除
+                        </button>
+                    </div>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="lv2IndexMenuList == null || lv2Loading">
+                    <thead>
+                        <tr>
+                            <th  style="width:15%"></th>
+                            <th  style="width:25%">名称</th>
+                            <th  style="width:20%">类型</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="menu in lv2IndexMenuList| orderBy : 'sortIndex'">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="lv2LableIds" ng-model="menu.lableId"><i></i></label></td>
+                            <td>{{menu.name}}</td>
+                            <td>
+                                <span class="label" ng-class="{'bg-success': menu.popedom == 'COMMON', 'bg-warning': menu.popedom == 'SUPER','bg-danger': menu.popedom == 'ROOT'}" title="{{menu.popedomStr}}">{{menu.popedomStr}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <a name="block"></a>
+    <div class="panel panel-default" ng-show="showLvBlock">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                <span class="label pull-right m-t-xs">
+                    <a href="" ng-click="closeLvBlock()">
+                        <i class="fa fa-times text-danger text"></i>
+                    </a>
+                </span>
+                {{lv.title}}
+            </div>
+            <div class="panel-body">
+                <form role="form" name="form" ng-submit="submit()">
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>名称<i class="text-danger">*</i></label>
+                        <input type="text" class="form-control" placeholder="输入菜单名称" ng-model="formMenu.name" required>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>类型<i class="text-danger">*</i></label>
+                        <select name="form_menu_type" class="form-control" ng-model="formMenu.type">
+                            <option value="COMMON">普通菜单</option>
+                            <option value="SUPER">超级管理员菜单</option>
+                            <option value="ROOT">ROOT菜单</option>
+                        </select>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>排序</label>
+                        <input type="number" class="form-control" placeholder="输入整数" ng-model="formMenu.index">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>glyphicon</label>
+                        <input type="text" class="form-control" placeholder="输入 glyphicon" ng-model="formMenu.glyphicon">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>sref</label>
+                        <input type="text" class="form-control" placeholder="输入 sref" ng-model="formMenu.sref">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <button type="submit" class="btn btn-sm" ng-disabled="form.$invalid || formMenu.submitting" ng-class="{'btn-primary' : isNewLvBlock, 'btn-info' : isEditLvBlock, 'active' : formMenu.submitting}">
+                        <span class="text">保存</span>
+                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script type="text/ng-template" id="confirm.html">
+        <div ng-include="'/back/tpl/confirm.html'"></div>
+    </script>
+</div>

@@ -1,0 +1,135 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">角色管理</h1>
+</div>
+<div class="wrapper-md" ng-controller="SuperRoleController">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    角色列表
+                </div>
+                <div class="panel-body">
+                    <div class="row wrapper">
+                        <div class="col-sm-5 m-b-xs">
+                            <button class="btn m-b-xs btn-sm btn-primary btn-addon" ng-disabled="roleList == null || roleListLoading" ng-click="newRole()">
+                                <i class="fa fa-plus"></i>
+                                添加
+                            </button>
+                            <button class="btn m-b-xs btn-sm btn-info btn-addon" ng-disabled="roleList == null || roleListLoading || totalItems < 1" ng-click="editRole()">
+                                <i class="fa fa-edit"></i>
+                                修改
+                            </button>
+                            <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-disabled="roleList == null || roleListLoading || totalItems < 1" ng-click="deleteRole()">
+                                <i class="fa fa-trash-o"></i>
+                                删除
+                            </button>
+                            <button class="btn m-b-xs btn-sm btn-warning btn-addon" ng-disabled="roleList == null || roleListLoading || totalItems < 1" ng-click="powerRole()">
+                                <i class="icon-settings"></i>
+                                权限
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-center" ng-show="roleList == null || roleListLoading">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <div class="text-center" ng-show="roleList != null && !roleListLoading && !roleListLoadingData && totalItems < 1">
+                        <alert type="warning">无数据</alert>
+                    </div>
+                    <table class="table table-striped m-b-none" ng-hide="roleList == null || roleListLoading || totalItems < 1 || roleListLoadingData">
+                        <thead>
+                            <tr>
+                                <th  style="width:15%"></th>
+                                <th  style="width:25%">名称</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="role in roleList| orderBy : 'sortIndex'">
+                                <td><label class="i-checks m-b-none"><input type="checkbox" name="lableIds" ng-model="role.lableId"><i></i></label></td>
+                                <td>{{role.name}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <footer class="panel-footer" ng-hide="roleList == null || roleListLoading || totalItems < 1">
+                        <div class="row">
+                            <div class="text-center">
+                                <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a name="role"></a>
+    <div class="panel panel-default" ng-show="block.show">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                <span class="label pull-right m-t-xs">
+                    <a href="" ng-click="block.show = false">
+                        <i class="fa fa-times text-danger text"></i>
+                    </a>
+                </span>
+                {{block.title}}
+            </div>
+            <div class="panel-body">
+                <form role="form" name="form" ng-submit="submit()">
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>名称<i class="text-danger">*</i></label>
+                        <input type="text" class="form-control" placeholder="输入菜单名称" ng-model="formMenu.name" required>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>排序</label>
+                        <input type="number" class="form-control" placeholder="输入整数" ng-model="formMenu.sortIndex">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <button type="submit" class="btn btn-sm" ng-disabled="form.$invalid || block.submitting" ng-class="{'btn-primary' : block.type == 'new', 'btn-info' : block.type == 'edit', 'active' : block.submitting}">
+                        <span class="text">保存</span>
+                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <a name="power"></a>
+    <div class="panel panel-default" ng-show="power.show">
+        <div class="panel-heading font-bold">
+            <span class="label pull-right m-t-xs">
+                <a href="" ng-click="power.show = false">
+                    <i class="fa fa-times text-danger text"></i>
+                </a>
+            </span>
+            角色权限
+        </div>
+        <div class="panel-body">
+            <div class="text-center" ng-show="menuList == null || powerLoading">
+                <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+            </div>
+            <table class="table table-striped m-b-none" ng-hide="menuList == null || powerLoading">
+                <thead>
+                    <tr>
+                        <th  style="width:15%">拥有</th>
+                        <th  style="width:25%">菜单名称</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="menu in menuList">
+                        <td><label class="i-checks m-b-none"><input type="checkbox" name="lableIds" ng-model="menu.lableId"><i></i></label></td>
+                        <td>{{menu.name}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="line line-dashed b-b line-lg pull-in"></div>
+            <button class="btn btn-sm btn-warning" ng-disabled="power.submitting || powerLoading" ng-click="savePower()" ng-class="{'active' : power.submitting}">
+                <span class="text">保存</span>
+                <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+            </button>
+        </div>
+    </div>
+    <script type="text/ng-template" id="confirm.html">
+        <div ng-include="'/back/tpl/confirm.html'"></div>
+    </script>
+</div>

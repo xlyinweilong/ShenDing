@@ -1,0 +1,60 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">个人信息</h1>
+</div>
+<div class="wrapper-md" ng-controller="MyInfoController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">修改个人信息</div>
+            <div class="text-center" ng-show="user == null">
+                <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+            </div>
+            <div class="panel-body" ng-show="user != null">
+                <form role="form"  ng-submit="submit()">
+                    <div class="form-group">
+                        <label>姓名<i class="text-danger">*</i></label>
+                        <input type="text" class="form-control" ng-readonly="true" placeholder="输入用户姓名" ng-model="user.name">
+                    </div>
+                    <div class="form-group">
+                        <label>帐号<i class="text-danger">*</i></label>
+                        <input type="text" class="form-control" placeholder="输入用户帐号" ng-model="user.account">
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="text" class="form-control" placeholder="输入用户邮箱" ng-model="user.email">
+                    </div>
+                    <div class="form-group">
+                        <label>性别</label>
+                        <div class="btn-group" ng-init="user.sex = 1">
+                            <label class="btn btn-sm btn-info"    ng-model="user.sex" btn-radio="1"><i class="fa fa-check text-active"></i> 男</label>
+                            <label class="btn btn-sm btn-success" ng-model="user.sex" btn-radio="0"><i class="fa fa-check text-active"></i> 女</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>身份证</label>
+                        <input type="text" placeholder="输入用身份证" ng-readonly="true" class="form-control" ng-model="user.idCard">
+                    </div>
+                    <div class="form-group">
+                        <label>所属银行</label>
+                        <input type="text" placeholder="输入所属银行类型，如支付宝" class="form-control" ng-model="user.bankType">
+                    </div>
+                    <div class="form-group">
+                        <label>支付宝/银行卡</label>
+                        <input type="text" placeholder="如：622 6485999 0321" class="form-control" ng-model="user.bankCardCode">
+                    </div>
+                    <div class="form-group">
+                        <label>手机</label>
+                        <input type="text" placeholder="输入用手机" class="form-control" ng-model="user.mobile">
+                    </div>
+                    <div class="form-group">
+                        <label>微信号</label>
+                        <input type="text" placeholder="输入用微信号" class="form-control" ng-model="user.weChatCode">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-info" ng-disabled="user.name == '' || user.name == null || user.account == '' || user.account == null || loading" ng-class="{'active' : loading}">
+                        <span class="text">保存</span>
+                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,97 @@
+<div class="container w-xxl w-auto-xs" ng-controller="SignupFormController" ng-init="app.settings.container = false;">
+    <a href class="navbar-brand block m-t">{{app.name}}</a>
+    <div class="m-b-lg">
+        <div class="wrapper text-center">
+            <strong>一起来更精彩！</strong>
+        </div>
+        <form name="form" class="form-validation">
+            <div class="list-group list-group-sm">
+                <div class="list-group-item">
+                    <input type="text" placeholder="登录帐号" class="form-control no-border ng-touched" ng-model="user.account">
+                </div>
+                <div class="list-group-item">
+                    <input type="password" placeholder="登录密码" class="form-control no-border" ng-model="user.passwd">
+                </div>
+                <div class="list-group-item">
+                    <input type="text" placeholder="姓名" class="form-control no-border" ng-model="user.name">
+                </div>
+                <div class="list-group-item">
+                    <div class="btn-group" ng-init="user.sex = '1'">
+                        <label class="btn btn-sm btn-info"    ng-model="user.sex" btn-radio="'1'"><i class="fa fa-check text-active"></i> 男</label>
+                        <label class="btn btn-sm btn-success" ng-model="user.sex" btn-radio="'0'"><i class="fa fa-check text-active"></i> 女</label>
+                    </div>
+                </div>
+                <div class="list-group-item">
+                    <input type="email" placeholder="邮箱" class="form-control no-border" ng-model="user.email">
+                </div>
+                <div class="list-group-item">
+                    <p class="input-group">
+                        <input type="text" class="form-control no-border" placeholder="生日" datepicker-popup="yyyy-MM-dd" ng-model="user.birthday" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                <div class="list-group-item">
+                    <input type="text" placeholder="身份证" class="form-control no-border" ng-model="user.idCard">
+                </div>
+                <div class="list-group-item">
+                    <input type="text" placeholder="收款银行，如支付宝，建行" class="form-control no-border" ng-model="user.bankType">
+                </div>
+                <div class="list-group-item">
+                    <input type="text" placeholder="收款卡号" class="form-control no-border" ng-model="user.bankCardCode">
+                </div>
+                <div class="list-group-item">
+                    <input type="text" placeholder="手机" class="form-control no-border" ng-model="user.mobile">
+                </div>
+                <div class="list-group-item">
+                    <input type="text" placeholder="微信号" class="form-control no-border" ng-model="user.weChatCode">
+                </div>
+                <div class="list-group-item">
+                    <input type="text" placeholder="QQ号" class="form-control no-border" ng-model="user.qq">
+                </div>
+                <div class="list-group-item">
+                    省份：
+                    <select id="province" ui-jq="select2"  class="w-md" ng-model="province" ng-change="changeProvince()">
+                        <option ng-repeat="ele in provinceList" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                    </select>
+                </div>
+                <div class="list-group-item" ng-show="cityList != null && cityList != []">
+                    城市：
+                    <select id="city" ui-jq="select2" class="w-md" ng-model="city" ng-change="changeCity()">
+                        <option ng-repeat="ele in cityList" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                    </select>
+                </div>
+                <div class="list-group-item" ng-show="areaList != null && areaList != []">
+                    县区：
+                    <select id="area" ui-jq="select2" class="w-md" ng-model="area">
+                        <option ng-repeat="ele in areaList" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                    </select>
+                </div>
+                <div class="list-group-item" ng-show="area != null && area != ''">
+                    <input type="text" placeholder="详细地址(如：清华路433号)" class="form-control no-border" ng-model="user.address">
+                </div>
+                <div class="list-group-item">
+                    <img alt="验证码" name="randImage" id="randImage" src="/admin/verification_code" width="60" height="20">
+                    <a href="javascript:loadimage();"><font>看不清？</font></a>
+                </div>
+                <div class="list-group-item">
+                    <input type="text" class="form-control no-border" placeholder="验证码" ng-model="user.code" style="">
+                </div>
+            </div>
+            <div class="text-danger wrapper text-center" ng-show="authError != null">
+                {{authError}}
+            </div>
+            <button type="submit" class="btn btn-lg btn-primary btn-block" ng-click="signup()" ng-disabled='user.code == null || user.code.length != 4 || user.bankCardCode == null || user.bankCardCode == "" || user.bankType == null || user.bankType == "" || user.idCard == null || user.idCard == "" || user.name == null || user.name == "" || user.passwd == null || user.passwd == "" || user.passwd.length < 6 || user.account == null || user.account == ""'>注册</button>
+            <div class="line line-dashed"></div>
+            <p class="text-center"><small>已经有帐号?</small></p>
+            <a ui-sref="access.signin" class="btn btn-lg btn-default btn-block">去登录</a>
+        </form>
+    </div>
+    <div class="text-center" ng-include="'/back/tpl/blocks/page_footer.html'"></div>
+</div>
+<script language="javascript">
+    function loadimage() {
+        document.getElementById("randImage").src = "/admin/verification_code?" + Math.random();
+    }
+</script> 

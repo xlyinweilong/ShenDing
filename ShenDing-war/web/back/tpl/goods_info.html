@@ -1,0 +1,112 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">区域详情</h1>
+</div>
+<div class="wrapper-md" ng-controller="GoodsInfoController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                基本信息
+            </div>
+            <div class="panel-body">
+                <div class="text-center" ng-show="goods == null">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="goods == null">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">名称</th>
+                            <th style="width:75%">详情</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>区域</td>
+                            <td>{{goods.name}}</td>
+                        </tr>
+                        <tr>
+                            <td>类型</td>
+                            <td>{{goods.typeString}}</td>
+                        </tr>
+                        <tr>
+                            <td>编号</td>
+                            <td>{{goods.serialId}}</td>
+                        </tr>
+                        <tr>
+                            <td>省份</td>
+                            <td>{{goods.provinceStr}}</td>
+                        </tr>
+                        <tr>
+                            <td>价格</td>
+                            <td>{{goods.price}}</td>
+                        </tr>
+                        <tr>
+                            <td>大区</td>
+                            <td><a href="#/app/user/user_info/{{goods.user.id}}" class="text-info">{{goods.user.name}}</a></td>
+                        </tr>
+                        <tr>
+                            <td>微信帐号</td>
+                            <td>{{goods.weChatCode}}</td>
+                        </tr>
+                        <tr>
+                            <td>微信人数</td>
+                            <td>{{goods.peopleCount}}</td>
+                        </tr>
+                        <tr>
+                            <td>qq号</td>
+                            <td>{{goods.qqCode}}</td>
+                        </tr>
+                        <tr>
+                            <td>状态</td>
+                            <td>{{goods.statusMean}}</td>
+                        </tr>
+                        <tr ng-if="goods.statusStartDate != null">
+                            <td>开始时间</td>
+                            <td>{{goods.statusStartDate|date:"yyyy-MM-dd"}}</td>
+                        </tr>
+                        <tr ng-if="goods.statusEndDate != null">
+                            <td>结束时间</td>
+                            <td>{{goods.statusEndDate|date:"yyyy-MM-dd"}}</td>
+                        </tr>
+                        <tr ng-if="order != null">
+                            <td>加盟</td>
+                            <td><a href="#/app/order/order_info/{{order.id}}" class="text-info">{{order.serialId}}</a></td>
+                        </tr>
+                        <tr ng-if="order != null">
+                            <td>最后的代理人</td>
+                            <td><a href="#/app/user/user_info/{{order.agentUser.id}}" class="text-info">{{order.agentUser.name}}</a></td>
+                        </tr>
+                        <tr>
+                            <td>类型</td>
+                            <td>
+                                <span ng-class="{'bg-success': goods.category == 'SERVICE_PEOPLE','bg-primary':goods.category == 'MAKE_FRIENDS'}" class="label ng-binding" title="{{goods.categoryMean}}">{{goods.categoryMean}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="row" ng-hide="list == null || totalItems < 1">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                微信修改历史记录
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped m-b-none">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">微信号</th>
+                            <th style="width:25%">修改时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in list">
+                            <td>{{item.weChatCode}}</td>
+                            <td>{{item.createDate| date:"yyyy-MM-dd"}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

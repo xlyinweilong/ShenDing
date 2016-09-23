@@ -1,0 +1,167 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">加盟创建</h1>
+</div>
+<div class="wrapper-md" ng-controller="CreateOrderController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                {{order.title}}
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchSaleGoods()">
+                    <div class="form-group">
+                        <label>代理区域<i class="text-danger">*</i> <span class="label label-success" ng-show="checkedAgent != null">已选择:{{checkedAgent.name}} (便民平台)</span> <span ng-show="checkedAgent != null">{{checkedAgent.typeString}} {{checkedAgent.price}}</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchAgentMsg" placeholder="如长春1，长春，CC1，cc">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="saleGoodsList != null && saleGoodsListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="saleGoodsList != null && saleGoodsListTotalItems < 1 && !saleGoodsListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="saleGoodsList != null && saleGoodsListTotalItems > 0 && !saleGoodsListLoadingData">
+                            <a ng-repeat="ele in saleGoodsList" class="list-group-item" ng-click="checkAgent(ele)">{{ele.name}} ({{ele.provinceStr}}) {{ele.user.roleString}}：{{ele.user.name}}</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form ng-repeat="ef in eles" role="form" name="form" ng-submit="searchSoldOutGoods(ef)">
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <p>业务员 <span class="label label-success" ng-show="checkedRecommend[ef] != null">已选择:{{checkedRecommend[ef].name}}</span></p>
+                        <p>
+                        <div ng-class="{ 'col-lg-6':eles.length > 1}">
+                            <div class="input-group">
+                                <input class="form-control" type="text" ng-model="searchRecommendMsg[ef]" placeholder="输入平台、姓名或身份证号，如：CC1、长春">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="submit">查找</button>
+                                </span>
+                            </div>
+                            <div class="text-center" ng-show="soldOutGoodsList[ef] != null && soldOutGoodsListLoadingData[ef]">
+                                <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                            </div>
+                            <div class="text-center" ng-show="soldOutGoodsList[ef] != null && soldOutGoodsListTotalItems[ef] < 1 && !soldOutGoodsListLoadingData[ef]">
+                                <alert type="warning">无数据</alert>
+                            </div>
+                            <div class="list-group bg-white" ng-show="soldOutGoodsList[ef] != null && soldOutGoodsListTotalItems[ef] > 0 && !soldOutGoodsListLoadingData[ef]">
+                                <a ng-repeat="ele in soldOutGoodsList[ef]" class="list-group-item" ng-click="checkRecommend(ele, ef)">{{ele.name}} ({{ele.roleString}}) {{ele.idCard}} {{ele.goodsMsg}} <span ng-class="{'bg-success': ele.goodsCategory == '便民平台','bg-primary':ele.goodsCategory == '交友平台'}" class="label ng-binding" title="{{ele.goodsCategory}}">{{ele.goodsCategory}}</span></a>
+                            </div>
+                        </div>
+                        <div class="col-lg-6" ng-show="eles.length > 1">
+                            <div class="input-group m-b">
+                                <input type="text" class="form-control" placeholder="分配比例，如50" ng-model="rate[ef]">
+                                <span class="input-group-addon">%</span>
+                            </div>
+                        </div>
+                        </p>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <p><button class="btn m-b-xs btn-sm btn-primary btn-addon" ng-click="addEles()"><i class="fa fa-plus text"></i>增加业务员</button></p>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div ng-show="checkedRecommend[0] != null" class="line line-dashed b-b line-lg pull-in"></div>
+                <div  ng-show="checkedRecommend[0] != null" class="form-group">
+                    <label>推荐分成总金额</label>
+                    <input type="text" class="form-control" placeholder="如:1500" ng-model="order.divideAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchDivideUser()">
+                    <div class="form-group">
+                        <label>分成大区经理 <span class="label label-success" ng-show="checkedDivideUser != null">已选择:{{checkedUser.name}}</span> <span ng-show="checkedDivideUser != null">{{checkedDivideUser.name}} {{checkedDivideUser.roleString}}</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchDivideUserMsg" placeholder="如杨娜">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="divideUserList != null && divideUserListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="divideUserList != null && divideUserListTotalItems < 1 && !divideUserListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="divideUserList != null && divideUserListTotalItems > 0 && !divideUserListLoadingData">
+                            <a ng-repeat="ele in divideUserList" class="list-group-item" ng-click="checkDivideUser(ele)">{{ele.name}} ({{ele.roleString}})</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>分成大区经理分成金额</label>
+                    <input type="text" class="form-control" placeholder="如:50" ng-model="order.userAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>加盟金额</label>
+                    <input type="text" class="form-control" placeholder="如:9000" ng-model="order.price">
+                </div>
+                <div class="form-group">
+                    <label>人数费</label>
+                    <input type="text" class="form-control" placeholder="不填默认0" ng-model="order.peopleCountFee">
+                </div>
+                <div class="form-group">
+                    <label>已返还金额</label>
+                    <input type="text" class="form-control" placeholder="不填默认0" ng-model="order.backAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>汇款金额</label>
+                    <input type="text" class="form-control" placeholder="如:9000" ng-model="order.amount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>回款时间</label>
+                    <p class="input-group">
+                        <input type="text" class="form-control no-border" placeholder="回款时间" datepicker-popup="yyyy-MM-dd" ng-model="order.payDate" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>金额类型</label>
+                    <select class="form-control" ng-model="order.amountType">
+                        <option ng-selected="order.amountType == null || order.amountType == 'EARNEST'" value="EARNEST">定金</option>
+                        <option value="FINAL_PAYMENT">尾款</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>支付方式</label>
+                    <select class="form-control" ng-model="order.payType">
+                        <option  ng-selected="order.payType == null || order.payType == 'BANK_TRANSFER'" value="BANK_TRANSFER">银行汇款</option>
+                        <<option value="ALIPAY">支付宝</option>
+                        <option value="POST_CARD">刷卡</option>
+                        <option value="WECHAT_PAY">微信支付</option>
+                        <option value="ICBC">工行</option>
+                        <option value="ABC">农行</option>
+                        <option value="CCBC">建行</option>
+                        <option value="CASH">现金支付</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <input type="text" class="form-control" placeholder="备注信息" ng-model="order.remark">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button class="btn btn-sm" type="button" ng-click="backPage()">返回</button>
+                <button type="button" class="btn btn-sm" ng-click="submitForm()" ng-disabled="order.payDate == null || order.payDate == '' || order.submitting || order.price == null || order.price < 0 || order.amount == null || order.amount < 0 || checkedAgent == null || checkedRecommend == null" ng-class="{
+                        'btn-primary'
+                        : order.setType == 'add', 'btn-info': order.setType == 'edit', 'active' : order.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

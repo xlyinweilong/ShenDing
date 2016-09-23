@@ -1,0 +1,47 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">修改区域大区经理</h1>
+</div>
+<div class="wrapper-md" ng-controller="PlaceUserController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                修改区域大区经理
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>省份<i class="text-danger">*</i></label>
+                    <select id="province"  class="form-control" ng-model="province" required>
+                        <option ng-repeat="ele in provinceList" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchUser()">
+                    <div class="form-group">
+                        <label>选择大区经理<i class="text-danger">*</i> <span class="label label-success" ng-show="checkedEle != null">已选择:{{checkedEle.name}}</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchUserMsg" placeholder="输入帐号、姓名或身份号查找">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="searchList != null && searchListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="searchList != null && searchTotalItems < 1 && !searchListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="searchList != null && searchTotalItems > 0 && !searchListLoadingData">
+                            <a ng-repeat="ele in searchList" class="list-group-item" ng-click="checkEle(ele)">{{ele.name}} ({{ele.roleString}}) {{ele.idCard}}</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm btn-info" ng-click="submitForm()" ng-disabled="goods.submitting || province == null || checkedEle == null" ng-class="{'active' : goods.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

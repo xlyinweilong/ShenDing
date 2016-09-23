@@ -1,0 +1,95 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">推荐广告</h1>
+</div>
+<div class="wrapper-md" ng-controller="MyNewAdController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                广告列表
+                <span class="label bg-warning pull-down m-t-xs" ng-if="totalAmount != null">小计:{{totalAmount}}</span>
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-5 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <div class="col-sm-7  m-b-xs">
+                        <div class="col-md-5">
+                            <label>开始日期</label>
+                            <p class="input-group">
+                                <input type="text" class="form-control" datepicker-popup="yyyy-MM-dd" ng-model="startDate" is-open="startDateOpened" datepicker-options="dateOptions">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" ng-click="openStart($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-5">
+                            <label>结束日期</label>
+                            <p class="input-group">
+                                <input type="text" class="form-control" datepicker-popup="yyyy-MM-dd" ng-model="endDate" is-open="endDateOpened" datepicker-options="dateOptions">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" ng-click="openEnd($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <p class="input-group">
+                                <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-click="pageChanged()">
+                                    <i class="fa fa-search"></i>
+                                    搜索
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:10%">时间</th>
+                            <th style="width:20%">广告名称</th>
+                            <th style="width:15%">收益</th>
+                            <th style="width:20%">平台</th>
+                            <th style="width:20%">平台省份</th>
+                            <th style="width:15%">类别</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td>{{item.payDate| date:'yyyy-MM-dd'}}</td>
+                            <td>{{item.name}}</td>
+                            <td>{{item.userAmount}}<span ng-if="item.userBalanceAmount > 0"> + {{item.userBalanceAmount}}</td>
+                            <td>
+                                {{item.goods.name}}
+                                <span ng-class="{'bg-success': item.category == 'SERVICE_PEOPLE','bg-primary':item.category == 'MAKE_FRIENDS'}" class="label ng-binding ng-scope" title="{{item.categoryMean}}">{{item.categoryMean}}</span>
+                            </td>
+                            <td>{{item.goods.provinceStr}}</td>
+                            <td>
+                                <span class="label bg-success ng-binding ng-scope" title="{{item.sendTypeMean}}">{{item.sendTypeMean}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="list == null || listLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>

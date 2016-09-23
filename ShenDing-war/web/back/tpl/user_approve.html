@@ -1,0 +1,101 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">注册审批</h1>
+</div>
+<div class="wrapper-md" ng-controller="UserApproveController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                用户列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-7 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-primary btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData || totalItems < 1" ng-click="approveUser()">
+                            <i class="fa fa-edit"></i>
+                            审批通过
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData" ng-click="getUserList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <form role="form" name="form" ng-submit="getUserList(1, false)()">
+                        <div class="col-sm-5">
+                            <div class="input-group">
+                                <input class="input-sm form-control" ng-model="userListSearch" type="text" placeholder="帐号、姓名或身份证号">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-default" ng-disabled="userList == null || userListLoading || userListLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="text-center" ng-show="userList == null || userListLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="userList != null && !userListLoading && !userListLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="userList == null || userListLoading || userListLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th  style="width:5%"></th>
+                            <th  style="width:10%">帐号</th>
+                            <th  style="width:10%">名字</th>
+                            <th  style="width:10%">性别</th>
+                            <th  style="width:10%">身份证</th>
+                            <th  style="width:10%">地址</th>
+                            <th  style="width:5%">邮箱</th>
+                            <th  style="width:5%">手机</th>
+                            <th  style="width:5%">微信</th>
+                            <th  style="width:5%">QQ</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="userListLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="userListLoadingData">
+                        <tr ng-repeat="user in userList">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="userLableIds" ng-model="user.lableId"><i></i></label></td>
+                            <td>{{user.account}}</td>
+                            <td>
+                                <a class="text-info"  href="#/app/user/user_info/{{user.id}}">{{user.name}}</a>
+                            </td>
+                            <td>
+                                <span ng-class="{'bg-success': user.sex == 0,'bg-info': user.sex == 1}" class="label ng-binding" title="{{user.sexStr}}">{{user.sexStr}}</span>
+                            </td>
+                            <td>
+                                {{user.idCard}}
+                            </td>
+                            <td>
+                                {{user.provinceStr}} {{user.cityStr}} {{user.areaStr}}
+                            </td>
+                            <td>
+                                {{user.email}}
+                            </td>
+                            <td>
+                                {{user.mobile}}
+                            </td>
+                            <td>
+                                {{user.weChatCode}}
+                            </td>
+                            <td>
+                                {{user.qq}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="userList == null || userListLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

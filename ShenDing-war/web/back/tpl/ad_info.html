@@ -1,0 +1,73 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">广告详情</h1>
+</div>
+<div class="wrapper-md" ng-controller="AdInfoController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                广告详情
+            </div>
+            <div class="panel-body">
+                <div class="text-center" ng-show="ad == null">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="ad == null">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">名称</th>
+                            <th style="width:75%">详情</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>广告名称</td>
+                            <td>{{ad.name}}</td>
+                        </tr>
+                        <tr ng-if="ad.user != null">
+                            <td>业务员</td>
+                            <td><a class="text-info" href="#/app/user/user_info/{{ad.user.id}}">{{ad.user.name}}</a></td>
+                        </tr>
+                        <tr ng-if="ad.user != null">
+                            <td>平台</td>
+                            <td><a class="text-info" href="#/app/goods/goods_info/{{ad.goods.id}}">{{ad.goods.name}}</a></td>
+                        </tr>
+                        <tr>
+                            <td>金额</td>
+                            <td>{{ad.amount}}</td>
+                        </tr>
+                        <tr>
+                            <td>返回</td>
+                            <td>{{ad.userBalanceAmount}}</td>
+                        </tr>
+                        <tr>
+                            <td>分成</td>
+                            <td>{{ad.userAmount}}</td>
+                        </tr>
+                        <tr>
+                            <td>回款时间</td>
+                            <td>{{ad.payDate| date:"yyyy-MM-dd"}}</td>
+                        </tr>
+                        <tr>
+                            <td>支付方式</td>
+                            <td>{{ad.gatewayTypeStr}}</td>
+                        </tr>
+                        <tr ng-if="ad.ownerWeChat != null">
+                            <td>广告主微信</td>
+                            <td>{{ad.ownerWeChat}}</td>
+                        </tr>
+                        <tr ng-if="ad.remark != null">
+                            <td>备注</td>
+                            <td>{{ad.remark}}</td>
+                        </tr>
+                        <tr>
+                            <td>类型</td>
+                            <td>
+                                <span ng-class="{'bg-success': ad.category == 'SERVICE_PEOPLE','bg-primary':ad.category == 'MAKE_FRIENDS'}" class="label ng-binding" title="{{ad.categoryMean}}">{{ad.categoryMean}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,257 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">用户管理</h1>
+</div>
+<div class="wrapper-md" ng-controller="UserController">
+    <div class="row" ng-init="approve = 0">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                用户列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-7 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-primary btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData" ng-click="addUser()">
+                            <i class="fa fa-plus"></i>
+                            创建
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-info btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData || totalItems < 1" ng-click="editUser()">
+                            <i class="fa fa-edit"></i>
+                            修改
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-info btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData || totalItems < 1" ng-click="editUserAmount()">
+                            <i class="fa fa-edit"></i>
+                            修改余额
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-warning btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData || totalItems < 1" ng-click="enableUser()">
+                            <i class="fa fa-unlock"></i>
+                            启用
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData || totalItems < 1" ng-click="disableUser()">
+                            <i class="fa fa-lock"></i>
+                            禁用
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData || totalItems < 1" ng-click="deleteUser()">
+                            <i class="fa fa-trash-o"></i>
+                            删除
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="userList == null || userListLoading || userListLoadingData" ng-click="getUserList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <form role="form" name="form" ng-submit="getUserList(1, false)()">
+                        <div class="col-sm-5">
+                            <div class="input-group">
+                                <input class="input-sm form-control" ng-model="userListSearch" type="text" placeholder="帐号、姓名或身份证号">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-default" ng-disabled="userList == null || userListLoading || userListLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="text-center" ng-show="userList == null || userListLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="userList != null && !userListLoading && !userListLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="userList == null || userListLoading || userListLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th  style="width:10%"></th>
+                            <th  style="width:15%">帐号</th>
+                            <th  style="width:15%">名字</th>
+                            <th  style="width:20%">身份证</th>
+                            <th  style="width:15%">地址</th>
+                            <th  style="width:15%">状态</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="userListLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="userListLoadingData">
+                        <tr ng-repeat="user in userList">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="userLableIds" ng-model="user.lableId"><i></i></label></td>
+                            <td>{{user.account}}</td>
+                            <td>
+                                <a class="text-info"  href="#/app/user/user_info/{{user.id}}">{{user.name}}</a>
+                            </td>
+                            <td>
+                                {{user.idCard}}
+                            </td>
+                            <td>
+                                {{user.provinceStr}} {{user.cityStr}} {{user.areaStr}}
+                            </td>
+                            <td>
+                                <span ng-class="{'bg-success': user.status == null || user.status == 'NORMAL', 'bg-warning': user.status == 'BANNED_24H' || user.status == 'BANNED_1W' || user.status == 'BANNED_PERMANENT','bg-danger': user.status == 'DISABLED'}" class="label ng-binding" title="{{user.statusMean}}">{{user.statusMean}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="userList == null || userListLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <a name="block"></a>
+        <div class="panel panel-default" ng-show="block.show">
+            <div class="panel-heading font-bold">
+                <span class="label pull-right m-t-xs">
+                    <a href="" ng-click="block.show = false">
+                        <i class="fa fa-times text-danger text"></i>
+                    </a>
+                </span>
+                {{block.title}}
+            </div>
+            <div class="panel-body">
+                <form role="form" name="form" ng-submit="submit()">
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>角色<i class="text-danger">*</i></label>
+                        <select class="form-control" ng-model="user.role" required>
+                            <option value="-1">代理</option>
+                            <option ng-repeat="ele in roleList" ng-selected="ele.id == user.role" value="{{ele.id}}">{{ele.name}}</option>
+                        </select>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>姓名<i class="text-danger">*</i></label>
+                        <input type="text" class="form-control" placeholder="输入用户姓名" ng-model="user.name" required>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>帐号<i class="text-danger">*</i></label>
+                        <input type="text" class="form-control" placeholder="输入用户帐号" ng-model="user.account" required>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="text" class="form-control" placeholder="输入用户邮箱" ng-model="user.email">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>密码<i ng-if="block.type == 'add'" class="text-danger">*</i></label>
+                        <input type="password" class="form-control" placeholder="输入密码" ng-model="user.passwd">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>性别<i class="text-danger">*</i></label>
+                        <div class="btn-group" ng-init="user.sex = 1">
+                            <label class="btn btn-sm btn-info"    ng-model="user.sex" btn-radio="1"><i class="fa fa-check text-active"></i> 男</label>
+                            <label class="btn btn-sm btn-success" ng-model="user.sex" btn-radio="0"><i class="fa fa-check text-active"></i> 女</label>
+                        </div>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>身份证<i class="text-danger">*</i></label>
+                        <input type="text" placeholder="输入用身份证" class="form-control" ng-model="user.idCard">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>所属银行</label>
+                        <input type="text" placeholder="输入所属银行类型，如支付宝" class="form-control" ng-model="user.bankType">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>支付宝/银行卡</label>
+                        <input type="text" placeholder="如：622 6485999 0321" class="form-control" ng-model="user.bankCardCode">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>生日</label>
+                        <p class="input-group">
+                            <input type="text" class="form-control no-border" placeholder="选择生日" datepicker-popup="yyyy-MM-dd" ng-model="user.birthday" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                            </span>
+                        </p>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>手机</label>
+                        <input type="text" placeholder="输入用手机" class="form-control" ng-model="user.mobile">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>微信号</label>
+                        <input type="text" placeholder="输入用微信号" class="form-control" ng-model="user.weChatCode">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>QQ号</label>
+                        <input type="text" placeholder="输入用QQ号" class="form-control" ng-model="user.qq">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>省份</label>
+                        <select id="province" class="form-control" ng-model="province" ng-change="changeProvince()">
+                            <option ng-repeat="ele in provinceList" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                        </select>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in" ng-show="cityList != null && cityList != []"></div>
+                    <div class="form-group" ng-show="cityList != null && cityList != []">
+                        <label>城市</label>
+                        <select id="city"  class="form-control" ng-model="city" ng-change="changeCity()">
+                            <option ng-repeat="ele in cityList" ng-selected="ele.code == city" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                        </select>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in" ng-show="areaList != null && areaList != []"></div>
+                    <div class="form-group" ng-show="areaList != null && areaList != []">
+                        <label>县区</label>
+                        <select id="area" class="form-control" ng-model="area">
+                            <option ng-repeat="ele in areaList" ng-selected="ele.code == area" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                        </select>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in" ng-show="area != null && area != ''"></div>
+                    <div class="form-group" ng-show="area != null && area != ''">
+                        <label>详细地址</label>
+                        <input type="text" placeholder="如：清华路433号" class="form-control" ng-model="user.address">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <button type="submit" class="btn btn-sm" ng-disabled="user.name == null || user.account == null || block.submitting || ((user.passwd == null || user.passwd == '') && block.type == 'add')" ng-class="{'btn-primary' : block.type == 'add', 'btn-info' : block.type == 'edit','active' : block.submitting}">
+                        <span class="text">保存</span>
+                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <a name="blockAmount"></a>
+        <div class="panel panel-default" ng-show="blockAmount.show">
+            <div class="panel-heading font-bold">
+                <span class="label pull-right m-t-xs">
+                    <a href="" ng-click="blockAmount.show = false">
+                        <i class="fa fa-times text-danger text"></i>
+                    </a>
+                </span>
+                {{blockAmount.title}}({{user.name}})
+            </div>
+            <div class="panel-body">
+                <form role="form" name="form" ng-submit="submitAmount()">
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>余额<i class="text-danger">*</i></label>
+                        <input type="text" class="form-control" placeholder="输入用户余额" ng-model="user.balance" required>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <button type="submit" class="btn btn-sm btn-info" ng-disabled="user.balance == null || blockAmount.submitting" ng-class="{'active' : blockAmount.submitting}">
+                        <span class="text">保存</span>
+                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

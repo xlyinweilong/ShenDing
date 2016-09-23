@@ -1,0 +1,94 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">加盟回收</h1>
+</div>
+<div class="wrapper-md" ng-controller="MFOrderController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                加盟列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-7 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-warning btn-addon" ng-disabled="list == null || listLoading || listLoadingData || totalItems < 1" ng-click="backOrder()">
+                            <i class="fa fa-trash-o"></i>
+                            回收
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <form role="form" name="form" ng-submit="getList(1, false)()">
+                        <div class="col-sm-5">
+                            <div class="input-group">
+                                <input class="input-sm form-control" ng-model="listSearch" type="text" placeholder="加盟号码或者区域信息">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-default" ng-disabled="list == null || listLoading || listLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:5%"></th>
+                            <th style="width:15%">代理人名称</th>
+                            <th style="width:10%">区域名称</th>
+                            <th style="width:10%">省份</th>
+                            <th style="width:10%">序列号</th>
+                            <th style="width:10%">大区</th>
+                            <th style="width:10%">价钱</th>
+                            <th style="width:10%">实付</th>
+                            <th style="width:10%">状态</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="userLableIds" ng-model="item.lableId"><i></i></label></td>
+                            <td><a class="text-info" href="#/app/user/user_info/{{item.agentUser.id}}">{{item.agentUser.name}}</a></td>
+                            <td><a class="text-info" href="#/app/goods/goods_info/{{item.goods.id}}">{{item.goods.name}}</a></td>
+                            <td>{{item.goods.provinceStr}}</td>
+                            <td>
+                                <a class="text-info" href="#/app/order/order_info/{{item.id}}">{{item.serialId}}</a>
+                            </td>
+                            <td>
+                                <a class="text-info" href="#/app/user/user_info/{{item.user.id}}">{{item.user.name}}</a>
+                            </td>
+                            <td>
+                                {{item.price}}
+                            </td>
+                            <td>
+                                {{item.paidPrice}}
+                            </td>
+                            <td>
+                                <span ng-if="item.status == 'SUCCESS' || item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT'" ng-class="{'bg-success': item.status == 'SUCCESS' || item.status == 'WAIT_SIGN_CONTRACT','bg-warning':item.status == 'TERMINATION'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
+                                <a ng-if="item.status == 'PENDING_PAYMENT' || item.status == 'EARNEST'" class="text-info" title="{{item.statusMean}}">{{item.statusMean}}</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="list == null || listLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

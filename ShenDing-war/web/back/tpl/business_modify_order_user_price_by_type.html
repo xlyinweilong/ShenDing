@@ -1,0 +1,31 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">修改默认分成大区经理分成金额</h1>
+</div>
+<div class="wrapper-md" ng-controller="OrderUserPriceController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                修改默认分成大区经理分成金额
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>类型<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="dic.type" ng-change="loadDic()">
+                        <option ng-repeat="ele in goodsTypeList" value="{{ele.key}}">{{ele.name}}</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>金额<i class="text-danger">*</i></label>
+                    <input class="form-control" type="text" ng-model="dic.amount" placeholder="输入金额">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm btn-info" ng-click="submitForm()" ng-disabled="dic.submitting || dic.amount == null || dic.type == null" ng-class="{'active' : dic.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

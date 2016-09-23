@@ -1,0 +1,128 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">用户详情</h1>
+</div>
+<div class="wrapper-md" ng-controller="UserInfoController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                用户基本信息
+            </div>
+            <div class="panel-body">
+                <div class="text-center" ng-show="user == null">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="user == null">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">名称</th>
+                            <th style="width:75%">详情</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>帐号</td>
+                            <td>{{user.account}}</td>
+                        </tr>
+                        <tr>
+                            <td>姓名</td>
+                            <td>{{user.name}}</td>
+                        </tr>
+                        <tr>
+                            <td>性别</td>
+                            <td>{{user.sexStr}}</td>
+                        </tr>
+                        <tr>
+                            <td>电话</td>
+                            <td>{{user.mobile}}</td>
+                        </tr>
+                        <tr>
+                            <td>邮件</td>
+                            <td>{{user.email}}</td>
+                        </tr>
+                        <tr>
+                            <td>身份证</td>
+                            <td>{{user.idCard}}</td>
+                        </tr>
+                        <tr>
+                            <td>生活平台总计押金</td>
+                            <td>{{user.deposit}}</td>
+                        </tr>
+                        <tr>
+                            <td>生活平台押金余额</td>
+                            <td>{{user.balance}}</td>
+                        </tr>
+                        <tr>
+                            <td>交友平台总计押金</td>
+                            <td>{{user.depositMf}}</td>
+                        </tr>
+                        <tr>
+                            <td>交友平台押金余额</td>
+                            <td>{{user.balanceMf}}</td>
+                        </tr>
+                        <tr>
+                            <td>银行卡类型</td>
+                            <td>{{user.bankType}}</td>
+                        </tr>
+                        <tr>
+                            <td>银行卡号码</td>
+                            <td>{{user.bankCardCode}}</td>
+                        </tr>
+                        <tr>
+                            <td>生日</td>
+                            <td>{{user.birthdayStr}}</td>
+                        </tr>
+                        <tr>
+                            <td>qq</td>
+                            <td>{{user.qq}}</td>
+                        </tr>
+                        <tr>
+                            <td>微信</td>
+                            <td>{{user.weChatCode}}</td>
+                        </tr>
+                        <tr>
+                            <td>地址</td>
+                            <td>{{user.provinceStr}} {{user.cityStr}} {{user.areaStr}} {{user.address}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="row" ng-hide="list == null || totalItems < 1">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                加盟详情
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped m-b-none">
+                    <thead>
+                        <tr>
+                            <th style="width:12%">订单</th>
+                            <th style="width:16%">平台</th>
+                            <th style="width:12%">大区</th>
+                            <th style="width:12%">价格</th>
+                            <th style="width:12%">时间</th>
+                            <th style="width:12%">状态</th>
+                            <th style="width:12%">类型</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in list">
+                            <td><a class="text-info" href="#/app/order/order_info/{{item.id}}">{{item.serialId}}</a></td>
+                            <td><a class="text-info" href="#/app/goods/goods_info/{{item.goods.id}}">{{item.goods.name}}</a></td>
+                            <td><a class="text-info" href="#/app/user/user_info/{{item.user.id}}">{{item.user.name}}</a></td>
+                            <td>{{item.price}}</td>
+                            <td>{{item.limitStart| date:"yyyy-MM-dd"}}到{{item.limitEnd| date:"yyyy-MM-dd"}}</td>
+                            <td>
+                                <span ng-class="{'bg-success': item.status == 'SUCCESS','bg-warning':item.status == 'WAIT_SIGN_CONTRACT' || item.status == 'EARNEST','bg-danger':item.status == 'TERMINATION'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
+                            </td>
+                            <td>
+                                <span ng-class="{'bg-success': item.category == 'SERVICE_PEOPLE','bg-primary':item.category == 'MAKE_FRIENDS'}" class="label ng-binding" title="{{item.categoryMean}}">{{item.categoryMean}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

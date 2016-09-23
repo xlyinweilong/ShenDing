@@ -1,0 +1,191 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">区域管理</h1>
+</div>
+<div class="wrapper-md" ng-controller="GoodsController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                区域列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-7 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-primary btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="add()">
+                            <i class="fa fa-plus"></i>
+                            创建
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-info btn-addon" ng-disabled="list == null || listLoading || listLoadingData || totalItems < 1" ng-click="edit()">
+                            <i class="fa fa-edit"></i>
+                            修改
+                        </button>
+                        <!--                        <button class="btn m-b-xs btn-sm btn-warning btn-addon" ng-disabled="list == null || listLoading || listLoadingData || totalItems < 1" ng-click="enableUser()">
+                                                    <i class="fa fa-unlock"></i>
+                                                    上架
+                                                </button>
+                                                <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-disabled="list == null || listLoading || listLoadingData || totalItems < 1" ng-click="disableUser()">
+                                                    <i class="fa fa-lock"></i>
+                                                    下架
+                                                </button>-->
+                        <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-disabled="list == null || listLoading || listLoadingData || totalItems < 1" ng-click="deleteItems()">
+                            <i class="fa fa-trash-o"></i>
+                            删除
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <form role="form" name="form" ng-submit="getList(1, false)">
+                        <div class="col-sm-5">
+                            <div class="input-group">
+                                <input class="input-sm form-control" ng-model="listSearch" type="text" placeholder="区域名称、编号或负责人；省份；人数如：500-2000">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-default" ng-disabled="list == null || listLoading || listLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th  style="width:5%"></th>
+                            <th  style="width:10%">名称</th>
+                            <th  style="width:5%">微信</th>
+                            <th  style="width:5%">QQ</th>
+                            <th  style="width:10%">人数</th>
+                            <th  style="width:10%">序列号</th>
+                            <th  style="width:10%">省份</th>
+                            <th  style="width:10%">平台</th>
+                            <th  style="width:10%">价钱</th>
+                            <th  style="width:15%">大区</th>
+                            <th  style="width:10%">状态</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="userLableIds" ng-model="item.lableId"><i></i></label></td>
+                            <td><a class="text-info" href="#/app/goods/goods_info/{{item.id}}">{{item.name}}</a></td>
+                            <td>{{item.weChatCode}}</td>
+                            <td>{{item.qqCode}}</td>
+                            <td>{{item.peopleCount}}</td>
+                            <td>{{item.serialId}}</td>
+                            <td>
+                                {{item.provinceStr}}
+                            </td>
+                            <td>
+                                {{item.typeString}}
+                            </td>
+                            <td>
+                                {{item.price}}
+                            </td>
+                            <td>
+                                <a class="text-info" href="#/app/user/user_info/{{item.user.id}}">{{item.user.name}} ({{item.user.roleString}}) {{item.user.idCard}}</a>
+                            </td>
+                            <td>
+                                <span ng-class="{'bg-success': item.status == null || item.status == 'SALE', 'bg-warning': item.status == 'SOLD_OUT' || item.status == 'LOCKED' || item.status == 'RESERVE'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="list == null || listLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <a name="a_goods"></a>
+        <div class="panel panel-default" ng-show="goods.show">
+            <div class="panel-heading font-bold">
+                <span class="label pull-right m-t-xs">
+                    <a href="" ng-click="goods.show = false">
+                        <i class="fa fa-times text-danger text"></i>
+                    </a>
+                </span>
+                {{goods.title}}
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>名称<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="输入名称，如长春1" ng-model="goods.name" required>
+                </div>
+                <div class="form-group">
+                    <label>微信</label>
+                    <input type="text" class="form-control" placeholder="输入微信帐号" ng-model="goods.weChatCode" required>
+                </div>
+                <div class="form-group">
+                    <label>QQ</label>
+                    <input type="text" class="form-control" placeholder="输入QQ号" ng-model="goods.qqCode" required>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>省份<i class="text-danger">*</i></label>
+                    <select id="province"  class="form-control" ng-model="province" required>
+                        <option ng-repeat="ele in provinceList" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>平台类型<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="goods.type" ng-change="changeGoodsType()">
+                        <option ng-repeat="ele in goodsTypeList" value="{{ele.key}}">{{ele.name}}</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>价钱<i class="text-danger">*</i></label>
+                    <input type="number" class="form-control" placeholder="输入价钱" ng-model="goods.price" required>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>人数</label>
+                    <input type="number" class="form-control" placeholder="输入微信帐号内人数" ng-model="goods.peopleCount" required>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchUser()">
+                    <div class="form-group">
+                        <label>选择大区<i class="text-danger">*</i> <span class="label label-success" ng-show="checkedEle != null">已选择:{{checkedEle.name}}</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchUserMsg" placeholder="输入帐号、姓名或身份号查找">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="searchList != null && searchListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="searchList != null && searchTotalItems < 1 && !searchListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="searchList != null && searchTotalItems > 0 && !searchListLoadingData">
+                            <a ng-repeat="ele in searchList" class="list-group-item" ng-click="checkEle(ele)">{{ele.name}} ({{ele.roleString}}) {{ele.idCard}}</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm" ng-click="submitForm()" ng-disabled="goods.submitting || goods.name == null || goods.name == '' || province == null || goods.price == null || goods.price == '' || checkedEle == null" ng-class="{'btn-primary': goods.setType == 'add', 'btn-info': goods.setType == 'edit', 'active' : goods.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

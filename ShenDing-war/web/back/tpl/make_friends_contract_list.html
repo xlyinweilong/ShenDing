@@ -1,0 +1,167 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">合同管理</h1>
+</div>
+<div class="wrapper-md" ng-controller="MFContractListController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                加盟列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-7 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-disabled="list == null || listLoading || listLoadingData || totalItems < 1" ng-click="deleteItems()">
+                            <i class="fa fa-trash-o"></i>
+                            删除
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-warning btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="downList()">
+                            <i class="fa fa-cloud-download"></i>
+                            下载
+                        </button>
+                    </div>
+                    <form role="form" name="form" ng-submit="getList(1, false)">
+                        <div class="col-sm-5">
+                            <div class="input-group">
+                                <input class="input-sm form-control" ng-model="listSearch" type="text" placeholder="加盟号码或者区域信息">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-default" ng-disabled="list == null || listLoading || listLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:8%"></th>
+                            <th style="width:20%">代理人名称</th>
+                            <th style="width:8%">区域名称</th>
+                            <th style="width:8%">省份</th>
+                            <th style="width:8%">序列号</th>
+                            <th style="width:8%">合同编号</th>
+                            <th style="width:8%">大区</th>
+                            <th style="width:8%">价钱</th>
+                            <th style="width:8%">实付</th>
+                            <th style="width:8%">状态</th>
+                            <th style="width:8%">修改</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="userLableIds" ng-model="item.lableId"><i></i></label></td>
+                            <td><a class="text-info" href="#/app/user/user_info/{{item.agentUser.id}}">{{item.agentUser.name}}</a></td>
+                            <td><a class="text-info" href="#/app/goods/goods_info/{{item.goods.id}}">{{item.goods.name}}</a></td>
+                            <td>{{item.goods.provinceStr}}</td>
+                            <td>
+                                <a class="text-info" href="#/app/order/order_info/{{item.id}}">{{item.serialId}}</a>
+                            </td>
+                            <td>
+                                <a class="text-info" href="#/app/order/order_info/{{item.id}}">{{item.contractSerialId}}</a>
+                            </td>
+                            <td>
+                                <a class="text-info" href="#/app/user/user_info/{{item.agentUser.id}}">{{item.user.name}}</a>
+                            </td>
+                            <td>
+                                {{item.price}}
+                            </td>
+                            <td>
+                                {{item.paidPrice}}
+                            </td>
+                            <td>
+                                <span ng-if="item.status == 'SUCCESS' || item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT'" ng-class="{'bg-success': item.status == 'SUCCESS','bg-warning':item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
+                                <a href="#/app/make_friends/update_order/{{item.id}}" ng-if="item.status == 'PENDING_PAYMENT' || item.status == 'EARNEST'" class="text-info" title="{{item.statusMean}}">{{item.statusMean}}</a>
+                            </td>
+                            <td>
+                                <a ng-click="edit(item)" class="text-info">修改</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="list == null || listLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <a name="contract"></a>
+        <div class="panel panel-default" ng-show="order.show">
+            <div class="panel-heading font-bold">
+                <span class="label pull-right m-t-xs">
+                    <a href="" ng-click="order.show = false">
+                        <i class="fa fa-times text-danger text"></i>
+                    </a>
+                </span>
+                完善合同
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>名称</label>
+                    <input type="text" class="form-control" ng-readonly="true" placeholder="输入区域名称，如长春1" ng-model="order.goods.name">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>合同续签时间</label>
+                    <p class="input-group">
+                        <input type="text" class="form-control no-border" placeholder="续签时间" datepicker-popup="yyyy-MM-dd" ng-model="order.lastRenewDate" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchUser()">
+                    <div class="form-group">
+                        <label>代理人<i class="text-danger">*</i> <span class="label label-success" ng-show="checkedUser != null">已选择:{{checkedUser.name}}</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchUserMsg" placeholder="输入帐号、姓名或身份证号">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="userList != null && userListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="userList != null && userListTotalItems < 1 && !userListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="userList != null && userListTotalItems > 0 && !userListLoadingData">
+                            <a ng-repeat="ele in userList" class="list-group-item" ng-click="checkUser(ele)">{{ele.name}} ({{ele.roleString}}) {{ele.idCard}}</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>合同编号</label>
+                    <input type="text" class="form-control" placeholder="输入合同编号" ng-model="order.contractSerialId">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm btn-info" ng-click="submitForm()" ng-disabled="order.submitting || checkedUser == null" ng-class="{'active' : order.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

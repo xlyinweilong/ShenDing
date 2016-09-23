@@ -1,0 +1,136 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">加盟详情</h1>
+</div>
+<div class="wrapper-md" ng-controller="OrderInfoController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                加盟详情
+            </div>
+            <div class="panel-body">
+                <div class="text-center" ng-show="order == null">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="order == null">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">名称</th>
+                            <th style="width:75%">详情</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>合同编号</td>
+                            <td>{{order.contractSerialId}}</td>
+                        </tr>
+                        <tr ng-if="order.lastRenewDate != null">
+                            <td>合同最后续签时间</td>
+                            <td>{{order.lastRenewDate| date:"yyyy-MM-dd"}}</td>
+                        </tr>
+                        <tr>
+                            <td>区域</td>
+                            <td><a class="text-info" href="#/app/goods/goods_info/{{order.goods.id}}">{{order.goods.name}}({{order.goods.provinceStr}})</a></td>
+                        </tr>
+                        <tr>
+                            <td>原本地管家</td>
+                            <td>{{order.oldName}}</td>
+                        </tr>
+                        <tr>
+                            <td>代理人</td>
+                            <td><a class="text-info" href="#/app/user/user_info/{{order.agentUser.id}}">{{order.agentUser.name}} &nbsp;&nbsp;{{order.agentUser.idCard}}</a></td>
+                        </tr>
+                        <tr>
+                            <td>金额</td>
+                            <td>{{order.price}}</td>
+                        </tr>
+                        <tr>
+                            <td>大区经理</td>
+                            <td><a class="text-info" href="#/app/user/user_info/{{order.user.id}}">{{order.user.name}}</a></td>
+                        </tr>
+                        <tr ng-if="order.divideUser != null && order.userAmount > 0">
+                            <td>分成大区经理</td>
+                            <td><a class="text-info" href="#/app/user/user_info/{{order.divideUser.id}}">{{order.divideUser.name}}</a></td>
+                        </tr>
+                        <tr ng-if="order.divideUser != null && order.userAmount > 0">
+                            <td>分成大区经理预计提成</td>
+                            <td>{{order.userAmount}}</td>
+                        </tr>
+                        <tr>
+                            <td>已付金额</td>
+                            <td>{{order.paidPrice}}</td>
+                        </tr>
+                        <tr>
+                            <td>人数费</td>
+                            <td>{{order.peopleCountFee}}</td>
+                        </tr>
+                        <tr>
+                            <td>已返回金额</td>
+                            <td>{{order.backAmount}}</td>
+                        </tr>
+                        <tr ng-if="order.recommendIdList != null">
+                            <td>分成金额</td>
+                            <td>{{order.divideAmount}}</td>
+                        </tr>
+                        <tr ng-if="order.recommendIdList != null">
+                            <td>自动扣除手续费</td>
+                            <td>{{order.fee}}</td>
+                        </tr>
+                        <tr>
+                            <td>回款时间</td>
+                            <td>{{order.lastPayDate| date:"yyyy-MM-dd"}}</td>
+                        </tr>
+                        <tr ng-if="order.recommendIdList != null" ng-repeat="recommendId in order.recommendIdList">
+                            <td>推荐人</td>
+                            <td><a class="text-info" href="#/app/user/user_info/{{recommendId}}">{{order.recommendNameList[$index]}}&nbsp;&nbsp;{{order.recommendRateList[$index]}}%</a></td>
+                        </tr>
+                        <tr>
+                            <td>有效期</td>
+                            <td>开始：{{order.limitStart| date:"yyyy-MM-dd"}}&nbsp;&nbsp;结束：{{order.limitEnd| date:"yyyy-MM-dd"}}</td>
+                        </tr>
+                        <tr>
+                            <td>备注</td>
+                            <td>{{order.remark}}</td>
+                        </tr>
+                        <tr>
+                            <td>类型</td>
+                            <td>
+                                <span ng-class="{'bg-success': order.category == 'SERVICE_PEOPLE','bg-primary':order.category == 'MAKE_FRIENDS'}" class="label ng-binding" title="{{order.categoryMean}}">{{order.categoryMean}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="row" ng-hide="list == null || totalItems < 1">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                支付详情
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped m-b-none">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">汇款金额</th>
+                            <th style="width:25%">回款时间</th>
+                            <th style="width:25%">金额类型</th>
+                            <th style="width:25%">支付方式</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in list">
+                            <td>{{item.price}}</td>
+                            <td>{{item.payDate| date:"yyyy-MM-dd"}}</td>
+                            <td>
+                                <span ng-class="{'bg-success': item.type == 'FINAL_PAYMENT', 'bg-warning':item.type == 'EARNEST'}" class="label ng-binding" title="{{item.typeMean}}">{{item.typeMean}}</span>
+                            </td>
+                            <td>
+                                <span class="label ng-binding bg-success" title="{{item.gatewayTypeStr}}">{{item.gatewayTypeStr}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

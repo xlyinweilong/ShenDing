@@ -1,0 +1,63 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">我的加盟</h1>
+</div>
+<div class="wrapper-md" ng-controller="MyOrderController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                加盟列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-5 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:10%">平台</th>
+                            <th style="width:10%">原本地管家</th>
+                            <th style="width:10%">省份</th>
+                            <th style="width:10%">大区经理</th>
+                            <th style="width:10%">状态</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td>
+                                {{item.goods.name}}
+                                <span ng-class="{'bg-success': item.category == 'SERVICE_PEOPLE','bg-primary':item.category == 'MAKE_FRIENDS'}" class="label ng-binding ng-scope" title="{{item.categoryMean}}">{{item.categoryMean}}</span>
+                            </td>
+                            <td>{{item.oldName}}</td>
+                            <td>{{item.goods.provinceStr}}</td>
+                            <td>{{item.goods.user.name}}</td>
+                            <td>
+                                <span ng-class="{'bg-success': item.status == 'SUCCESS','bg-warning':item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT'}" class="label ng-binding ng-scope" title="{{item.statusMean}}">{{item.statusMean}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="list == null || listLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
