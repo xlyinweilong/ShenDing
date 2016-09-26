@@ -1995,6 +1995,8 @@ public class AdminService {
             ad.setEndDate(Tools.addMonth(ad.getPayDate(), 3));
         } else if (AdLimitTypeEnum.DAY_15.equals(ad.getLimitType())) {
             ad.setEndDate(Tools.addDay(ad.getPayDate(), 15));
+        } else if (AdLimitTypeEnum.DAY_10.equals(ad.getLimitType())) {
+            ad.setEndDate(Tools.addDay(ad.getPayDate(), 10));
         }
         ad.setOwnerWeChat(ownerWeChat);
         ad.setName(name);

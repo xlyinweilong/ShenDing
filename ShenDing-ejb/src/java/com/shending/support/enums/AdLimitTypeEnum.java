@@ -6,7 +6,7 @@ package com.shending.support.enums;
  * @author yin.weilong
  */
 public enum AdLimitTypeEnum {
-
+    DAY_10, //10天
     DAY_15, //半个月
     MONTH_1, //一个月
     MONTH_2,//两个月
@@ -14,6 +14,8 @@ public enum AdLimitTypeEnum {
 
     public String getMean() {
         switch (this) {
+            case DAY_10:
+                return "10天";
             case DAY_15:
                 return "半个月";
             case MONTH_1:

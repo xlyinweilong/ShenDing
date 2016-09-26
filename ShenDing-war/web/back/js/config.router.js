@@ -3,15 +3,15 @@
  * Config for the router
  */
 angular.module('app').run(['$rootScope', '$state', '$stateParams',
-            function ($rootScope, $state, $stateParams) {
-                $rootScope.$state = $state;
-                $rootScope.$stateParams = $stateParams;
-            }
-    ]).config(['$stateProvider', '$urlRouterProvider',
-        function ($stateProvider, $urlRouterProvider) {
-            $urlRouterProvider.when("", "/access/signin");
-            $urlRouterProvider.otherwise('/access/signin');
-            $stateProvider
+    function ($rootScope, $state, $stateParams) {
+        $rootScope.$state = $state;
+        $rootScope.$stateParams = $stateParams;
+    }
+]).config(['$stateProvider', '$urlRouterProvider',
+    function ($stateProvider, $urlRouterProvider) {
+        $urlRouterProvider.when("", "/access/signin");
+        $urlRouterProvider.otherwise('/access/signin');
+        $stateProvider
                 .state('app', {
                     abstract: true,
                     url: '/app',
@@ -157,7 +157,7 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                         ]
                     }
                 })
-                 .state('app.business.business_modify_order_user_price_by_type', {
+                .state('app.business.business_modify_order_user_price_by_type', {
                     url: '/business_modify_order_user_price_by_type',
                     templateUrl: '/back/tpl/business_modify_order_user_price_by_type.html'
                 })
@@ -205,6 +205,14 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/update_order/:id',
                     templateUrl: '/back/tpl/business_update_order.html'
                 })
+                .state('app.business.update_success_order', {
+                    url: '/update_success_order/:id',
+                    templateUrl: '/back/tpl/business_update_success_order.html'
+                })
+                .state('app.business.delete_earnest_order', {
+                    url: '/delete_earnest_order/:id',
+                    templateUrl: '/back/tpl/business_delete_earnest_order.html'
+                })
                 .state('app.business.user_wage_log_list', {
                     url: '/user_wage_log_list',
                     templateUrl: '/back/tpl/business_user_wage_log_list.html'
@@ -245,7 +253,7 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/new_ad_list',
                     templateUrl: '/back/tpl/make_friends_new_ad_list.html'
                 })
-                 .state('app.make_friends.make_friends_modify_order_user_price_by_type', {
+                .state('app.make_friends.make_friends_modify_order_user_price_by_type', {
                     url: '/make_friends_modify_order_user_price_by_type',
                     templateUrl: '/back/tpl/make_friends_modify_order_user_price_by_type.html'
                 })
@@ -507,6 +515,6 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                             }]
                     }
                 })
-        }
-    ]
+    }
+]
         );

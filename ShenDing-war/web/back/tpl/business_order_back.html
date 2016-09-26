@@ -72,7 +72,7 @@
                                 {{item.paidPrice}}
                             </td>
                             <td>
-                                <span ng-if="item.status == 'SUCCESS' || item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT'" ng-class="{'bg-success': item.status == 'SUCCESS' || item.status == 'WAIT_SIGN_CONTRACT','bg-warning':item.status == 'TERMINATION'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
+                                <span ng-if="item.status == 'SUCCESS' || item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT' || item.status == 'PAYMENT_TIMEOUT'" ng-class="{'bg-success': item.status == 'SUCCESS' || item.status == 'WAIT_SIGN_CONTRACT'|| item.status == 'PAYMENT_TIMEOUT' ,'bg-warning':item.status == 'TERMINATION'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
                                 <a ng-if="item.status == 'PENDING_PAYMENT' || item.status == 'EARNEST'" class="text-info" title="{{item.statusMean}}">{{item.statusMean}}</a>
                             </td>
                         </tr>

@@ -80,8 +80,10 @@
                                 {{item.paidPrice}}
                             </td>
                             <td>
-                                <span ng-if="item.status == 'SUCCESS' || item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT'" ng-class="{'bg-success': item.status == 'SUCCESS' || item.status == 'WAIT_SIGN_CONTRACT','bg-warning':item.status == 'TERMINATION'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
+                                <span ng-if="item.status == 'SUCCESS' || item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT' || item.status == 'PAYMENT_TIMEOUT'" ng-class="{'bg-success': item.status == 'SUCCESS' || item.status == 'WAIT_SIGN_CONTRACT'|| item.status == 'PAYMENT_TIMEOUT','bg-warning':item.status == 'TERMINATION'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
                                 <a href="#/app/business/update_order/{{item.id}}" ng-if="item.status == 'PENDING_PAYMENT' || item.status == 'EARNEST'" class="text-info" title="{{item.statusMean}}">{{item.statusMean}}</a>
+                                <a href="#/app/business/update_success_order/{{item.id}}" ng-if="item.status == 'SUCCESS'" class="text-info" title="修改">修改</a>
+                                <a href="#/app/business/delete_earnest_order/{{item.id}}" ng-if="item.status == 'EARNEST'" class="text-info" title="作废提成">作废提成</a>
                             </td>
                         </tr>
                     </tbody>

@@ -1635,6 +1635,87 @@ public class AdminREST {
     }
 
     /**
+     * 修改价钱
+     *
+     * @param auth
+     * @param id
+     * @param paidPrice
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("update_success_order")
+    public String updateSuccessOrder(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("paidPrice") String paidPrice) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (!SysUserTypeEnum.SUPER.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        GoodsOrder order = em.find(GoodsOrder.class, id);
+        adminService.saveLog(user, "修改成功订单", "订单号：" + order.getSerialId() + " 支付金额：" + order.getPaidPrice() + " 修改为：" + paidPrice);
+        order.setPaidPrice(new BigDecimal(paidPrice));
+        order.setPrice(new BigDecimal(paidPrice));
+        em.merge(order);
+        map.put("msg", "操作成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 作废订单并且提成
+     *
+     * @param auth
+     * @param id
+     * @param userAmount
+     * @param date
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("delete_earnest_order")
+    public String deleteEarnestOrder(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("userAmount") String userAmount, @FormParam("date") String date) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (!SysUserTypeEnum.SUPER.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        GoodsOrder order = em.find(GoodsOrder.class, id);
+        if (!order.getStatus().equals(OrderStatusEnum.EARNEST)) {
+            throw new EjbMessageException("订单必须是定金状态");
+        }
+        if (order.getDivideUser() == null) {
+            throw new EjbMessageException("订单不存在分成大区经理");
+        }
+        Date payDate = null;
+        try {
+            if (Tools.isNotBlank(date)) {
+                payDate = Tools.parseDate(date, "yyyy-MM-dd");
+            }
+        } catch (Exception e) {
+            payDate = null;
+        }
+        if (payDate == null) {
+            throw new EjbMessageException("请输入分成时间");
+        }
+        //支付超时订单
+        order.setStatus(OrderStatusEnum.PAYMENT_TIMEOUT);
+        em.merge(order);
+        
+        //生成返回大区提成
+        UserWageLog userWageLog = new UserWageLog();
+        userWageLog.setAmount(new BigDecimal(userAmount));
+        userWageLog.setGoodsOrder(order);
+        userWageLog.setPayDate(payDate);
+        userWageLog.setUser(order.getDivideUser());
+        userWageLog.setCategory(order.getCategory());
+        em.persist(userWageLog);
+        Map map = Tools.getDMap();
+        adminService.saveLog(user, "作废订单并且提成", "订单号：" + order.getSerialId() + " 提成金额：" + order.getPaidPrice() + " 提成时间：" + date);
+        map.put("msg", "操作成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
      * 创建补充订单
      *
      * @param auth

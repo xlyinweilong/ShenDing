@@ -1,0 +1,36 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">超时加盟订单</h1>
+</div>
+<div class="wrapper-md" ng-controller="DeleteEarnestOrderController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                超时前提成
+            </div>
+            <form ng-submit="submitForm()">
+                <div class="panel-body">
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>提成大区金额</label>
+                        <input type="text" class="form-control" placeholder="如:20" ng-model="order.userAmount">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>提成时间</label>
+                        <p class="input-group">
+                            <input type="text" class="form-control no-border" placeholder="提成时间" datepicker-popup="yyyy-MM-dd" ng-model="order.date" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                            </span>
+                        </p>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <button type="submit" class="btn btn-sm btn-info" ng-disabled="submitting || order.userAmount == null || order.date == null" ng-class="{ 'active' : submitting}">
+                        <span class="text">超时</span>
+                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>超时中...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

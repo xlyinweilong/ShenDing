@@ -865,6 +865,17 @@ app.controller('CreateOrderController', ['$scope', '$http', '$modal', '$location
         $scope.backPage = function () {
             $state.go('app.business.order');
         };
+
+        $scope.myKeyup = function (e) {
+            var keycode = window.event ? e.keyCode : e.which;
+            if (keycode == 13) {
+                if ($scope.order.payDate == null || $scope.order.payDate == '' || $scope.order.submitting || $scope.order.price == null || $scope.order.price < 0 || $scope.order.amount == null || $scope.order.amount < 0 || $scope.checkedAgent == null || $scope.checkedRecommend == null) {
+                    return;
+                }
+                $scope.submitForm();
+            }
+        };
+
     }]);
 
 
@@ -928,6 +939,16 @@ app.controller('UpdateOrderController', ['$scope', '$http', '$modal', '$location
         };
         $scope.backPage = function () {
             $state.go('app.business.order');
+        };
+
+        $scope.myKeyup = function (e) {
+            var keycode = window.event ? e.keyCode : e.which;
+            if (keycode == 13) {
+                if ($scope.orderRecord.submitting || $scope.orderRecord.amount == null || $scope.orderRecord.amount < 0 || $scope.orderRecord.payDate == null || $scope.orderRecord.payDate == '') {
+                    return;
+                }
+                $scope.submitForm();
+            }
         };
     }]);
 app.controller('AdController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
@@ -1151,6 +1172,16 @@ app.controller('CreateAdController', ['$scope', '$http', '$modal', '$location', 
         };
         $scope.backPage = function () {
             $state.go('app.business.new_ad_list');
+        };
+
+        $scope.myKeyup = function (e) {
+            var keycode = window.event ? e.keyCode : e.which;
+            if (keycode == 13) {
+                if ($scope.ad.submitting || $scope.ad.userAmount == null || $scope.ad.userAmount < 0 || $scope.ad.userBalanceAmount == null || $scope.ad.userBalanceAmount < 0 || $scope.ad.amount == null || $scope.ad.amount < 0 || $scope.ad.name == null || $scope.ad.name == '' || $scope.payDate == null) {
+                    return;
+                }
+                $scope.submitForm();
+            }
         };
     }]);
 app.controller('UpdateAdController', ['$scope', '$http', '$modal', '$location', "$state", "$stateParams", function ($scope, $http, $modal, $location, $state, $stateParams) {
@@ -1824,5 +1855,98 @@ app.controller('ModifyOrderUserController', ['$scope', '$http', '$modal', '$loca
                 }
                 $scope.submitting = false;
             });
+        };
+    }]);
+
+app.controller('UpdateSuccessOrderController', ['$scope', '$http', '$modal', '$location', "$state", "$stateParams", function ($scope, $http, $modal, $location, $state, $stateParams) {
+        $scope.order = null;
+        $scope.submitting = false;
+        $scope.getOrder = function () {
+            $scope.submitting = true;
+            $http.get("/webservice/admin/order_info?id=" + $stateParams.id).success(function (responseData) {
+                $scope.submitting = false;
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $scope.order = responseData.data;
+                }
+            });
+        };
+
+        if ($stateParams.id != null && $stateParams.id > 0) {
+            $scope.getOrder();
+        } else {
+            $.scojs_message("ERROR", $.scojs_message.TYPE_ERROR);
+        }
+
+        $scope.submitForm = function () {
+            $scope.submitting = true;
+            $http.post("/webservice/admin/update_success_order", $scope.order).success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_OK);
+                }
+                $scope.submitting = false;
+            });
+        };
+    }]);
+
+app.controller('DeleteEarnestOrderController', ['$scope', '$http', '$modal', '$location', "$state", "$stateParams", function ($scope, $http, $modal, $location, $state, $stateParams) {
+        $scope.order = null;
+        $scope.submitting = false;
+        $scope.getOrder = function () {
+            $scope.submitting = true;
+            $http.get("/webservice/admin/order_info?id=" + $stateParams.id).success(function (responseData) {
+                $scope.submitting = false;
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $scope.order = responseData.data;
+                    $scope.order.userAmount = 20;
+                }
+            });
+        };
+
+        if ($stateParams.id != null && $stateParams.id > 0) {
+            $scope.getOrder();
+        } else {
+            $.scojs_message("ERROR", $.scojs_message.TYPE_ERROR);
+        }
+
+        $scope.submitForm = function () {
+            $scope.submitting = true;
+            if ($scope.order.date instanceof Date) {
+                $scope.order.date = $scope.order.date.getFullYear() + "-" + ($scope.order.date.getMonth() + 1) + "-" + $scope.order.date.getDate();
+            }
+            $http.post("/webservice/admin/delete_earnest_order", $scope.order).success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_OK);
+                    $state.go('app.business.order');
+                }
+                $scope.submitting = false;
+            });
+        };
+        
+        $scope.opened = false;
+
+        $scope.open = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opened = true;
         };
     }]);

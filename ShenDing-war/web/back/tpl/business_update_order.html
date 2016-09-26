@@ -100,56 +100,58 @@
             <div class="panel-heading font-bold">
                 补充支付
             </div>
-            <div class="panel-body">
-                <div class="line line-dashed b-b line-lg pull-in"></div>
-                <div class="form-group">
-                    <label>汇款金额</label>
-                    <input type="text" class="form-control" placeholder="如:9000" ng-model="orderRecord.amount">
+            <form ng-submit="submitForm()">
+                <div class="panel-body">
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>汇款金额</label>
+                        <input type="text" class="form-control" placeholder="如:9000" ng-model="orderRecord.amount">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>人数费用修改</label>
+                        <input type="text" class="form-control" placeholder="0会修改为0，不填不修改" ng-model="peopleCountFee">
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>回款时间</label>
+                        <p class="input-group">
+                            <input type="text" class="form-control no-border" placeholder="回款时间" datepicker-popup="yyyy-MM-dd" ng-model="orderRecord.payDate" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                            </span>
+                        </p>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>金额类型</label>
+                        <select class="form-control" ng-model="orderRecord.amountType" ng-keyup="myKeyup($event)">
+                            <option ng-selected="orderRecord.amountType == null || orderRecord.amountType == 'EARNEST'" value="EARNEST">定金</option>
+                            <option value="FINAL_PAYMENT">尾款</option>
+                        </select>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>支付方式</label>
+                        <select class="form-control" ng-model="orderRecord.payType" ng-keyup="myKeyup($event)">
+                            <option  ng-selected="order.payType == null || order.payType == 'BANK_TRANSFER'" value="BANK_TRANSFER">银行汇款</option>
+                            <option value="ALIPAY">支付宝</option>
+                            <option value="POST_CARD">刷卡</option>
+                            <option value="WECHAT_PAY">微信支付</option>
+                            <option value="ICBC">工行</option>
+                            <option value="ABC">农行</option>
+                            <option value="CCBC">建行</option>
+                            <option value="CASH">现金支付</option>
+                        </select>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <button class="btn btn-sm" type="button" ng-click="backPage()">返回</button>
+                    <button type="submit" class="btn btn-sm btn-info" ng-disabled="orderRecord.submitting || orderRecord.amount == null || orderRecord.amount < 0 || orderRecord.payDate == null || orderRecord.payDate == ''" ng-class="{ 'active' : orderRecord.submitting}">
+                        <span class="text">保存</span>
+                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                    </button>
                 </div>
-                <div class="line line-dashed b-b line-lg pull-in"></div>
-                <div class="form-group">
-                    <label>人数费用修改</label>
-                    <input type="text" class="form-control" placeholder="0会修改为0，不填不修改" ng-model="peopleCountFee">
-                </div>
-                <div class="line line-dashed b-b line-lg pull-in"></div>
-                <div class="form-group">
-                    <label>回款时间</label>
-                    <p class="input-group">
-                        <input type="text" class="form-control no-border" placeholder="回款时间" datepicker-popup="yyyy-MM-dd" ng-model="orderRecord.payDate" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
-                        <span class="input-group-btn">
-                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
-                        </span>
-                    </p>
-                </div>
-                <div class="line line-dashed b-b line-lg pull-in"></div>
-                <div class="form-group">
-                    <label>金额类型</label>
-                    <select class="form-control" ng-model="orderRecord.amountType">
-                        <option ng-selected="orderRecord.amountType == null || orderRecord.amountType == 'EARNEST'" value="EARNEST">定金</option>
-                        <option value="FINAL_PAYMENT">尾款</option>
-                    </select>
-                </div>
-                <div class="line line-dashed b-b line-lg pull-in"></div>
-                <div class="form-group">
-                    <label>支付方式</label>
-                    <select class="form-control" ng-model="orderRecord.payType">
-                        <option  ng-selected="order.payType == null || order.payType == 'BANK_TRANSFER'" value="BANK_TRANSFER">银行汇款</option>
-                        <<option value="ALIPAY">支付宝</option>
-                        <option value="POST_CARD">刷卡</option>
-                        <option value="WECHAT_PAY">微信支付</option>
-                        <option value="ICBC">工行</option>
-                        <option value="ABC">农行</option>
-                        <option value="CCBC">建行</option>
-                        <option value="CASH">现金支付</option>
-                    </select>
-                </div>
-                <div class="line line-dashed b-b line-lg pull-in"></div>
-                <button class="btn btn-sm" type="button" ng-click="backPage()">返回</button>
-                <button type="button" class="btn btn-sm btn-info" ng-click="submitForm()" ng-disabled="orderRecord.submitting || orderRecord.amount == null || orderRecord.amount < 0 || orderRecord.payDate == null || orderRecord.payDate == ''" ng-class="{ 'active' : orderRecord.submitting}">
-                    <span class="text">保存</span>
-                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
-                </button>
-            </div>
+            </form>
         </div>
     </div>
 </div>
