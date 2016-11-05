@@ -1,0 +1,113 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">化妆品创建/更新</h1>
+</div>
+<div class="wrapper-md" ng-controller="CreateUpdateCosmeticsController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                创建/更新化妆品
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>到款时间<i class="text-danger">*不填默认今天</i></label>
+                    <p class="input-group" style="max-width: 350px">
+                        <input type="text" class="form-control no-border" placeholder="到款时间" datepicker-popup="yyyy-MM-dd" ng-model="payDate" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchOrderList()">
+                    <div class="form-group" style="max-width: 350px">
+                        <label>分成代理 <i class="text-danger">*</i><span class="label label-success" ng-show="checkedOrder != null">已选择:{{checkedOrder.goods.name}} ({{checkedOrder.goods.provinceStr}}) {{checkedOrder.categoryMean}} (代理：{{checkedOrder.agentUser.name}})</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchOrderMsg" placeholder="输入平台，如：CC1、长春">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="orderList != null && orderListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="orderList != null && orderListTotalItems < 1 && !orderListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="orderList != null && orderListTotalItems > 0 && !orderListLoadingData">
+                            <a ng-repeat="ele in orderList" class="list-group-item" ng-click="checkOrder(ele)">{{ele.goods.name}} ({{ele.goods.provinceStr}}) {{ele.categoryMean}} (代理：{{ele.agentUser.name}})</a>
+                        </div>
+                    </div>
+                </form>
+                 <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>产品<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="product.product" ng-change="changeAmount()">
+                        <option ng-selected="product.product == null || product.product == '1'" value="1">清颜原液</option>
+                        <option value="2">清滢柔肤洁面乳</option>
+                        <option value="3">舒缓清润精华液</option>
+                        <option value="4">馥活提亮精华液</option>
+                        <option value="5">多效蚕丝面膜</option>
+                        <option value="6">冻干粉修护套</option>
+                        <option value="7">冻干粉嫩肤套</option>
+                        <option value="8">冻干粉保湿套</option>
+                    </select>
+                </div>
+                 <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>数量<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="3" ng-model="product.soldCount" ng-change="changeAmount()">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>价格<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="金额" ng-model="product.incomeAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>提成<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="金额" ng-model="product.commissionAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchUserList()">
+                    <div class="form-group" style="max-width: 350px">
+                        <label>分成大区经理<span class="label label-success" ng-show="checkedUser != null">已选择:{{checkedUser.name}}</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchUserMsg" placeholder="输入用户名，如：杨娜">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="userList != null && userListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="userList != null && userListTotalItems < 1 && !userListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="userList != null && userListTotalItems > 0 && !userListLoadingData">
+                            <a ng-repeat="ele in userList" class="list-group-item" ng-click="checkUser(ele)">{{ele.name}}</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>大区经理提成</label>
+                    <input type="text" class="form-control" placeholder="金额" ng-model="product.regionalManagerAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <input type="text" class="form-control" placeholder="输入备注，最多100个字" ng-model="product.remark">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm btn-primary" ng-click="submitForm()" ng-disabled="product.submitting || !(product.soldCount > 0) || !(product.incomeAmount > -1) || !(product.commissionAmount > -1) || product.soldCount == null || product.incomeAmount == null || product.commissionAmount == null || checkedOrder == null || product.product == null" ng-class="{ 'active' : product.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

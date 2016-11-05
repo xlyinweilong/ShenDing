@@ -1,5 +1,6 @@
 package com.shending.service;
 
+import com.shending.entity.Cosmetics;
 import com.shending.entity.WageLog;
 import com.shending.entity.DataArea;
 import com.shending.entity.DataCity;
@@ -1004,6 +1005,12 @@ public class AdminService {
         if (map.containsKey("type")) {
             criteria.add(builder.equal(root.get("type"), map.get("type")));
         }
+        if (map.containsKey("cosmeticsIsNull")) {
+            criteria.add(builder.isNull(root.get("cosmetics")));
+        }
+        if (map.containsKey("cosmeticsIsNotNull")) {
+            criteria.add(builder.isNotNull(root.get("cosmetics")));
+        }
         if (map.containsKey("user")) {
             criteria.add(builder.equal(root.get("user"), map.get("user")));
         }
@@ -1526,11 +1533,11 @@ public class AdminService {
             str[10] = uid.toString();
             list1.add(str);
         }
-        Query queryProduct = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.productLog IS NOT NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user");
+        Query queryProduct = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.productLog IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user");
         queryProduct.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
         for (Object o : queryProduct.getResultList()) {
             Object[] os = (Object[]) o;
-            String[] str = new String[13];
+            String[] str = new String[14];
             str[0] = os[0].toString();
             str[1] = os[1].toString();
             str[2] = os[2].toString();
@@ -1555,13 +1562,14 @@ public class AdminService {
                 str[10] = str[9];
             }
             str[11] = uid.toString();
+            str[13] = "0";
             list2.add(str);
         }
         Query query2 = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.goodsOrder IS NOT NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user");
         query2.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
         for (Object o : query2.getResultList()) {
             Object[] os = (Object[]) o;
-            String[] str = new String[13];
+            String[] str = new String[14];
             str[0] = os[0].toString();
             str[1] = os[1].toString();
             str[2] = os[2].toString();
@@ -1591,6 +1599,7 @@ public class AdminService {
                 str[10] = Double.parseDouble(str[7]) + Double.parseDouble(str[8]) + Double.parseDouble(str[9]) + "";//总工资;
             }
             str[11] = uid.toString();
+            str[13] = "0";
             list3.add(str);
         }
 
@@ -1606,7 +1615,7 @@ public class AdminService {
             if (longList3.contains(uid) || longList2.contains(uid)) {
                 continue;
             }
-            String[] str = new String[13];
+            String[] str = new String[14];
             str[0] = strList1[0];
             str[1] = strList1[1];
             str[2] = strList1[2];
@@ -1617,8 +1626,68 @@ public class AdminService {
             str[8] = str[9] = "0";//产品和加盟
             str[10] = str[7] = strList1[7];//广告工资和总工资
             str[11] = uid.toString();
+            str[13] = "0";
             list3.add(str);
         }
+
+        //查询化妆品
+        Map<Long, String[]> listMap = new HashMap<>();
+        List<Long> idCosmetics = new ArrayList<>();
+        Query queryCosmetics = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.cosmetics IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user");
+        queryCosmetics.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryCosmetics.getResultList()) {
+            Object[] os = (Object[]) o;
+            String[] str = new String[13];
+            str[0] = os[0].toString();
+            str[1] = os[1].toString();
+            str[2] = os[2].toString();
+            str[3] = os[3].toString();
+            str[4] = os[4].toString();
+            str[5] = os[5] == null ? "" : os[5].toString();
+            str[6] = os[6] == null ? "" : os[6].toString();
+            if (str[6].length() > 10) {
+                str[6] = str[6].substring(0, 4) + "-" + str[6].substring(4, str[6].length());
+            }
+            str[9] = os[7].toString();//化妆品提成工资
+            Long uid = (Long) os[8];
+            str[10] = str[12] = null;
+            str[11] = uid.toString();
+            listMap.put(uid, str);
+        }
+
+        //把listCosmetics合并到list3
+        for (String[] s : list3) {
+            Long uid = Long.parseLong(s[11]);
+            if (listMap.containsKey(uid)) {
+                //如果有这个用户，合并
+                String[] str = listMap.get(uid);
+                s[13] = str[9];//赋值化妆品
+                s[10] = Double.parseDouble(s[10]) + Double.parseDouble(str[9]) + "";//重新计算总工资
+//                list3.add(s);
+                idCosmetics.add(uid);
+            }
+        }
+
+        //循环MAP找到没有重复的，添加上去
+        for (Long uid : listMap.keySet()) {
+            if (!idCosmetics.contains(uid)) {
+                String[] s = listMap.get(uid);
+                //如果没有这个用户，添加到list3
+                String[] str = new String[14];
+                str[0] = s[0];
+                str[1] = s[1];
+                str[2] = s[2];
+                str[3] = s[3];
+                str[4] = s[4];
+                str[5] = s[5];
+                str[6] = s[6];
+                str[7] = str[8] = str[9] = "0";//产品和加盟
+                str[10] = str[13] = s[9];//化妆品工资和总工资
+                str[11] = uid.toString();
+                list3.add(str);
+            }
+        }
+
         for (String[] str : list3) {
             Long uid = Long.parseLong(str[11]);
             str[11] = this.getUserOrderNames(uid);
@@ -1629,7 +1698,7 @@ public class AdminService {
         //去掉list3中的数组的3和4
         List returnList = new ArrayList();
         for (String[] str : list3) {
-            String[] newStr = new String[11];
+            String[] newStr = new String[12];
             newStr[0] = str[0];
             newStr[1] = str[1];
             newStr[2] = str[2];
@@ -1638,9 +1707,10 @@ public class AdminService {
             newStr[5] = str[7];
             newStr[6] = str[8];
             newStr[7] = str[9];
-            newStr[8] = str[10];
-            newStr[9] = str[11];
-            newStr[10] = str[12];
+            newStr[9] = str[10];
+            newStr[10] = str[11];
+            newStr[11] = str[12];
+            newStr[8] = str[13];
             returnList.add(newStr);
         }
         return returnList;
@@ -1712,7 +1782,7 @@ public class AdminService {
      */
     public List<String[]> findWageLogProductList(Date startDate, Date endDate) {
         List<String[]> list = new ArrayList<>();
-        Query query = em.createQuery("SELECT a.user.name,a.productLog.goods.name,a.user.bankType,a.user.bankCardCode,SUM(a.amount),COUNT(a.productLog),SUM(a.productLog.soldCount),a.user.id FROM WageLog a WHERE a.type = :type AND a.deleted =  FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.user");
+        Query query = em.createQuery("SELECT a.user.name,a.productLog.goods.name,a.user.bankType,a.user.bankCardCode,SUM(a.amount),COUNT(a.productLog),SUM(a.productLog.soldCount),a.user.id FROM WageLog a WHERE a.type = :type AND a.cosmetics IS NULL AND a.deleted =  FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.user");
         query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("type", WageLogTypeEnum.PRODUCT);
         for (Object o : query.getResultList()) {
             Object[] os = (Object[]) o;
@@ -1731,6 +1801,62 @@ public class AdminService {
             str[6] = os[6].toString();
             long uid = (long) os[7];
             str[7] = this.getUserOrderNames(uid);
+            list.add(str);
+        }
+        return list;
+    }
+
+    /**
+     * 代理化妆品提成
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    public List<String[]> findWageLogCosmeticsList(Date startDate, Date endDate) {
+        List<String[]> list = new ArrayList<>();
+        Query query = em.createQuery("SELECT a.user.name,a.cosmetics.goods.name,a.user.bankType,a.user.bankCardCode,SUM(a.amount),COUNT(a.cosmetics),SUM(a.cosmetics.soldCount),a.user.id FROM WageLog a WHERE a.type = :type AND a.cosmetics IS NOT NULL AND a.deleted =  FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.user");
+        query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("type", WageLogTypeEnum.PRODUCT);
+        for (Object o : query.getResultList()) {
+            Object[] os = (Object[]) o;
+            String[] str = new String[8];
+            str[0] = os[0].toString();
+            str[1] = os[1].toString();
+            str[2] = os[2] == null ? "" : os[2].toString();
+            String bankCardCode = os[3] == null ? "" : os[3].toString();
+            if (bankCardCode.length() > 10) {
+                str[3] = bankCardCode + ";";
+            } else {
+                str[3] = os[3] == null ? "" : os[3].toString();
+            }
+            str[4] = os[4].toString();
+            str[5] = os[5].toString();
+            str[6] = os[6].toString();
+            long uid = (long) os[7];
+            str[7] = this.getUserOrderNames(uid);
+            list.add(str);
+        }
+        return list;
+    }
+
+    /**
+     * 获取化妆品的代理工资
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    public List<String[]> findUserWageCosmeticsList(Date startDate, Date endDate) {
+        List<String[]> list = new ArrayList<>();
+        Query query = em.createQuery("SELECT a.regionalManager.name,SUM(a.regionalManagerAmount),COUNT(a.id),SUM(a.soldCount) FROM Cosmetics a WHERE a.regionalManager IS NOT NULL AND a.deleted =  FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.regionalManager");
+        query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : query.getResultList()) {
+            Object[] os = (Object[]) o;
+            String[] str = new String[4];
+            str[0] = os[0].toString();
+            str[1] = os[1].toString();
+            str[2] = os[2] == null ? "" : os[2].toString();
+            str[3] = os[3] == null ? "" : os[3].toString();
             list.add(str);
         }
         return list;
@@ -1851,6 +1977,33 @@ public class AdminService {
         wageLog.setFee(BigDecimal.ZERO);
         wageLog.setPayDate(productLog.getPayDate());
         wageLog.setProductLog(productLog);
+        if (id == null) {
+            em.persist(wageLog);
+        } else {
+            em.merge(wageLog);
+        }
+        return wageLog;
+    }
+
+    /**
+     * 根据化妆品生成用户收益
+     *
+     * @param id
+     * @param cosmetics
+     * @return
+     */
+    public WageLog createOrUpdateWageLog(Long id, Cosmetics cosmetics) {
+        WageLog wageLog = new WageLog();
+        if (id != null) {
+            wageLog = em.find(WageLog.class, id);
+        }
+        wageLog.setCategory(cosmetics.getGoodsOrder().getCategory());
+        wageLog.setUser(cosmetics.getUser());
+        wageLog.setAmount(cosmetics.getCommissionAmount());
+        wageLog.setType(WageLogTypeEnum.PRODUCT);
+        wageLog.setFee(BigDecimal.ZERO);
+        wageLog.setPayDate(cosmetics.getPayDate());
+        wageLog.setCosmetics(cosmetics);
         if (id == null) {
             em.persist(wageLog);
         } else {
@@ -2062,6 +2215,49 @@ public class AdminService {
     }
 
     /**
+     * 创建或更新化妆品
+     *
+     * @param id
+     * @param orderId
+     * @param incomeAmount
+     * @param commissionAmount
+     * @param payDate
+     * @param product
+     * @param remark
+     * @param soldCount
+     * @param regionalManager
+     * @param regionalManagerAmount
+     */
+    public void createOrUpdateCosmetics(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate,
+            int product, String remark, int soldCount, Long regionalManager, BigDecimal regionalManagerAmount) {
+        Cosmetics cosmetics = new Cosmetics();
+        if (id != null) {
+            cosmetics = em.find(Cosmetics.class, id);
+        }
+        GoodsOrder order = em.find(GoodsOrder.class, orderId);
+        cosmetics.setGoodsOrder(order);
+        cosmetics.setGoods(order.getGoods());
+        cosmetics.setUser(order.getAgentUser());
+        cosmetics.setIncomeAmount(incomeAmount);
+        cosmetics.setCommissionAmount(commissionAmount);
+        cosmetics.setPayDate(payDate);
+        cosmetics.setProduct(product);
+        cosmetics.setRemark(remark);
+        cosmetics.setSoldCount(soldCount);
+        cosmetics.setRegionalManager(em.find(SysUser.class, regionalManager));
+        cosmetics.setRegionalManagerAmount(regionalManagerAmount);
+        Long wageLogId = null;
+        if (id == null) {
+            em.persist(cosmetics);
+//            em.flush();
+        } else {
+            em.merge(cosmetics);
+            wageLogId = this.findWageLogByCosmetics(cosmetics).getId();
+        }
+        this.createOrUpdateWageLog(wageLogId, cosmetics);
+    }
+
+    /**
      * 获取产品信息日志
      *
      * @param map
@@ -2132,6 +2328,76 @@ public class AdminService {
     }
 
     /**
+     * 获取化妆品列表
+     *
+     * @param map
+     * @param pageIndex
+     * @param maxPerPage
+     * @param list
+     * @param page
+     * @return
+     */
+    public ResultList<Cosmetics> findCosmeticsList(Map<String, Object> map, int pageIndex, int maxPerPage, Boolean list, Boolean page) {
+        ResultList<Cosmetics> resultList = new ResultList<>();
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<Cosmetics> query = builder.createQuery(Cosmetics.class);
+        Root root = query.from(Cosmetics.class);
+        List<Predicate> criteria = new ArrayList<>();
+        criteria.add(builder.equal(root.get("deleted"), false));
+        if (map.containsKey("startDate")) {
+            criteria.add(builder.greaterThanOrEqualTo(root.get("payDate"), (Date) map.get("startDate")));
+        }
+        if (map.containsKey("endDate")) {
+            criteria.add(builder.lessThan(root.get("payDate"), (Date) map.get("endDate")));
+        }
+        if (map.containsKey("search")) {
+            criteria.add(builder.or(builder.like(root.get("goods").get("name"), "%" + (String) map.get("search") + "%"), builder.like(root.get("goods").get("namePinyin"), "%" + (String) map.get("search") + "%")));
+        }
+        if (map.containsKey("category")) {
+            criteria.add(builder.equal(root.get("goodsOrder").get("category"), map.get("category")));
+        }
+        try {
+            if (list == null || !list) {
+                CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+                countQuery.select(builder.count(root));
+                if (criteria.isEmpty()) {
+                    throw new RuntimeException("no criteria");
+                } else if (criteria.size() == 1) {
+                    countQuery.where(criteria.get(0));
+                } else {
+                    countQuery.where(builder.and(criteria.toArray(new Predicate[0])));
+                }
+                Long totalCount = em.createQuery(countQuery).getSingleResult();
+                resultList.setTotalCount(totalCount.intValue());
+            }
+            if (list == null || list) {
+                query = query.select(root);
+                if (criteria.isEmpty()) {
+                    throw new RuntimeException("no criteria");
+                } else if (criteria.size() == 1) {
+                    query.where(criteria.get(0));
+                } else {
+                    query.where(builder.and(criteria.toArray(new Predicate[0])));
+                }
+                query.orderBy(builder.desc(root.get("payDate")));
+                TypedQuery<Cosmetics> typeQuery = em.createQuery(query);
+                if (page != null && page) {
+                    int startIndex = (pageIndex - 1) * maxPerPage;
+                    typeQuery.setFirstResult(startIndex);
+                    typeQuery.setMaxResults(maxPerPage);
+                    resultList.setPageIndex(pageIndex);
+                    resultList.setStartIndex(startIndex);
+                    resultList.setMaxPerPage(maxPerPage);
+                }
+                List<Cosmetics> dataList = typeQuery.getResultList();
+                resultList.addAll(dataList);
+            }
+        } catch (NoResultException ex) {
+        }
+        return resultList;
+    }
+
+    /**
      * 根据产品获取工资
      *
      * @param productLog
@@ -2141,6 +2407,24 @@ public class AdminService {
         WageLog log = null;
         TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.productLog = :productLog", WageLog.class);
         query.setParameter("productLog", productLog);
+        try {
+            log = query.getSingleResult();
+        } catch (NoResultException e) {
+            log = null;
+        }
+        return log;
+    }
+
+    /**
+     * 根据化妆品获取工资
+     *
+     * @param cosmetics
+     * @return
+     */
+    public WageLog findWageLogByCosmetics(Cosmetics cosmetics) {
+        WageLog log = null;
+        TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.cosmetics = :cosmetics", WageLog.class);
+        query.setParameter("cosmetics", cosmetics);
         try {
             log = query.getSingleResult();
         } catch (NoResultException e) {

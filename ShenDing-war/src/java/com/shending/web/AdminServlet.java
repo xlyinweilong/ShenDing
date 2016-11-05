@@ -1,5 +1,6 @@
 package com.shending.web;
 
+import com.shending.entity.Cosmetics;
 import com.shending.entity.GoodsOrder;
 import com.shending.entity.NewAd;
 import com.shending.entity.OrderRecord;
@@ -106,7 +107,10 @@ public class AdminServlet extends BaseServlet {
             case CONTRACT_LIST:
             case PRODUCT_LOG_WAGE_LIST:
             case PRODUCT_LOG_LIST:
+            case COSMETICS_LIST:
+            case COSMETICS_WAGE_LIST:
             case ALL_WAGE_LIST:
+            case COSMETICS_USER_WAGE_LIST:
                 setLoginLogoutBothAllowed(request);
                 break;
             default:
@@ -177,7 +181,8 @@ public class AdminServlet extends BaseServlet {
 
     public static enum PageEnum {
 
-        INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST;
+        INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
+        COSMETICS_LIST, COSMETICS_WAGE_LIST,COSMETICS_USER_WAGE_LIST;
 
     }
 
@@ -217,8 +222,14 @@ public class AdminServlet extends BaseServlet {
                 return loadContractList(request, response);
             case PRODUCT_LOG_LIST:
                 return loadProductLogList(request, response);
+            case COSMETICS_LIST:
+                return loadCosmeticsLogList(request, response);
             case PRODUCT_LOG_WAGE_LIST:
                 return loadProductLogWageList(request, response);
+            case COSMETICS_WAGE_LIST:
+                return loadCosmeticsWageList(request, response);
+            case COSMETICS_USER_WAGE_LIST:
+                return loadCosmeticsUserWageList(request,response);
             default:
                 throw new BadPageException();
         }
@@ -667,9 +678,6 @@ public class AdminServlet extends BaseServlet {
         //***************************************
         return FORWARD_TO_ANOTHER_URL;
     }
-    
-    
-            
 
     /**
      * 订单详情
@@ -1059,7 +1067,7 @@ public class AdminServlet extends BaseServlet {
             }
         }
         List<String[]> resultList = adminService.findWageTotalListAll(startDate, endDate);
-        String[] headLine = new String[11];
+        String[] headLine = new String[12];
         headLine[0] = "用户";
         headLine[1] = "便民余额";
         headLine[2] = "便民押金";
@@ -1070,9 +1078,10 @@ public class AdminServlet extends BaseServlet {
         headLine[5] = "广告工资";
         headLine[6] = "加盟提成工资";
         headLine[7] = "产品工资";
-        headLine[8] = "总工资";
-        headLine[9] = "代理的平台";
-        headLine[10] = "含有回收";
+        headLine[8] = "化妆品工资";
+        headLine[9] = "总工资";
+        headLine[10] = "代理的平台";
+        headLine[11] = "含有回收";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);
@@ -1490,6 +1499,7 @@ public class AdminServlet extends BaseServlet {
         searchMap.put("startDate", startDate);
         searchMap.put("endDate", endDate);
         searchMap.put("type", WageLogTypeEnum.PRODUCT);
+        searchMap.put("cosmeticsIsNull", true);
         List<WageLog> resultList = adminService.findWageLogList(searchMap, 0, 0, true, false);
         String[] headLine = new String[7];
         headLine[0] = "时间";
@@ -1511,6 +1521,105 @@ public class AdminServlet extends BaseServlet {
             s[4] = productLog.getGoods().getName();
             s[5] = log.getAmount().toString();//对账用这个
             s[6] = productLog.getRemark() == null ? "" : productLog.getRemark();
+            vecCsvData.add(s);
+        }
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
+     * 下载化妆品对账表
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadCosmeticsLogList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "cosmetics.csv";//default file name
+        List vecCsvData = new ArrayList();
+        String start = super.getRequestString(request, "startDate");
+        String end = super.getRequestString(request, "endDate");
+        Date startDate = null;
+        Date endDate = null;
+        if (Tools.isNotBlank(start)) {
+            try {
+                startDate = Tools.getBeginOfDay(Tools.parseDate(start, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                startDate = null;
+            }
+        }
+        if (Tools.isNotBlank(end)) {
+            try {
+                endDate = Tools.getEndOfDay(Tools.parseDate(end, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                endDate = null;
+            }
+        }
+        Map searchMap = new HashMap();
+        searchMap.put("startDate", startDate);
+        searchMap.put("endDate", endDate);
+        searchMap.put("type", WageLogTypeEnum.PRODUCT);
+        searchMap.put("cosmeticsIsNotNull", true);
+        List<WageLog> resultList = adminService.findWageLogList(searchMap, 0, 0, true, false);
+        String[] headLine = new String[7];
+        headLine[0] = "时间";
+        headLine[1] = "产品";
+        headLine[2] = "价格";
+        headLine[3] = "数量";
+        headLine[4] = "购买平台";
+        headLine[5] = "提成";
+        headLine[6] = "备注";
+        headLine[7] = "分成大区经理";
+        headLine[8] = "大区经理分成金额";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        for (WageLog log : resultList) {
+            Cosmetics cosmetics = log.getCosmetics();
+            String[] s = new String[9];
+            s[0] = Tools.formatDate(log.getPayDate(), "yyyy-MM-dd");
+            s[1] = cosmetics.getProductStr();
+            s[2] = cosmetics.getIncomeAmount().toString();
+            s[3] = cosmetics.getSoldCount() + "";
+            s[4] = cosmetics.getGoods().getName();
+            s[5] = log.getAmount().toString();//对账用这个
+            s[6] = cosmetics.getRemark() == null ? "" : cosmetics.getRemark();
+            s[7] = cosmetics.getRegionalManager() == null ? "" : cosmetics.getRegionalManager().getName();
+            s[8] = cosmetics.getRegionalManagerAmount()== null ? "" : cosmetics.getRegionalManagerAmount().toString();
             vecCsvData.add(s);
         }
         //Exporting vector to csv file
@@ -1590,6 +1699,162 @@ public class AdminServlet extends BaseServlet {
         headLine[5] = "交易次数";
         headLine[6] = "产品数量";
         headLine[7] = "代理全部平台";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        vecCsvData.addAll(resultList);
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
+     * 下载化妆品列表工资表
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadCosmeticsWageList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "cosmetics_log_wage.csv";//default file name
+        List vecCsvData = new ArrayList();
+        String start = super.getRequestString(request, "startDate");
+        String end = super.getRequestString(request, "endDate");
+        Date startDate = null;
+        Date endDate = null;
+        if (Tools.isNotBlank(start)) {
+            try {
+                startDate = Tools.getBeginOfDay(Tools.parseDate(start, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                startDate = null;
+            }
+        }
+        if (Tools.isNotBlank(end)) {
+            try {
+                endDate = Tools.getEndOfDay(Tools.parseDate(end, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                endDate = null;
+            }
+        }
+        List<String[]> resultList = adminService.findWageLogCosmeticsList(startDate, endDate);
+        String[] headLine = new String[8];
+        headLine[0] = "用户";
+        headLine[1] = "平台";
+        headLine[2] = "银行";
+        headLine[3] = "卡号";
+        headLine[4] = "提成";
+        headLine[5] = "交易次数";
+        headLine[6] = "产品数量";
+        headLine[7] = "代理全部平台";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        vecCsvData.addAll(resultList);
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
+     * 下载大区经分成
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadCosmeticsUserWageList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "cosmetics_user_wage.csv";//default file name
+        List vecCsvData = new ArrayList();
+        String start = super.getRequestString(request, "startDate");
+        String end = super.getRequestString(request, "endDate");
+        Date startDate = null;
+        Date endDate = null;
+        if (Tools.isNotBlank(start)) {
+            try {
+                startDate = Tools.getBeginOfDay(Tools.parseDate(start, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                startDate = null;
+            }
+        }
+        if (Tools.isNotBlank(end)) {
+            try {
+                endDate = Tools.getEndOfDay(Tools.parseDate(end, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                endDate = null;
+            }
+        }
+        List<String[]> resultList = adminService.findUserWageCosmeticsList(startDate, endDate);
+        String[] headLine = new String[4];
+        headLine[0] = "用户";
+        headLine[1] = "提成";
+        headLine[2] = "售出数量";
+        headLine[3] = "交易次数";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);

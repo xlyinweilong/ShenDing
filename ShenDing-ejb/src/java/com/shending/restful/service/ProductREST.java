@@ -562,4 +562,187 @@ public class ProductREST {
         return "ok";
     }
 
+    /**
+     * 删除化妆品
+     *
+     * @param auth
+     * @param ids
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("delete_cosmetics")
+    public String delCosmetics(@CookieParam("auth") String auth, @FormParam("ids") List<Long> ids) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        for (Long id : ids) {
+            Cosmetics cosmetics = em.find(Cosmetics.class, id);
+            cosmetics.setDeleted(true);
+            em.merge(cosmetics);
+            WageLog wageLog = adminService.findWageLogByCosmetics(cosmetics);
+            wageLog.setDeleted(Boolean.TRUE);
+            em.merge(wageLog);
+        }
+        map.put("msg", "删除成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 创建/更新化妆品
+     *
+     * @param auth
+     * @param id
+     * @param soldCount
+     * @param incomeAmount
+     * @param commissionAmount
+     * @param product
+     * @param goodsOrderId
+     * @param remark
+     * @param payDate
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("create_or_update_cosmetics")
+    public String createOrUpdateCosmetics(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("soldCount") int soldCount, @FormParam("incomeAmount") String incomeAmount, @FormParam("commissionAmount") String commissionAmount,
+            @FormParam("product") int product, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate, @FormParam("regionalManager") Long regionalManager, @FormParam("regionalManagerAmount") String regionalManagerAmount) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        Date payDateTime = null;
+        try {
+            payDateTime = Tools.parseDate(payDate, "yyyy-MM-dd");
+        } catch (Exception e) {
+            payDateTime = Tools.getBeginOfDay(new Date());
+        }
+        if (new BigDecimal(incomeAmount).compareTo(BigDecimal.ZERO) < 0 || new BigDecimal(commissionAmount).compareTo(BigDecimal.ZERO) < 0) {
+            throw new EjbMessageException("参数异常");
+        }
+        adminService.createOrUpdateCosmetics(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, product, remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount));
+        map.put("msg", "操作成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 获取化妆品列表
+     *
+     * @param auth
+     * @param search
+     * @param start
+     * @param end
+     * @param pageIndex
+     * @param maxPerPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("cosmetics_list")
+    public String getCosmeticsList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        String category = null;
+        if (Tools.isNotBlank(search)) {
+            search = search.split(" ")[0];
+            searchMap.put("search", search);
+        }
+        if (Tools.isNotBlank(search)) {
+            String[] searchs = search.split(" ");
+            for (String str : searchs) {
+                if ("便民".equals(str)) {
+                    category = "SERVICE_PEOPLE";
+                } else if ("交友".equals(str)) {
+                    category = "MAKE_FRIENDS";
+                }
+            }
+            search = searchs[0];
+            searchMap.put("search", search);
+        }
+        if (Tools.isNotBlank(category)) {
+            searchMap.put("category", CategoryEnum.valueOf(category));
+        }
+        if (Tools.isNotBlank(start)) {
+            searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+        }
+        if (Tools.isNotBlank(end)) {
+            searchMap.put("endDate", Tools.getEndOfDay(Tools.parseDate(end, "yyy-MM-dd")));
+        }
+        ResultList<Cosmetics> list = adminService.findCosmeticsList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("totalCount", list.getTotalCount());
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 获取化妆品信息
+     *
+     * @param auth
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("cosmetics_info")
+    public String getCosmeticsInfo(@CookieParam("auth") String auth, @QueryParam("id") Long id) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Cosmetics cosmetics = em.find(Cosmetics.class, id);
+        map.put("data", cosmetics);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 我的化妆品列表
+     *
+     * @param auth
+     * @param start
+     * @param end
+     * @param pageIndex
+     * @param maxPerPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("my_cosmetics_list")
+    public String myCosmeticsList(@CookieParam("auth") String auth, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        searchMap.put("type", WageLogTypeEnum.PRODUCT);
+        searchMap.put("user", user);
+        String sql = "SELECT SUM(w.amount) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.type = :type";
+        if (Tools.isNotBlank(start)) {
+            searchMap.put("startDate", Tools.parseDate(start, "yyyy-MM-dd"));
+            sql += " AND w.payDate > :start";
+        }
+        if (Tools.isNotBlank(end)) {
+            searchMap.put("endDate", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
+            sql += " AND w.payDate < :end";
+        }
+        sql += " GROUP BY w.user";
+        Query queryTotal = em.createQuery(sql);
+        queryTotal.setParameter("user", user).setParameter("type", WageLogTypeEnum.PRODUCT);
+        if (Tools.isNotBlank(start)) {
+            queryTotal.setParameter("start", Tools.addDay(Tools.parseDate(start, "yyyy-MM-dd"), -1));
+        }
+        if (Tools.isNotBlank(end)) {
+            queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
+        }
+        ResultList<WageLog> list = adminService.findWageLogList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("totalCount", list.getTotalCount());
+        map.put("totalAmount", queryTotal.getResultList().isEmpty() ? null : queryTotal.getSingleResult());
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
 }

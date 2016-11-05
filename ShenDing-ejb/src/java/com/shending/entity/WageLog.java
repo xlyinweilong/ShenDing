@@ -73,6 +73,10 @@ public class WageLog implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     //销售的产品
     private ProductLog productLog;
+    @JoinColumn(name = "cosmetics_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    //销售的化妆品
+    private Cosmetics cosmetics;
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 255)
     private WageLogTypeEnum type = WageLogTypeEnum.SEND;
@@ -193,6 +197,14 @@ public class WageLog implements Serializable {
 
     public void setGoodsNames(String goodsNames) {
         this.goodsNames = goodsNames;
+    }
+
+    public Cosmetics getCosmetics() {
+        return cosmetics;
+    }
+
+    public void setCosmetics(Cosmetics cosmetics) {
+        this.cosmetics = cosmetics;
     }
 
 }

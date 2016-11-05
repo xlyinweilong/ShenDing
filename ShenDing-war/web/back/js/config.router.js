@@ -353,6 +353,14 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/product_create_or_update/:id',
                     templateUrl: '/back/tpl/product_create_update.html'
                 })
+                .state('app.product.cosmetics_list', {
+                    url: '/cosmetics_list',
+                    templateUrl: '/back/tpl/cosmetics_list.html'
+                })
+                .state('app.product.cosmetics_create_or_update', {
+                    url: '/cosmetics_create_or_update/:id',
+                    templateUrl: '/back/tpl/cosmetics_create_update.html'
+                })
                 .state('app.task', {
                     url: '/task',
                     template: '<div ui-view></div>',
