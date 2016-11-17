@@ -68,10 +68,10 @@
                     <tbody ng-hide="listLoadingData">
                         <tr ng-repeat="item in list">
                             <td>{{item.payDate| date:'yyyy-MM-dd'}}</td>
-                            <td>{{item.productLog.productStr}}</td>
-                            <td>{{item.productLog.soldCount}}</td>
-                            <td>{{item.productLog.incomeAmount}}</td>
-                            <td>{{item.productLog.commissionAmount}}</td>
+                            <td>{{item.productLog.productStr}}{{item.cosmetics.productStr}}</td>
+                            <td>{{item.productLog.soldCount}}{{item.cosmetics.soldCount}}</td>
+                            <td>{{item.productLog.incomeAmount}}{{item.cosmetics.incomeAmount}}</td>
+                            <td>{{item.productLog.commissionAmount}}{{item.cosmetics.commissionAmount}}</td>
                         </tr>
                     </tbody>
                 </table>
