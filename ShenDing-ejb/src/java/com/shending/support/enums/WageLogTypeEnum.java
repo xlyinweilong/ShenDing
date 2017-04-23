@@ -1,5 +1,7 @@
 package com.shending.support.enums;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * 广告日志记录类型
  *
@@ -27,6 +29,23 @@ public enum WageLogTypeEnum {
                 return "产品销售";
             default:
                 return "";
+        }
+    }
+
+    public static WageLogTypeEnum getEnum(String mean) {
+        switch (StringUtils.trim(mean)) {
+            case "发":
+                return SEND;
+            case "接":
+                return ACCEPT;
+            case "自接自发":
+                return SEND_AND_ACCEPT;
+            case "推荐代理":
+                return RECOMMEND;
+            case "产品销售":
+                return PRODUCT;
+            default:
+                return null;
         }
     }
 }

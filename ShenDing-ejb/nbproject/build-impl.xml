@@ -847,6 +847,7 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.slf4j-api-1.7.7.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.velocity-1.7.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.zxing_core-3.2.0.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.jxl.jar}" todir="${build.classes.dir}"/>
     </target>
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
         <basename file="${file.reference.Baidu-Push-SDK-Java-1.1.2.jar}" property="manifest.file.reference.Baidu-Push-SDK-Java-1.1.2.jar"/>
@@ -878,8 +879,9 @@ exists or setup the property manually. For example like this:
         <basename file="${file.reference.slf4j-api-1.7.7.jar}" property="manifest.file.reference.slf4j-api-1.7.7.jar"/>
         <basename file="${file.reference.velocity-1.7.jar}" property="manifest.file.reference.velocity-1.7.jar"/>
         <basename file="${file.reference.zxing_core-3.2.0.jar}" property="manifest.file.reference.zxing_core-3.2.0.jar"/>
+        <basename file="${file.reference.jxl.jar}" property="manifest.file.reference.jxl.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 jar-7 jar-8 jar-9 jar-10 jar-11 jar-12 jar-13 jar-14 jar-15 jar-16 jar-17 jar-18 jar-19 jar-20 jar-21 jar-22 jar-23 jar-24 jar-25 jar-26 jar-27 jar-28 jar-29 "/>
+            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 jar-7 jar-8 jar-9 jar-10 jar-11 jar-12 jar-13 jar-14 jar-15 jar-16 jar-17 jar-18 jar-19 jar-20 jar-21 jar-22 jar-23 jar-24 jar-25 jar-26 jar-27 jar-28 jar-29 jar-30 "/>
             <attribute name="jar-1-Extension-Name" value="${manifest.file.reference.Baidu-Push-SDK-Java-1.1.2.jar}"/>
             <attribute name="jar-2-Extension-Name" value="${manifest.file.reference.cb_md5.jar}"/>
             <attribute name="jar-3-Extension-Name" value="${manifest.file.reference.commons-beanutils-1.9.2.jar}"/>
@@ -909,6 +911,7 @@ exists or setup the property manually. For example like this:
             <attribute name="jar-27-Extension-Name" value="${manifest.file.reference.slf4j-api-1.7.7.jar}"/>
             <attribute name="jar-28-Extension-Name" value="${manifest.file.reference.velocity-1.7.jar}"/>
             <attribute name="jar-29-Extension-Name" value="${manifest.file.reference.zxing_core-3.2.0.jar}"/>
+            <attribute name="jar-30-Extension-Name" value="${manifest.file.reference.jxl.jar}"/>
         </manifest>
     </target>
     <target depends="compile" name="library-inclusion-in-manifest">
@@ -941,6 +944,7 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.slf4j-api-1.7.7.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.velocity-1.7.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.zxing_core-3.2.0.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.jxl.jar}" todir="${dist.ear.dir}/lib"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update"/>
     </target>
     <target name="-copy-meta-inf">

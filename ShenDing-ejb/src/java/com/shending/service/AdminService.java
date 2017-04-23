@@ -729,6 +729,9 @@ public class AdminService {
             Predicate predicate = builder.or((Predicate[]) listPredicate.toArray(new Predicate[listPredicate.size()]));
             criteria.add(predicate);
         }
+        if (map.containsKey("placeName")) {
+             criteria.add(builder.equal(root.get("name"), map.get("placeName")));
+        }
         if (map.containsKey("provinceStr")) {
             criteria.add(builder.or(builder.equal(root.get("provinceStr"), map.get("provinceStr")), builder.equal(root.get("provinceStr"), map.get("provinceStr").toString().substring(0, map.get("provinceStr").toString().length() - 1))));
         }

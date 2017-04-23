@@ -956,6 +956,43 @@ app.controller('AdController', ['$scope', '$http', '$modal', '$location', "$stat
         $scope.listLoading = false;
         $scope.listLoadingData = false;
         $scope.listSearch = "";
+
+        //上传文件
+        $scope.myFile = null;
+        $scope.activeMyFile = false;//正在上传
+        //上传方法
+        $scope.uploadFile = function () {
+            $scope.activeMyFile = true;
+            var fd = new FormData();
+            var file = document.querySelector('input[type=file]').files[0];
+            if (file == null || file.length < 1) {
+                $.scojs_message("请选择文件", $.scojs_message.TYPE_ERROR);
+            } else {
+                fd.append('file1', file);
+                $http({
+                    method: 'POST',
+                    url: "/webservice/admin/upload_file_ad",
+                    data: fd,
+                    headers: {'Content-Type': undefined},
+                    transformRequest: angular.identity
+                }).success(function (response) {
+                    document.querySelector('input[type=file]').files[0] = null;
+                    if (response.success == 1) {
+                        //上传成功的操作
+                        $.scojs_message(response.msg, $.scojs_message.TYPE_OK);
+                    } else {
+                        $.scojs_message(response.msg, $.scojs_message.TYPE_ERROR);
+                    }
+                    $scope.activeMyFile = false;
+                    $scope.currentPage = 1;
+                    $scope.getList($scope.currentPage, false);
+
+                });
+            }
+
+
+        }
+
         /**
          * pagination
          */
@@ -1941,7 +1978,7 @@ app.controller('DeleteEarnestOrderController', ['$scope', '$http', '$modal', '$l
                 $scope.submitting = false;
             });
         };
-        
+
         $scope.opened = false;
 
         $scope.open = function ($event) {

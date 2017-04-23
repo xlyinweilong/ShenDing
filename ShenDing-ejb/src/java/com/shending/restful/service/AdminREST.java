@@ -1,5 +1,6 @@
 package com.shending.restful.service;
 
+import com.shending.config.Config;
 import com.shending.entity.DataArea;
 import com.shending.entity.DataCity;
 import com.shending.entity.DataProvince;
@@ -19,6 +20,8 @@ import com.shending.entity.Vote;
 import com.shending.entity.WageLog;
 import com.shending.restful.interception.AccountInterceptor;
 import com.shending.service.AdminService;
+import com.shending.support.FileUploadItem;
+import com.shending.support.FileUploadObj;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
 import com.shending.support.Trans2PinYin;
@@ -39,7 +42,9 @@ import com.shending.support.enums.SysUserStatus;
 import com.shending.support.enums.SysUserTypeEnum;
 import com.shending.support.exception.EjbMessageException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -62,6 +67,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.DefaultValue;
@@ -71,8 +78,16 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import jxl.Cell;
+import jxl.CellType;
+import jxl.Sheet;
+import jxl.Workbook;
+import jxl.write.Label;
+import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * 后台管理
@@ -90,6 +105,162 @@ public class AdminREST {
     private AdminService adminService;
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
+
+    /**
+     * 导入广告
+     *
+     * @param servletRequest
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("upload_file_ad")
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    public String createOrUpdateEvent(@CookieParam("auth") String auth, @Context HttpServletRequest servletRequest) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        FileUploadObj fileUploadObj = null;
+        Map map = Tools.getDMap();
+        try {
+            fileUploadObj = Tools.uploadFile(servletRequest, 100, null, null, null);
+        } catch (FileUploadException e) {
+            map.put("msg", e.getMessage());
+            return Tools.caseObjectToJson(map);
+        }
+        for (FileUploadItem item : fileUploadObj.getFileList()) {
+            if ("file1".equals(item.getFieldName())) {
+                File file = new File(item.getUploadFullPath());
+                jxl.Workbook readwb = null;
+                try {
+                    //构建Workbook对象, 只读Workbook对象   
+                    //直接从本地文件创建Workbook   
+                    InputStream instream = new FileInputStream(item.getUploadFullPath());
+                    readwb = Workbook.getWorkbook(instream);
+                    //Sheet的下标是从0开始   
+                    //获取第一张Sheet表   
+                    Sheet readsheet = readwb.getSheet(0);
+                    //获取Sheet表中所包含的总行数   
+                    int rsRows = readsheet.getRows();
+                    //入账时间
+                    for (int i = 1; i < rsRows; i++) {
+                        Cell[] cells = readsheet.getRow(i);
+                        String payDateStr = StringUtils.trim(cells[0].getContents());
+                        Date payDate = null;
+                        try {
+                            payDate = Tools.parseDate(payDateStr, "yyyy-MM-dd");
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行入账时间格式错误");
+                        }
+                        if (payDate == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行入账时间格式错误");
+                        }
+                        //业务员
+                        String placeName = StringUtils.trim(cells[1].getContents());
+                        Map searchMap = new HashMap();
+                        searchMap.put("category", CategoryEnum.SERVICE_PEOPLE);
+                        searchMap.put("placeName", placeName);
+                        searchMap.put("status", GoodsStatusEnum.SOLD_OUT);
+                        ResultList<Goods> list = adminService.findGoodsList(searchMap, 1, 10, null, Boolean.TRUE);
+                        if (list.size() != 1) {
+                            throw new EjbMessageException("第" + (i + 1) + "行业务员无法唯一定位，请手动录入该条");
+                        }
+                        Goods goods = list.get(0);
+                        //广告名称
+                        String name = StringUtils.trim(cells[2].getContents());
+                        if (StringUtils.isBlank(name)) {
+                            throw new EjbMessageException("第" + (i + 1) + "行广告名称不能为空");
+                        }
+                        //广告微信
+                        String ownerWeChat = StringUtils.trimToNull(cells[3].getContents());
+                        //持续时间
+                        String limitTypeStr = StringUtils.trimToNull(cells[4].getContents());
+                        AdLimitTypeEnum limitType = AdLimitTypeEnum.getEnum(limitTypeStr);
+                        if (limitType == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行持续时间错误");
+                        }
+                        //级别
+                        String adLevelStr = StringUtils.trimToNull(cells[5].getContents());
+                        AdLevelEnum adLevel = AdLevelEnum.getEnum(adLevelStr);
+                        if (adLevel == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行级别错误");
+                        }
+                        //金额
+                        String amount = StringUtils.trimToNull(cells[6].getContents());
+                        BigDecimal amountBd = null;
+                        if (amount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行金额错误");
+                        }
+                        try {
+                            amountBd = new BigDecimal(amount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行金额错误");
+                        }
+                        //支付方式
+                        String gatewayTypeStr = StringUtils.trimToNull(cells[7].getContents());
+                        PaymentGatewayTypeEnum gatewayType = PaymentGatewayTypeEnum.getEnum(gatewayTypeStr);
+                        if (gatewayType == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行支付方式错误");
+                        }
+                        //返还
+                        String userBalanceAmount = StringUtils.trimToNull(cells[8].getContents());
+                        BigDecimal userBalanceAmountBd = null;
+                        if (userBalanceAmount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行返还错误");
+                        }
+                        try {
+                            userBalanceAmountBd = new BigDecimal(userBalanceAmount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行返还错误");
+                        }
+                        //提成
+                        String userAmount = StringUtils.trimToNull(cells[9].getContents());
+                        BigDecimal userAmountBd = null;
+                        if (userAmount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                        }
+                        try {
+                            userAmountBd = new BigDecimal(userAmount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                        }
+                        //备注
+                        String remark = StringUtils.trimToNull(cells[10].getContents());
+
+                        //接/发*
+                        String sendTypeStr = StringUtils.trimToNull(cells[11].getContents());
+                        WageLogTypeEnum sendType = WageLogTypeEnum.getEnum(sendTypeStr);
+                        if (sendType == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行接/发类型错误");
+                        }
+                        //类型*
+                        String categoryPlusStr = StringUtils.trimToNull(cells[12].getContents());
+                        String categoryPlus = null;
+                        if ("便民平台".equals(categoryPlusStr)) {
+                            categoryPlus = "NORMAL";
+                        } else if ("广告部".equals(categoryPlusStr)) {
+                            categoryPlus = "AD_DEPARTMENT";
+                        } else {
+                            throw new EjbMessageException("第" + (i + 1) + "行类型错误");
+                        }
+                        adminService.createOrUpdateNewAd(null, goods, amountBd, payDate, limitType, name, ownerWeChat, gatewayType, user, userBalanceAmountBd, userAmountBd, adLevel, remark, sendType, CategoryEnum.SERVICE_PEOPLE, categoryPlus);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    map.put("success", "0");
+                    map.put("msg", e.getMessage());
+                    return Tools.caseObjectToJson(map);
+                } finally {
+                    readwb.close();
+                }
+                FileUtils.deleteQuietly(file);
+                map.put("msg", "上传成功");
+                map.put("success", "1");
+                map.put("data", "");
+                return Tools.caseObjectToJson(map);
+            }
+        }
+        map.put("msg", "未找到合法数据");
+        return Tools.caseObjectToJson(map);
+    }
 
 //    @GET
 //    @Path("vote")
@@ -316,9 +487,12 @@ public class AdminREST {
     @Path("data_province")
     public String getDataProvince() throws Exception {
         Map map = Tools.getDMap();
-        TypedQuery<DataProvince> query = em.createQuery("SELECT d FROM DataProvince d", DataProvince.class);
-        map.put("data", query.getResultList());
-        map.put("success", "1");
+        TypedQuery<DataProvince> query = em.createQuery("SELECT d FROM DataProvince d", DataProvince.class
+        );
+        map.put(
+                "data", query.getResultList());
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -336,11 +510,16 @@ public class AdminREST {
         if (Tools.isBlank(provinceCode)) {
             map.put("msg", "数据有误");
             return Tools.caseObjectToJson(map);
+
         }
-        TypedQuery<DataCity> query = em.createQuery("SELECT d FROM DataCity d WHERE d.provinceCode = :provinceCode", DataCity.class);
-        query.setParameter("provinceCode", provinceCode);
-        map.put("data", query.getResultList());
-        map.put("success", "1");
+        TypedQuery<DataCity> query = em.createQuery("SELECT d FROM DataCity d WHERE d.provinceCode = :provinceCode", DataCity.class
+        );
+        query.setParameter(
+                "provinceCode", provinceCode);
+        map.put(
+                "data", query.getResultList());
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -358,11 +537,16 @@ public class AdminREST {
         if (Tools.isBlank(cityCode)) {
             map.put("msg", "数据有误");
             return Tools.caseObjectToJson(map);
+
         }
-        TypedQuery<DataCity> query = em.createQuery("SELECT d FROM DataArea d WHERE d.cityCode = :cityCode", DataCity.class);
-        query.setParameter("cityCode", cityCode);
-        map.put("data", query.getResultList());
-        map.put("success", "1");
+        TypedQuery<DataCity> query = em.createQuery("SELECT d FROM DataArea d WHERE d.cityCode = :cityCode", DataCity.class
+        );
+        query.setParameter(
+                "cityCode", cityCode);
+        map.put(
+                "data", query.getResultList());
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -396,24 +580,37 @@ public class AdminREST {
      */
     @GET
     @Path("log_list")
-    public String logList(@CookieParam("auth") String auth, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String logList(@CookieParam("auth") String auth, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         ResultList<Log> resultList = new ResultList<>();
-        TypedQuery<Long> countQuery = em.createQuery("SELECT COUNT(l) FROM Log l ORDER BY l.createDate DESC", Long.class);
+        TypedQuery<Long> countQuery = em.createQuery("SELECT COUNT(l) FROM Log l ORDER BY l.createDate DESC", Long.class
+        );
         Long totalCount = countQuery.getSingleResult();
+
         resultList.setTotalCount(totalCount.intValue());
         TypedQuery<Log> query = em.createQuery("SELECT l FROM Log l ORDER BY l.createDate DESC", Log.class);
         int startIndex = (pageIndex - 1) * maxPerPage;
+
         query.setFirstResult(startIndex);
+
         query.setMaxResults(maxPerPage);
+
         resultList.setPageIndex(pageIndex);
+
         resultList.setStartIndex(startIndex);
+
         resultList.setMaxPerPage(maxPerPage);
+
         resultList.addAll(query.getResultList());
-        map.put("totalCount", resultList.getTotalCount());
-        map.put("data", (List) resultList);
-        map.put("success", "1");
+        map.put(
+                "totalCount", resultList.getTotalCount());
+        map.put(
+                "data", (List) resultList);
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -560,24 +757,37 @@ public class AdminREST {
      */
     @GET
     @Path("role_list")
-    public String getRoleList(@CookieParam("auth") String auth, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getRoleList(@CookieParam("auth") String auth, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         ResultList<SysRole> resultList = new ResultList<>();
-        TypedQuery<Long> countQuery = em.createQuery("SELECT COUNT(sr) FROM SysRole sr ORDER BY sr.sortIndex DESC", Long.class);
+        TypedQuery<Long> countQuery = em.createQuery("SELECT COUNT(sr) FROM SysRole sr ORDER BY sr.sortIndex DESC", Long.class
+        );
         Long totalCount = countQuery.getSingleResult();
+
         resultList.setTotalCount(totalCount.intValue());
         TypedQuery<SysRole> query = em.createQuery("SELECT sr FROM SysRole sr ORDER BY sr.sortIndex DESC", SysRole.class);
         int startIndex = (pageIndex - 1) * maxPerPage;
+
         query.setFirstResult(startIndex);
+
         query.setMaxResults(maxPerPage);
+
         resultList.setPageIndex(pageIndex);
+
         resultList.setStartIndex(startIndex);
+
         resultList.setMaxPerPage(maxPerPage);
+
         resultList.addAll(query.getResultList());
-        map.put("totalCount", resultList.getTotalCount());
-        map.put("data", (List) resultList);
-        map.put("success", "1");
+        map.put(
+                "totalCount", resultList.getTotalCount());
+        map.put(
+                "data", (List) resultList);
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -602,31 +812,41 @@ public class AdminREST {
             throw new EjbMessageException("无效用户");
         }
         adminService.saveLog(user, "创建更新角色", "名：" + name);
-        TypedQuery<Long> countQuery = em.createQuery("SELECT COUNT(sr) FROM SysRole sr", Long.class);
+        TypedQuery<Long> countQuery = em.createQuery("SELECT COUNT(sr) FROM SysRole sr", Long.class
+        );
         Long totalCount = countQuery.getSingleResult();
         Map map = Tools.getDMap();
-        if (totalCount > 9) {
+        if (totalCount
+                > 9) {
             map.put("msg", "角色已经上限！");
             return Tools.caseObjectToJson(map);
         }
         SysRole role = null;
-        if (id == null) {
+        if (id
+                == null) {
             role = new SysRole();
         } else {
             role = em.find(SysRole.class, id);
         }
+
         role.setName(name);
-        if (sortIndex != null) {
+        if (sortIndex
+                != null) {
             role.setSortIndex(sortIndex);
         }
-        if (id == null) {
+        if (id
+                == null) {
             em.persist(role);
         } else {
             em.merge(role);
         }
+
         em.flush();
-        map.put("msg", "操作成功！");
-        map.put("success", "1");
+
+        map.put(
+                "msg", "操作成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -702,14 +922,21 @@ public class AdminREST {
         Map map = Tools.getDMap();
         if (!SysUserTypeEnum.SUPER.equals(user.getAdminType())) {
             throw new EjbMessageException("无效用户");
+
         }
         SysUser sysUser = em.find(SysUser.class, id);
-        adminService.saveLog(user, "修改用户余额", "账号：" + sysUser.getAccount() + " 原来：" + sysUser.getBalance().toString() + " 改成：" + amount);
-        sysUser.setBalance(new BigDecimal(amount));
+        adminService.saveLog(user,
+                "修改用户余额", "账号：" + sysUser.getAccount() + " 原来：" + sysUser.getBalance().toString() + " 改成：" + amount);
+        sysUser.setBalance(
+                new BigDecimal(amount));
         em.merge(sysUser);
-        map.put("data", sysUser);
-        map.put("msg", "操作成功！");
-        map.put("success", "1");
+
+        map.put(
+                "data", sysUser);
+        map.put(
+                "msg", "操作成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -754,15 +981,21 @@ public class AdminREST {
             throw new EjbMessageException("您没有权限");
         }
         Map map = Tools.getDMap();
-        TypedQuery<SysUser> query = em.createQuery("SELECT s FROM SysUser s WHERE s.id IN :ids", SysUser.class);
-        query.setParameter("ids", ids);
-        for (SysUser sysUser : query.getResultList()) {
+        TypedQuery<SysUser> query = em.createQuery("SELECT s FROM SysUser s WHERE s.id IN :ids", SysUser.class
+        );
+        query.setParameter(
+                "ids", ids);
+        for (SysUser sysUser
+                : query.getResultList()) {
             sysUser.setStatus(SysUserStatus.NORMAL);
             em.merge(sysUser);
             adminService.saveLog(user, "审批用户", "账号：" + sysUser.getAccount());
         }
-        map.put("msg", "审批成功！");
-        map.put("success", "1");
+
+        map.put(
+                "msg", "审批成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -779,7 +1012,10 @@ public class AdminREST {
      */
     @GET
     @Path("user_list")
-    public String getUserList(@CookieParam("auth") String auth, @DefaultValue("0") @QueryParam("approve") int approve, @QueryParam("search") String search, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getUserList(@CookieParam("auth") String auth, @DefaultValue("0")
+            @QueryParam("approve") int approve, @QueryParam("search") String search, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Map searchMap = new HashMap();
@@ -813,7 +1049,9 @@ public class AdminREST {
      */
     @GET
     @Path("user_order_list")
-    public String getUserOrderList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("search") String search, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getUserOrderList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("search") String search, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Map searchMap = new HashMap();
@@ -869,8 +1107,10 @@ public class AdminREST {
     public String getUserInfo(@CookieParam("auth") String auth, @QueryParam("id") long id) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
-        map.put("data", em.find(SysUser.class, id));
-        map.put("success", "1");
+        map
+                .put("data", em.find(SysUser.class, id));
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -887,7 +1127,9 @@ public class AdminREST {
      */
     @GET
     @Path("goods_list")
-    public String getGoodsList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("status") String status, @QueryParam("search") String search, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getGoodsList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("status") String status, @QueryParam("search") String search, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Map searchMap = new HashMap();
@@ -984,10 +1226,13 @@ public class AdminREST {
         Map map = Tools.getDMap();
         boolean isCreate = true;
         Goods goods = new Goods();
+
         if (id != null) {
             goods = em.find(Goods.class, id);
-            adminService.saveLog(user, "更新商品", "商品号：" + goods.getSerialId() + " 名字：" + goods.getCategoryName() + "-" + name + " 价钱：" + goods.getPrice().toString() + "-" + price + " 人数：" + goods.getPeopleCount() + "-" + peopleCount);
+            adminService.saveLog(user,
+                    "更新商品", "商品号：" + goods.getSerialId() + " 名字：" + goods.getCategoryName() + "-" + name + " 价钱：" + goods.getPrice().toString() + "-" + price + " 人数：" + goods.getPeopleCount() + "-" + peopleCount);
             isCreate = false;
+
             if (Tools.isNotBlank(weChatCode)) {
                 weChatCode = weChatCode.trim();
                 if (!weChatCode.equals(goods.getWeChatCode())) {
@@ -1014,8 +1259,10 @@ public class AdminREST {
         goods.setName(name);
         goods.setNamePinyin(Trans2PinYin.trans2PinYinFirst(name));
         goods.setSerialId(adminService.getUniqueGoodsSerialId());
-        goods.setUser(em.find(SysUser.class, uid));
-        goods.setPeopleCount(peopleCount == null ? 0 : peopleCount);
+        goods
+                .setUser(em.find(SysUser.class, uid));
+        goods.setPeopleCount(peopleCount
+                == null ? 0 : peopleCount);
         if (isCreate) {
             em.persist(goods);
             em.flush();
@@ -1023,7 +1270,8 @@ public class AdminREST {
         } else {
             em.merge(goods);
         }
-        if (isCreate && Tools.isNotBlank(weChatCode)) {
+        if (isCreate
+                && Tools.isNotBlank(weChatCode)) {
             GoodsWeChat goodsWeChat = new GoodsWeChat();
             goodsWeChat.setGoods(goods);
             if (Tools.isNotBlank(weChatCode)) {
@@ -1032,9 +1280,13 @@ public class AdminREST {
             }
             em.persist(goodsWeChat);
         }
-        map.put("data", goods);
-        map.put("msg", "操作成功！");
-        map.put("success", "1");
+
+        map.put(
+                "data", goods);
+        map.put(
+                "msg", "操作成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1053,7 +1305,12 @@ public class AdminREST {
      */
     @GET
     @Path("order_list")
-    public String getOrderList(@CookieParam("auth") String auth, @DefaultValue("false") @QueryParam("limitEnd") boolean limitEnd, @QueryParam("category") String category, @QueryParam("user") Boolean userSelf, @QueryParam("uid") Long uid, @DefaultValue("false") @QueryParam("task") boolean task, @DefaultValue("false") @QueryParam("contract") boolean contract, @QueryParam("status") String status, @QueryParam("search") String search, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getOrderList(@CookieParam("auth") String auth, @DefaultValue("false")
+            @QueryParam("limitEnd") boolean limitEnd, @QueryParam("category") String category, @QueryParam("user") Boolean userSelf, @QueryParam("uid") Long uid, @DefaultValue("false")
+            @QueryParam("task") boolean task, @DefaultValue("false")
+            @QueryParam("contract") boolean contract, @QueryParam("status") String status, @QueryParam("search") String search, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Map searchMap = new HashMap();
@@ -1066,6 +1323,7 @@ public class AdminREST {
         }
         if (userSelf != null && userSelf) {
             searchMap.put("agentUser", user);
+
         }
         if (uid != null) {
             searchMap.put("agentUser", em.find(SysUser.class, uid));
@@ -1119,9 +1377,11 @@ public class AdminREST {
             throw new EjbMessageException("您没有权限");
         }
         Map map = Tools.getDMap();
+
         for (Long id : ids) {
             GoodsOrder goodsOrder = em.find(GoodsOrder.class, id);
-            if (goodsOrder.getStatus().equals(OrderStatusEnum.SUCCESS)) {
+            if (goodsOrder.getStatus()
+                    .equals(OrderStatusEnum.SUCCESS)) {
                 //重新计算用户余额
                 SysUser agentUser = goodsOrder.getAgentUser();
                 adminService.resetUserBalance(agentUser, goodsOrder);
@@ -1130,12 +1390,19 @@ public class AdminREST {
                 adminService.deleteWageLogByOrder(goodsOrder);
             }
             Goods goods = goodsOrder.getGoods();
-            goodsOrder.setAgentUser(null);
+
+            goodsOrder.setAgentUser(
+                    null);
             goodsOrder.setStatus(OrderStatusEnum.WAIT_SIGN_CONTRACT);
+
             goods.setStatus(GoodsStatusEnum.WAIT_SIGN_CONTRACT);
+
             em.merge(goods);
+
             em.merge(goodsOrder);
-            adminService.saveLog(user, "删除合同", "订单号：" + goodsOrder.getSerialId());
+
+            adminService.saveLog(user,
+                    "删除合同", "订单号：" + goodsOrder.getSerialId());
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -1175,33 +1442,46 @@ public class AdminREST {
         boolean isCreate = true;
         GoodsOrder goodsOrder = new GoodsOrder();
         goodsOrder.setCreateUser(user);
+
         if (id != null) {
             goodsOrder = em.find(GoodsOrder.class, id);
-            adminService.saveLog(user, "补充订单", "订单号：" + goodsOrder.getSerialId() + " 汇款金额：" + amount + " 人数费修改：" + peopleCountFee + " 回款时间：" + payDate + " 金额类型：" + orderRecordType);
+            adminService.saveLog(user,
+                    "补充订单", "订单号：" + goodsOrder.getSerialId() + " 汇款金额：" + amount + " 人数费修改：" + peopleCountFee + " 回款时间：" + payDate + " 金额类型：" + orderRecordType);
             isCreate = false;
         }
         Goods goods = em.find(Goods.class, goodsId);
-        if (id == null && !goods.getStatus().equals(GoodsStatusEnum.SALE)) {
+        if (id
+                == null && !goods.getStatus()
+                .equals(GoodsStatusEnum.SALE)) {
             throw new EjbMessageException("商品的状态错误");
         }
+
         goodsOrder.setUserAmount(BigDecimal.ZERO);
+
         if (Tools.isNotBlank(userAmount)) {
             goodsOrder.setUserAmount(new BigDecimal(userAmount));
         }
+
         if (Tools.isNotBlank(peopleCountFee)) {
             goodsOrder.setPeopleCountFee(new BigDecimal(peopleCountFee));
         }
+
         goodsOrder.setCategory(CategoryEnum.valueOf(category));
         goodsOrder.setRemark(remark);
+
         goodsOrder.setGoods(goods);
+
         goodsOrder.setUser(goods.getUser());
         goodsOrder.setGoodsMsg(goods.getProvinceStr() + "_" + goods.getName() + "_" + goods.getUser().getId() + "_" + goods.getUser().getName());
         goodsOrder.setGoodsPinyin(Trans2PinYin.trans2PinYinFirst(goods.getName()));
-        goodsOrder.setPrice(new BigDecimal(price));
+        goodsOrder.setPrice(
+                new BigDecimal(price));
         goodsOrder.setBackAmount(Tools.isBlank(backAmount) ? BigDecimal.ZERO : new BigDecimal(backAmount));
         goodsOrder.setSerialId(adminService.getUniqueOrderSerialId());
         goodsOrder.setDivideAmount(BigDecimal.ZERO);
-        if (recommendIds != null && recommendIds.size() > 0) {
+        if (recommendIds
+                != null && recommendIds.size()
+                > 0) {
             goodsOrder.setDivideAmount(new BigDecimal(divideAmount));
             if (recommendIds.size() == 1) {
                 SysUser recommendUser = em.find(SysUser.class, recommendIds.get(0));
@@ -1244,11 +1524,16 @@ public class AdminREST {
         if (null != divideUserId) {
             goodsOrder.setDivideUser(em.find(SysUser.class, divideUserId));
         }
+
         goodsOrder.setStatus(OrderStatusEnum.PENDING_PAYMENT);
+
         goods.setStatus(GoodsStatusEnum.LOCKED);
-        goods.setStatusStartDate(new Date());
+
+        goods.setStatusStartDate(
+                new Date());
         goods.setStatusEndDate(Tools.addMinute(new Date(), 30));
-        if (Tools.isNotBlank(amount) && isCreate && Tools.isNotBlank(payDate) && Tools.isNotBlank(gatewayType) && Tools.isNotBlank(orderRecordType)) {
+        if (Tools.isNotBlank(amount)
+                && isCreate && Tools.isNotBlank(payDate) && Tools.isNotBlank(gatewayType) && Tools.isNotBlank(orderRecordType)) {
             goodsOrder.setPaidPrice(new BigDecimal(amount));
             goodsOrder.setLastPayDate(Tools.parseDate(payDate, "yyyy-MM-dd"));
             goodsOrder.setGatewayType(PaymentGatewayTypeEnum.valueOf(gatewayType));
@@ -1274,7 +1559,9 @@ public class AdminREST {
         } else {
             em.merge(goodsOrder);
         }
-        if (goodsOrder.getStatus().equals(OrderStatusEnum.WAIT_SIGN_CONTRACT)) {
+
+        if (goodsOrder.getStatus()
+                .equals(OrderStatusEnum.WAIT_SIGN_CONTRACT)) {
             //尾款了
             if (goodsOrder.getUserAmount().compareTo(BigDecimal.ZERO) > 0 && goodsOrder.getDivideUser() != null) {
                 UserWageLog userWageLog = new UserWageLog();
@@ -1311,17 +1598,25 @@ public class AdminREST {
             //增加代理的金额
         }
         OrderRecord orderRecord = new OrderRecord();
+
         orderRecord.setGatewayType(PaymentGatewayTypeEnum.valueOf(gatewayType));
         orderRecord.setPayDate(Tools.parseDate(payDate, "yyyy-MM-dd"));
         orderRecord.setType(OrderRecordTypeEnum.valueOf(orderRecordType));
         orderRecord.setGoods(goodsOrder.getGoods());
         orderRecord.setOrder(goodsOrder);
-        orderRecord.setPrice(new BigDecimal(amount));
+
+        orderRecord.setPrice(
+                new BigDecimal(amount));
         em.persist(orderRecord);
+
         em.merge(goods);
-        map.put("data", goodsOrder);
-        map.put("msg", "操作成功！");
-        map.put("success", "1");
+
+        map.put(
+                "data", goodsOrder);
+        map.put(
+                "msg", "操作成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1346,20 +1641,26 @@ public class AdminREST {
         Map map = Tools.getDMap();
         GoodsOrder goodsOrder = em.find(GoodsOrder.class, id);
         Goods goods = goodsOrder.getGoods();
-        if (id == null && !goods.getStatus().equals(GoodsStatusEnum.WAIT_SIGN_CONTRACT)) {
+        if (id
+                == null && !goods.getStatus()
+                .equals(GoodsStatusEnum.WAIT_SIGN_CONTRACT)) {
             throw new EjbMessageException("商品的状态错误");
         }
-        if (!(goodsOrder.getStatus().equals(OrderStatusEnum.WAIT_SIGN_CONTRACT) || goodsOrder.getStatus().equals(OrderStatusEnum.SUCCESS))) {
+
+        if (!(goodsOrder.getStatus()
+                .equals(OrderStatusEnum.WAIT_SIGN_CONTRACT) || goodsOrder.getStatus().equals(OrderStatusEnum.SUCCESS))) {
             throw new EjbMessageException("商品的状态错误");
         }
         SysUser goodsUser = em.find(SysUser.class, userId);
         SysUser orderGoodsUser = goodsOrder.getAgentUser();
+
         if (Tools.isNotBlank(contractSerialId)) {
             goodsOrder.setContractSerialId(contractSerialId);
         } else {
             goodsOrder.setContractSerialId(null);
         }
         Date lastRenewDate = null;
+
         try {
             if (Tools.isNotBlank(lastRenew)) {
                 lastRenewDate = Tools.parseDate(lastRenew, "yyyy-MM-dd");
@@ -1367,8 +1668,10 @@ public class AdminREST {
         } catch (Exception e) {
             lastRenewDate = null;
         }
+
         goodsOrder.setLastRenewDate(lastRenewDate);
-        if (lastRenewDate != null) {
+        if (lastRenewDate
+                != null) {
             //生成记录
             OrderRenew or = new OrderRenew();
             or.setOrderId(goodsOrder.getId());
@@ -1376,10 +1679,15 @@ public class AdminREST {
             goodsOrder.setLimitEnd(Tools.addYear(lastRenewDate, 1));
             em.persist(or);
         }
+
         goodsOrder.setAgentUser(goodsUser);
+
         goodsOrder.setStatus(OrderStatusEnum.SUCCESS);
+
         goods.setStatus(GoodsStatusEnum.SOLD_OUT);
+
         em.merge(goodsOrder);
+
         //增加代理的金额
         if (CategoryEnum.SERVICE_PEOPLE.equals(goodsOrder.getCategory())) {
             goodsUser.setDeposit(goodsUser.getDeposit().add((goodsOrder.getPaidPrice().subtract(goodsOrder.getPeopleCountFee()))));
@@ -1400,12 +1708,19 @@ public class AdminREST {
         } else {
             throw new EjbMessageException("数据异常");
         }
+
         em.merge(goodsUser);
+
         em.merge(goods);
-        adminService.saveLog(user, "合同签约", "订单号：" + goodsOrder.getSerialId() + " 代理人:" + goodsOrder.getAgentUser().getAccount() + (goodsOrder.getContractSerialId() == null ? "" : " 合同编号:" + goodsOrder.getContractSerialId()));
-        map.put("data", goodsOrder);
-        map.put("msg", "操作成功！");
-        map.put("success", "1");
+
+        adminService.saveLog(user,
+                "合同签约", "订单号：" + goodsOrder.getSerialId() + " 代理人:" + goodsOrder.getAgentUser().getAccount() + (goodsOrder.getContractSerialId() == null ? "" : " 合同编号:" + goodsOrder.getContractSerialId()));
+        map.put(
+                "data", goodsOrder);
+        map.put(
+                "msg", "操作成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1428,20 +1743,30 @@ public class AdminREST {
             throw new EjbMessageException("您没有权限");
         }
         Map map = Tools.getDMap();
+
         for (Long id : ids) {
             GoodsOrder goodsOrder = em.find(GoodsOrder.class, id);
             Goods goods = goodsOrder.getGoods();
+
             if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && goodsOrder.getCreateUser() != null && !goodsOrder.getCreateUser().equals(user)) {
                 throw new EjbMessageException("您没有权限删除");
             }
-            goodsOrder.setDeleted(true);
+
+            goodsOrder.setDeleted(
+                    true);
             goods.setStatus(GoodsStatusEnum.SALE);
+
             em.merge(goods);
+
             em.merge(goodsOrder);
             Query deleteQuery = em.createQuery("UPDATE WageLog w SET w.deleted = TRUE WHERE w.goodsOrder = :goodsOrder");
-            deleteQuery.setParameter("goodsOrder", goodsOrder);
+
+            deleteQuery.setParameter(
+                    "goodsOrder", goodsOrder);
             deleteQuery.executeUpdate();
-            if (goodsOrder.getStatus().equals(OrderStatusEnum.SUCCESS) || goodsOrder.getStatus().equals(OrderStatusEnum.WAIT_SIGN_CONTRACT)) {
+
+            if (goodsOrder.getStatus()
+                    .equals(OrderStatusEnum.SUCCESS) || goodsOrder.getStatus().equals(OrderStatusEnum.WAIT_SIGN_CONTRACT)) {
                 Query deleteUserWageQuery = em.createQuery("UPDATE UserWageLog w SET w.deleted = TRUE WHERE w.goodsOrder = :goodsOrder");
                 deleteUserWageQuery.setParameter("goodsOrder", goodsOrder);
                 deleteUserWageQuery.executeUpdate();
@@ -1454,7 +1779,9 @@ public class AdminREST {
                 //删除用户分成
                 adminService.deleteWageLogByOrder(goodsOrder);
             }
-            adminService.saveLog(user, "订单作废", "订单号：" + goodsOrder.getSerialId());
+
+            adminService.saveLog(user,
+                    "订单作废", "订单号：" + goodsOrder.getSerialId());
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -1477,34 +1804,49 @@ public class AdminREST {
             throw new EjbMessageException("您没有权限");
         }
         Map map = Tools.getDMap();
+
         for (Long id : ids) {
             GoodsOrder goodsOrder = em.find(GoodsOrder.class, id);
             Goods goods = goodsOrder.getGoods();
+
             goods.setStatus(GoodsStatusEnum.SALE);
-            goods.setQqCode(null);
-            goods.setWeChatCode(null);
-            goods.setPeopleCount(0);
+
+            goods.setQqCode(
+                    null);
+            goods.setWeChatCode(
+                    null);
+            goods.setPeopleCount(
+                    0);
             em.merge(goods);
+
             goodsOrder.setStatus(OrderStatusEnum.TERMINATION);
+
             em.merge(goodsOrder);
             Query deleteQuery = em.createQuery("UPDATE WageLog w SET w.backed = TRUE WHERE w.goodsOrder = :goodsOrder");
-            deleteQuery.setParameter("goodsOrder", goodsOrder);
+
+            deleteQuery.setParameter(
+                    "goodsOrder", goodsOrder);
             deleteQuery.executeUpdate();
             //重新计算用户余额
             SysUser agentUser = goodsOrder.getAgentUser();
-            if (agentUser != null) {
+            if (agentUser
+                    != null) {
                 adminService.resetUserBalance(agentUser, goodsOrder);
                 em.merge(agentUser);
             }
             //回收AD
             TypedQuery<NewAd> query = em.createQuery("SELECT a FROM NewAd a WHERE a.backed = FALSE AND a.deleted = FALSE AND a.goods = :goods", NewAd.class);
-            query.setParameter("goods", goods);
+
+            query.setParameter(
+                    "goods", goods);
             List<NewAd> adPushGoodsList = query.getResultList();
             for (NewAd ad : adPushGoodsList) {
                 ad.setBacked(Boolean.TRUE);
                 em.merge(ad);
             }
-            adminService.saveLog(user, "回收订单", "订单号：" + goodsOrder.getSerialId());
+
+            adminService.saveLog(user,
+                    "回收订单", "订单号：" + goodsOrder.getSerialId());
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -1529,29 +1871,41 @@ public class AdminREST {
         Map map = Tools.getDMap();
         if (ids != null && ids.size() > 1) {
             throw new EjbMessageException("一次最多恢复一个订单");
+
         }
         for (Long id : ids) {
             GoodsOrder goodsOrder = em.find(GoodsOrder.class, id);
-            if (!goodsOrder.getStatus().equals(OrderStatusEnum.TERMINATION)) {
+            if (!goodsOrder.getStatus()
+                    .equals(OrderStatusEnum.TERMINATION)) {
                 throw new EjbMessageException("恢复回收状态不是回收状态");
             }
             SysUser agentUser = goodsOrder.getAgentUser();
-            if (agentUser == null) {
+            if (agentUser
+                    == null) {
                 throw new EjbMessageException("恢复回收的订单没有代理");
             }
             Goods goods = goodsOrder.getGoods();
-            if (!goods.getStatus().equals(GoodsStatusEnum.SALE)) {
+
+            if (!goods.getStatus()
+                    .equals(GoodsStatusEnum.SALE)) {
                 throw new EjbMessageException("要恢复订单的商品不是在售状态");
             }
+
             goods.setStatus(GoodsStatusEnum.SOLD_OUT);
+
             em.merge(goods);
+
             goodsOrder.setStatus(OrderStatusEnum.SUCCESS);
+
             em.merge(goodsOrder);
             Query deleteQuery = em.createQuery("UPDATE WageLog w SET w.backed = FALSE WHERE w.goodsOrder = :goodsOrder");
-            deleteQuery.setParameter("goodsOrder", goodsOrder);
+
+            deleteQuery.setParameter(
+                    "goodsOrder", goodsOrder);
             deleteQuery.executeUpdate();
             //重新计算用户余额
-            if (agentUser != null) {
+            if (agentUser
+                    != null) {
                 if (goodsOrder.getCategory().equals(CategoryEnum.SERVICE_PEOPLE)) {
                     agentUser.setBalance(agentUser.getBalance().add((goodsOrder.getPaidPrice().subtract(goodsOrder.getPeopleCountFee()))).subtract(goodsOrder.getBackAmount()).compareTo(BigDecimal.ZERO) > 0 ? agentUser.getBalance().add(goodsOrder.getPaidPrice().subtract(goodsOrder.getPeopleCountFee())).subtract(goodsOrder.getBackAmount()) : BigDecimal.ZERO);
                     agentUser.setDeposit(agentUser.getDeposit().add((goodsOrder.getPaidPrice().subtract(goodsOrder.getPeopleCountFee()))));
@@ -1565,13 +1919,17 @@ public class AdminREST {
             }
             //恢复AD
             TypedQuery<NewAd> query = em.createQuery("SELECT a FROM NewAd a WHERE a.backed = TRUE AND a.deleted = FALSE AND a.goods = :goods", NewAd.class);
-            query.setParameter("goods", goods);
+
+            query.setParameter(
+                    "goods", goods);
             List<NewAd> adPushGoodsList = query.getResultList();
             for (NewAd ad : adPushGoodsList) {
                 ad.setBacked(Boolean.FALSE);
                 em.merge(ad);
             }
-            adminService.saveLog(user, "恢复回收订单", "订单号：" + goodsOrder.getSerialId());
+
+            adminService.saveLog(user,
+                    "恢复回收订单", "订单号：" + goodsOrder.getSerialId());
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -1594,16 +1952,20 @@ public class AdminREST {
             throw new EjbMessageException("您没有权限");
         }
         Map map = Tools.getDMap();
+
         for (Long id : ids) {
             Goods goods = em.find(Goods.class, id);
-            if (goods.getStatus().equals(GoodsStatusEnum.DRAFT) || goods.getStatus().equals(GoodsStatusEnum.SALE)) {
+            if (goods.getStatus()
+                    .equals(GoodsStatusEnum.DRAFT) || goods.getStatus().equals(GoodsStatusEnum.SALE)) {
                 if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && goods.getCreateUser() != null && !goods.getCreateUser().equals(user)) {
                     throw new EjbMessageException("您没有权限删除");
                 }
                 goods.setDeleted(true);
                 em.merge(goods);
             }
-            adminService.saveLog(user, "删除商品", "订单号：" + goods.getSerialId());
+
+            adminService.saveLog(user,
+                    "删除商品", "订单号：" + goods.getSerialId());
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -1625,12 +1987,19 @@ public class AdminREST {
         Map map = Tools.getDMap();
         GoodsOrder order = em.find(GoodsOrder.class, id);
         TypedQuery<OrderRecord> query = em.createQuery("SELECT o FROM OrderRecord o WHERE o.order = :order", OrderRecord.class);
-        query.setParameter("order", order);
+
+        query.setParameter(
+                "order", order);
         List<OrderRecord> list = query.getResultList();
-        map.put("data", order);
-        map.put("list", list);
-        map.put("total", list.size());
-        map.put("success", "1");
+
+        map.put(
+                "data", order);
+        map.put(
+                "list", list);
+        map.put(
+                "total", list.size());
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1652,12 +2021,18 @@ public class AdminREST {
         }
         Map map = Tools.getDMap();
         GoodsOrder order = em.find(GoodsOrder.class, id);
-        adminService.saveLog(user, "修改成功订单", "订单号：" + order.getSerialId() + " 支付金额：" + order.getPaidPrice() + " 修改为：" + paidPrice);
-        order.setPaidPrice(new BigDecimal(paidPrice));
-        order.setPrice(new BigDecimal(paidPrice));
+        adminService.saveLog(user,
+                "修改成功订单", "订单号：" + order.getSerialId() + " 支付金额：" + order.getPaidPrice() + " 修改为：" + paidPrice);
+        order.setPaidPrice(
+                new BigDecimal(paidPrice));
+        order.setPrice(
+                new BigDecimal(paidPrice));
         em.merge(order);
-        map.put("msg", "操作成功！");
-        map.put("success", "1");
+
+        map.put(
+                "msg", "操作成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1677,15 +2052,20 @@ public class AdminREST {
         SysUser user = adminService.getUserByLoginCode(auth);
         if (!SysUserTypeEnum.SUPER.equals(user.getAdminType())) {
             throw new EjbMessageException("您没有权限");
+
         }
         GoodsOrder order = em.find(GoodsOrder.class, id);
-        if (!order.getStatus().equals(OrderStatusEnum.EARNEST)) {
+        if (!order.getStatus()
+                .equals(OrderStatusEnum.EARNEST)) {
             throw new EjbMessageException("订单必须是定金状态");
         }
-        if (order.getDivideUser() == null) {
+
+        if (order.getDivideUser()
+                == null) {
             throw new EjbMessageException("订单不存在分成大区经理");
         }
         Date payDate = null;
+
         try {
             if (Tools.isNotBlank(date)) {
                 payDate = Tools.parseDate(date, "yyyy-MM-dd");
@@ -1693,25 +2073,36 @@ public class AdminREST {
         } catch (Exception e) {
             payDate = null;
         }
-        if (payDate == null) {
+        if (payDate
+                == null) {
             throw new EjbMessageException("请输入分成时间");
         }
+
         //支付超时订单
         order.setStatus(OrderStatusEnum.PAYMENT_TIMEOUT);
+
         em.merge(order);
-        
+
         //生成返回大区提成
         UserWageLog userWageLog = new UserWageLog();
-        userWageLog.setAmount(new BigDecimal(userAmount));
+
+        userWageLog.setAmount(
+                new BigDecimal(userAmount));
         userWageLog.setGoodsOrder(order);
+
         userWageLog.setPayDate(payDate);
+
         userWageLog.setUser(order.getDivideUser());
         userWageLog.setCategory(order.getCategory());
         em.persist(userWageLog);
         Map map = Tools.getDMap();
-        adminService.saveLog(user, "作废订单并且提成", "订单号：" + order.getSerialId() + " 提成金额：" + order.getPaidPrice() + " 提成时间：" + date);
-        map.put("msg", "操作成功！");
-        map.put("success", "1");
+
+        adminService.saveLog(user,
+                "作废订单并且提成", "订单号：" + order.getSerialId() + " 提成金额：" + order.getPaidPrice() + " 提成时间：" + date);
+        map.put(
+                "msg", "操作成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1743,19 +2134,26 @@ public class AdminREST {
         if (Tools.isNotBlank(peopleCountFee)) {
             order.setPeopleCountFee(new BigDecimal(peopleCountFee));
         }
-        adminService.saveLog(user, "创建补充订单", "订单号：" + order.getSerialId() + " 支付时间：" + payDate + " 支付金额：" + amount + " 人数费：" + Tools.getString(peopleCountFee) + " 金额类型：" + Tools.getString(orderRecordType));
+
+        adminService.saveLog(user,
+                "创建补充订单", "订单号：" + order.getSerialId() + " 支付时间：" + payDate + " 支付金额：" + amount + " 人数费：" + Tools.getString(peopleCountFee) + " 金额类型：" + Tools.getString(orderRecordType));
         OrderRecord orderRecord = new OrderRecord();
+
         orderRecord.setGatewayType(PaymentGatewayTypeEnum.valueOf(gatewayType));
         orderRecord.setPayDate(Tools.parseDate(payDate, "yyyy-MM-dd"));
         orderRecord.setType(OrderRecordTypeEnum.valueOf(orderRecordType));
         orderRecord.setGoods(order.getGoods());
         orderRecord.setOrder(order);
-        orderRecord.setPrice(new BigDecimal(amount));
+
+        orderRecord.setPrice(
+                new BigDecimal(amount));
         em.persist(orderRecord);
+
         order.setLastPayDate(Tools.parseDate(payDate, "yyyy-MM-dd"));
         order.setGatewayType(PaymentGatewayTypeEnum.valueOf(gatewayType));
         order.setPaidPrice(order.getPaidPrice().add(new BigDecimal(amount)));
-        if (OrderRecordTypeEnum.valueOf(orderRecordType).equals(OrderRecordTypeEnum.FINAL_PAYMENT)) {
+        if (OrderRecordTypeEnum.valueOf(orderRecordType)
+                .equals(OrderRecordTypeEnum.FINAL_PAYMENT)) {
             order.setStatus(OrderStatusEnum.WAIT_SIGN_CONTRACT);
             order.setEndDate(new Date());
             order.setLimitEnd(Tools.addYear(Tools.parseDate(payDate, "yyyy-MM-dd"), 1));
@@ -1799,9 +2197,13 @@ public class AdminREST {
             }
             //增加代理的金额
         }
+
         em.merge(order);
-        map.put("msg", "操作成功！");
-        map.put("success", "1");
+
+        map.put(
+                "msg", "操作成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1817,7 +2219,9 @@ public class AdminREST {
      */
     @GET
     @Path("ad_list")
-    public String getAdList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("search") String search, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getAdList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("search") String search, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Map searchMap = new HashMap();
@@ -1849,25 +2253,37 @@ public class AdminREST {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         DicDefUserAmount ddua = new DicDefUserAmount();
-        TypedQuery<DicDefUserAmount> query = em.createQuery("SELECT d FROM DicDefUserAmount d WHERE d.category = :category AND d.type = :type", DicDefUserAmount.class);
-        query.setParameter("type", type).setParameter("category", category);
+        TypedQuery<DicDefUserAmount> query = em.createQuery("SELECT d FROM DicDefUserAmount d WHERE d.category = :category AND d.type = :type", DicDefUserAmount.class
+        );
+        query.setParameter(
+                "type", type).setParameter("category", category);
         List<DicDefUserAmount> list = query.getResultList();
-        if (list != null && !list.isEmpty()) {
+        if (list
+                != null && !list.isEmpty()) {
             ddua = list.get(0);
         }
-        ddua.setAmount(new BigDecimal(amount));
+
+        ddua.setAmount(
+                new BigDecimal(amount));
         ddua.setType(type);
+
         ddua.setCategory(category);
-        if (ddua.getId() != null) {
+
+        if (ddua.getId()
+                != null) {
             em.merge(ddua);
             adminService.saveLog(user, "修改默认分成大区经理分成金额", " category：" + Tools.getString(category) + " amount：" + Tools.getString(amount) + " type：" + Tools.getString(type));
         } else {
             em.persist(ddua);
             adminService.saveLog(user, "创建默认分成大区经理分成金额", " category：" + Tools.getString(category) + " amount：" + Tools.getString(amount) + " type：" + Tools.getString(type));
         }
-        map.put("data", ddua);
-        map.put("success", "1");
-        map.put("msg", "操作成功！");
+
+        map.put(
+                "data", ddua);
+        map.put(
+                "success", "1");
+        map.put(
+                "msg", "操作成功！");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1886,14 +2302,20 @@ public class AdminREST {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         DicDefUserAmount ddua = null;
-        TypedQuery<DicDefUserAmount> query = em.createQuery("SELECT d FROM DicDefUserAmount d WHERE d.category = :category AND d.type = :type", DicDefUserAmount.class);
-        query.setParameter("type", type).setParameter("category", category);
+        TypedQuery<DicDefUserAmount> query = em.createQuery("SELECT d FROM DicDefUserAmount d WHERE d.category = :category AND d.type = :type", DicDefUserAmount.class
+        );
+        query.setParameter(
+                "type", type).setParameter("category", category);
         List<DicDefUserAmount> list = query.getResultList();
-        if (list != null && !list.isEmpty()) {
+        if (list
+                != null && !list.isEmpty()) {
             ddua = list.get(0);
         }
-        map.put("data", ddua);
-        map.put("success", "1");
+
+        map.put(
+                "data", ddua);
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1910,10 +2332,14 @@ public class AdminREST {
     public String getDicDefUserAmountList(@CookieParam("auth") String auth, @QueryParam("category") String category) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
-        TypedQuery<DicDefUserAmount> query = em.createQuery("SELECT d FROM DicDefUserAmount d WHERE d.category = :category", DicDefUserAmount.class);
-        query.setParameter("category", category);
-        map.put("data", query.getResultList());
-        map.put("success", "1");
+        TypedQuery<DicDefUserAmount> query = em.createQuery("SELECT d FROM DicDefUserAmount d WHERE d.category = :category", DicDefUserAmount.class
+        );
+        query.setParameter(
+                "category", category);
+        map.put(
+                "data", query.getResultList());
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1936,23 +2362,33 @@ public class AdminREST {
             throw new EjbMessageException("您没有权限");
         }
         Map map = Tools.getDMap();
+
         for (Long id : ids) {
             NewAd ad = em.find(NewAd.class, id);
             if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && ad.getCreateUser() != null && !ad.getCreateUser().equals(user)) {
                 throw new EjbMessageException("您没有权限删除");
             }
-            ad.setDeleted(true);
+
+            ad.setDeleted(
+                    true);
             SysUser sysUser = ad.getUser();//分成人
-            if (ad.getCategory().equals(CategoryEnum.SERVICE_PEOPLE)) {
+
+            if (ad.getCategory()
+                    .equals(CategoryEnum.SERVICE_PEOPLE)) {
                 sysUser.setBalance(sysUser.getBalance().add(ad.getUserBalanceAmount()));
-            } else if (ad.getCategory().equals(CategoryEnum.MAKE_FRIENDS)) {
+            } else if (ad.getCategory()
+                    .equals(CategoryEnum.MAKE_FRIENDS)) {
                 sysUser.setBalance(sysUser.getBalance().add(ad.getUserBalanceAmount()));
             } else {
                 throw new EjbMessageException("数据异常");
             }
+
             em.merge(ad);
+
             em.merge(sysUser);
-            adminService.saveLog(user, "广告作废", " id：" + ad.getId() + " 名字：" + Tools.getString(ad.getName()));
+
+            adminService.saveLog(user,
+                    "广告作废", " id：" + ad.getId() + " 名字：" + Tools.getString(ad.getName()));
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -1978,11 +2414,15 @@ public class AdminREST {
             throw new EjbMessageException("您必须是超级管理员");
         }
         Map map = Tools.getDMap();
+
         for (Long id : ids) {
             SysUser sysUser = em.find(SysUser.class, id);
-            sysUser.setDeleted(true);
+            sysUser.setDeleted(
+                    true);
             em.merge(sysUser);
-            adminService.saveLog(user, "删除用户", " 账号：" + sysUser.getAccount());
+
+            adminService.saveLog(user,
+                    "删除用户", " 账号：" + sysUser.getAccount());
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -2003,8 +2443,10 @@ public class AdminREST {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         NewAd ad = em.find(NewAd.class, id);
-        map.put("data", ad);
-        map.put("success", "1");
+        map.put(
+                "data", ad);
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -2024,13 +2466,21 @@ public class AdminREST {
         Goods goods = em.find(Goods.class, id);
         GoodsOrder order = adminService.findOrderByOrder(goods);
         TypedQuery<GoodsWeChat> query = em.createQuery("SELECT gwc FROM GoodsWeChat gwc WHERE gwc.goods = :goods AND gwc.deleted = FALSE ORDER BY gwc.createDate DESC", GoodsWeChat.class);
-        query.setParameter("goods", goods);
+
+        query.setParameter(
+                "goods", goods);
         List<GoodsWeChat> list = query.getResultList();
-        map.put("data", goods);
-        map.put("order", order);
-        map.put("list", list);
-        map.put("total", list.size());
-        map.put("success", "1");
+
+        map.put(
+                "data", goods);
+        map.put(
+                "order", order);
+        map.put(
+                "list", list);
+        map.put(
+                "total", list.size());
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -2048,7 +2498,9 @@ public class AdminREST {
      */
     @GET
     @Path("wage_list")
-    public String getWageList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("start") String start, @QueryParam("end") String end, @QueryParam("search") String search, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getWageList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("start") String start, @QueryParam("end") String end, @QueryParam("search") String search, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Date startDate = null;
@@ -2119,7 +2571,9 @@ public class AdminREST {
      */
     @GET
     @Path("order_wage_list")
-    public String getOrderWageList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("start") String start, @QueryParam("end") String end, @QueryParam("search") String search, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getOrderWageList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("start") String start, @QueryParam("end") String end, @QueryParam("search") String search, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Date startDate = null;
@@ -2188,7 +2642,9 @@ public class AdminREST {
      */
     @GET
     @Path("user_wage_info")
-    public String getUserWageInfo(@CookieParam("auth") String auth, @QueryParam("uid") Long uid, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getUserWageInfo(@CookieParam("auth") String auth, @QueryParam("uid") Long uid, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Date startDate = null;
@@ -2206,28 +2662,42 @@ public class AdminREST {
             }
         } catch (Exception e) {
             endDate = null;
+
         }
         SysUser sysUser = em.find(SysUser.class, uid);
 
         //订单部分
         TypedQuery<WageLog> wageQuery = em.createQuery("SELECT w FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate <= :endDate AND w.payDate >= :startDate AND w.type = :type ORDER BY w.payDate DESC", WageLog.class);
-        wageQuery.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.RECOMMEND);
+
+        wageQuery.setParameter(
+                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.RECOMMEND);
         List<WageLog> wageList = wageQuery.getResultList();
 
         //广告部分
         Query countQuery = em.createQuery("SELECT COUNT(w) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate <= :endDate AND w.payDate >= :startDate AND w.type = :type");
-        countQuery.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.ACCEPT);
+
+        countQuery.setParameter(
+                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.ACCEPT);
         Long totalCount = (Long) countQuery.getSingleResult();
         TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate <= :endDate AND w.payDate >= :startDate AND w.type = :type ORDER BY w.payDate DESC", WageLog.class);
         int startIndex = (pageIndex - 1) * maxPerPage;
+
         query.setFirstResult(startIndex);
+
         query.setMaxResults(maxPerPage);
-        query.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.ACCEPT);
+
+        query.setParameter(
+                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.ACCEPT);
         List<WageLog> list = query.getResultList();
-        map.put("totalCount", totalCount);
-        map.put("data", list);
-        map.put("wageList", wageList.size() < 1 ? null : wageList);
-        map.put("success", "1");
+
+        map.put(
+                "totalCount", totalCount);
+        map.put(
+                "data", list);
+        map.put(
+                "wageList", wageList.size() < 1 ? null : wageList);
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -2245,7 +2715,9 @@ public class AdminREST {
      */
     @GET
     @Path("user_wage_ad_info")
-    public String getUserWageAdInfo(@CookieParam("auth") String auth, @QueryParam("uid") Long uid, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getUserWageAdInfo(@CookieParam("auth") String auth, @QueryParam("uid") Long uid, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Date startDate = null;
@@ -2263,22 +2735,33 @@ public class AdminREST {
             }
         } catch (Exception e) {
             endDate = null;
+
         }
         SysUser sysUser = em.find(SysUser.class, uid);
 
         //广告部分
         Query countQuery = em.createQuery("SELECT COUNT(w) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate <= :endDate AND w.payDate >= :startDate AND w.type = :type");
-        countQuery.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.SEND);
+
+        countQuery.setParameter(
+                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.SEND);
         Long totalCount = (Long) countQuery.getSingleResult();
         TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate <= :endDate AND w.payDate >= :startDate AND w.type = :type ORDER BY w.payDate DESC", WageLog.class);
         int startIndex = (pageIndex - 1) * maxPerPage;
+
         query.setFirstResult(startIndex);
+
         query.setMaxResults(maxPerPage);
-        query.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.SEND);
+
+        query.setParameter(
+                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.SEND);
         List list = query.getResultList();
-        map.put("totalCount", totalCount);
-        map.put("data", list);
-        map.put("success", "1");
+
+        map.put(
+                "totalCount", totalCount);
+        map.put(
+                "data", list);
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -2385,17 +2868,25 @@ public class AdminREST {
         if (!(OrderStatusEnum.SUCCESS.equals(order.getStatus()) || OrderStatusEnum.WAIT_SIGN_CONTRACT.equals(order.getStatus()))) {
             throw new EjbMessageException("订单不是完成状态！");
         }
-        adminService.saveLog(user, "修改订单日期", " 订单号：" + order.getSerialId() + " 日期：" + Tools.getString(Tools.formatDate(order.getLastPayDate(), "yyyy-MM-dd")) + "-" + Tools.getString(payDate));
+
+        adminService.saveLog(user,
+                "修改订单日期", " 订单号：" + order.getSerialId() + " 日期：" + Tools.getString(Tools.formatDate(order.getLastPayDate(), "yyyy-MM-dd")) + "-" + Tools.getString(payDate));
         Goods goods = order.getGoods();
         Date endDate = Tools.parseDate(payDate, "yyyy-MM-dd");
+
         order.setLimitEnd(Tools.addYear(endDate, 1));
         order.setLimitStart(endDate);
+
         order.setEndDate(endDate);
+
         order.setLastPayDate(endDate);
         TypedQuery<OrderRecord> typedQuery = em.createQuery("SELECT o FROM OrderRecord o WHERE o.order = :order ORDER BY o.createDate DESC", OrderRecord.class);
-        typedQuery.setParameter("order", order);
+
+        typedQuery.setParameter(
+                "order", order);
         List<OrderRecord> orderRecordList = typedQuery.getResultList();
-        if (orderRecordList != null && !orderRecordList.isEmpty()) {
+        if (orderRecordList
+                != null && !orderRecordList.isEmpty()) {
             OrderRecord orderRecord = orderRecordList.get(0);
             orderRecord.setPayDate(endDate);
             em.merge(orderRecord);
@@ -2404,10 +2895,15 @@ public class AdminREST {
         goods.setStatusStartDate(order.getLimitStart());
         goods.setStatusEndDate(order.getLimitEnd());
         em.merge(goods);
+
         em.merge(order);
-        map.put("data", order);
-        map.put("msg", "保存成功！");
-        map.put("success", "1");
+
+        map.put(
+                "data", order);
+        map.put(
+                "msg", "保存成功！");
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -2440,7 +2936,9 @@ public class AdminREST {
      */
     @GET
     @Path("order_task_list")
-    public String orderTaskList(@CookieParam("auth") String auth, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String orderTaskList(@CookieParam("auth") String auth, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
 
         Map map = Tools.getDMap();
@@ -2561,7 +3059,9 @@ public class AdminREST {
      */
     @GET
     @Path("my_new_order_list")
-    public String myNewOrderList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String myNewOrderList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Map searchMap = new HashMap();
@@ -2610,7 +3110,9 @@ public class AdminREST {
      */
     @GET
     @Path("my_new_ad_list")
-    public String myNewAdList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String myNewAdList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Map searchMap = new HashMap();
@@ -2659,7 +3161,9 @@ public class AdminREST {
      */
     @GET
     @Path("region_list")
-    public String regionNewAdList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String regionNewAdList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         List list = new LinkedList<>();
@@ -2878,7 +3382,9 @@ public class AdminREST {
      */
     @GET
     @Path("user_wage_log_list")
-    public String getUserWageLogList(@CookieParam("auth") String auth, @QueryParam("start") String start, @QueryParam("end") String end, @QueryParam("search") String search, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+    public String getUserWageLogList(@CookieParam("auth") String auth, @QueryParam("start") String start, @QueryParam("end") String end, @QueryParam("search") String search, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Date startDate = null;
@@ -2943,10 +3449,14 @@ public class AdminREST {
         }
         Map map = Tools.getDMap();
         SysUser newUser = em.find(SysUser.class, newUid);
-        adminService.saveLog(user, "批量修改地区的大区经理", " category：" + Tools.getString(category) + " province：" + Tools.getString(province));
+        adminService.saveLog(user,
+                "批量修改地区的大区经理", " category：" + Tools.getString(category) + " province：" + Tools.getString(province));
         TypedQuery<Goods> goodsQuery = em.createQuery("SELECT g FROM Goods g WHERE g.deleted = FALSE AND g.province = :province AND g.category  = :category", Goods.class);
-        goodsQuery.setParameter("province", province).setParameter("category", CategoryEnum.valueOf(category));
-        for (Goods goods : goodsQuery.getResultList()) {
+
+        goodsQuery.setParameter(
+                "province", province).setParameter("category", CategoryEnum.valueOf(category));
+        for (Goods goods
+                : goodsQuery.getResultList()) {
             goods.setUser(newUser);
             em.merge(goods);
             TypedQuery<GoodsOrder> goodsOrderQuery = em.createQuery("SELECT g FROM GoodsOrder g WHERE g.deleted = FALSE AND g.goods = :goods AND g.category = :category", GoodsOrder.class);
@@ -2956,8 +3466,11 @@ public class AdminREST {
                 em.merge(goodsOrder);
             }
         }
-        map.put("success", "1");
-        map.put("msg", "修改成功");
+
+        map.put(
+                "success", "1");
+        map.put(
+                "msg", "修改成功");
         return Tools.caseObjectToJson(map);
     }
 
@@ -3003,20 +3516,28 @@ public class AdminREST {
         Map map = Tools.getDMap();
         if (Tools.isBlank(serialId)) {
             throw new EjbMessageException("请输入订单号");
+
         }
-        TypedQuery<GoodsOrder> query = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.deleted = FALSE AND a.serialId = :serialId", GoodsOrder.class);
-        query.setParameter("serialId", serialId);
+        TypedQuery<GoodsOrder> query = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.deleted = FALSE AND a.serialId = :serialId", GoodsOrder.class
+        );
+        query.setParameter(
+                "serialId", serialId);
         GoodsOrder order = null;
+
         try {
             order = query.getSingleResult();
         } catch (Exception e) {
             order = null;
         }
-        if (order == null) {
+        if (order
+                == null) {
             throw new EjbMessageException("没有找到订单，若确认订单号正确，请联系管理员");
         }
-        map.put("data", order);
-        map.put("success", "1");
+
+        map.put(
+                "data", order);
+        map.put(
+                "success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -3043,12 +3564,18 @@ public class AdminREST {
         adminService.saveLog(user, "批量修改商品价格通过类型", " userAmount：" + Tools.getString(userAmount) + " newUid：" + newUid + " id：" + id);
         GoodsOrder order = em.find(GoodsOrder.class, id);
         SysUser sysUser = em.find(SysUser.class, newUid);
-        order.setUserAmount(new BigDecimal(userAmount));
+
+        order.setUserAmount(
+                new BigDecimal(userAmount));
         order.setDivideUser(sysUser);
+
         em.merge(order);
         TypedQuery<UserWageLog> countSql = em.createQuery("SELECT a FROM UserWageLog a WHERE a.goodsOrder = :goodsOrder", UserWageLog.class);
-        countSql.setParameter("goodsOrder", order);
-        if (countSql.getResultList() == null || countSql.getResultList().size() < 1) {
+
+        countSql.setParameter(
+                "goodsOrder", order);
+        if (countSql.getResultList()
+                == null || countSql.getResultList().size() < 1) {
             UserWageLog userWageLog = new UserWageLog();
             userWageLog.setAmount(new BigDecimal(userAmount));
             userWageLog.setCategory(order.getCategory());
@@ -3064,8 +3591,11 @@ public class AdminREST {
             }
         }
         Map map = Tools.getDMap();
-        map.put("success", "1");
-        map.put("msg", "修改成功");
+
+        map.put(
+                "success", "1");
+        map.put(
+                "msg", "修改成功");
         return Tools.caseObjectToJson(map);
     }
 
@@ -3076,23 +3606,33 @@ public class AdminREST {
         SysUser u1 = em.find(SysUser.class, 1788l);//5500  11000
         SysUser u2 = em.find(SysUser.class, 1789l);//5125 5410 10535
         TypedQuery<NewAd> queryad = em.createQuery("SELECT a FROM NewAd a WHERE a.user = :u2 ", NewAd.class);
-        queryad.setParameter("u2", u2);
-        for (NewAd ad : queryad.getResultList()) {
+
+        queryad.setParameter(
+                "u2", u2);
+        for (NewAd ad
+                : queryad.getResultList()) {
             ad.setUser(u1);
             em.merge(ad);
         }
         TypedQuery<GoodsOrder> queryOrderRecord = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.agentUser = :u2 ", GoodsOrder.class);
-        queryOrderRecord.setParameter("u2", u2);
-        for (GoodsOrder order : queryOrderRecord.getResultList()) {
+
+        queryOrderRecord.setParameter(
+                "u2", u2);
+        for (GoodsOrder order
+                : queryOrderRecord.getResultList()) {
             order.setAgentUser(u1);
             em.merge(order);
         }
         TypedQuery<WageLog> queryWageLog = em.createQuery("SELECT a FROM WageLog a WHERE a.user = :u2 ", WageLog.class);
-        queryWageLog.setParameter("u2", u2);
-        for (WageLog log : queryWageLog.getResultList()) {
+
+        queryWageLog.setParameter(
+                "u2", u2);
+        for (WageLog log
+                : queryWageLog.getResultList()) {
             log.setUser(u1);
             em.merge(log);
         }
+
         return "ok";
     }
 
@@ -3100,8 +3640,10 @@ public class AdminREST {
     @Path("dosome1")
     public String dosome1(@CookieParam("auth") String auth) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
-        TypedQuery<Goods> goodsQueryad = em.createQuery("SELECT a FROM Goods a WHERE a.deleted = FALSE ", Goods.class);
-        for (Goods goods : goodsQueryad.getResultList()) {
+        TypedQuery<Goods> goodsQueryad = em.createQuery("SELECT a FROM Goods a WHERE a.deleted = FALSE ", Goods.class
+        );
+        for (Goods goods
+                : goodsQueryad.getResultList()) {
             if (goods.getType().equals(GoodsTypeEnum.COUNTY) || goods.getType().equals(GoodsTypeEnum.SELF_COUNTY)) {
                 //获取最后一个字和倒数第二个字
                 String name = goods.getName();
@@ -3138,6 +3680,7 @@ public class AdminREST {
             }
 
         }
+
         return "ok";
     }
 
@@ -3155,22 +3698,32 @@ public class AdminREST {
         SysUser user = em.find(SysUser.class, 2693l);//修改后的用户
         GoodsOrder order = em.find(GoodsOrder.class, 961l);//要修改的订单
         SysUser oldAgentUser = order.getAgentUser();//原来的代理
+
         order.setAgentUser(user);
+
         em.merge(order);//修改成新的代理
         TypedQuery<NewAd> newAdQueryad = em.createQuery("SELECT a FROM NewAd a WHERE a.user = :user AND a.goods = :goods AND a.deleted = FALSE ", NewAd.class);
-        newAdQueryad.setParameter("user", oldAgentUser).setParameter("goods", order.getGoods());
+
+        newAdQueryad.setParameter(
+                "user", oldAgentUser).setParameter("goods", order.getGoods());
         BigDecimal tot = BigDecimal.ZERO;
-        for (NewAd ad : newAdQueryad.getResultList()) {
+        for (NewAd ad
+                : newAdQueryad.getResultList()) {
             tot = tot.add(ad.getUserBalanceAmount());
             ad.setUser(user);
             em.merge(ad);
         }
-        user.setBalance((order.getPaidPrice().subtract(order.getPeopleCountFee())).subtract(tot));
-        user.setDeposit((order.getPaidPrice().subtract(order.getPeopleCountFee())));
+
+        user.setBalance(
+                (order.getPaidPrice().subtract(order.getPeopleCountFee())).subtract(tot));
+        user.setDeposit(
+                (order.getPaidPrice().subtract(order.getPeopleCountFee())));
         em.merge(user);
+
         oldAgentUser.setBalance(oldAgentUser.getBalance().add(tot).subtract((order.getPaidPrice().subtract(order.getPeopleCountFee()))));
         oldAgentUser.setDeposit(oldAgentUser.getDeposit().subtract((order.getPaidPrice().subtract(order.getPeopleCountFee()))));
         em.merge(oldAgentUser);
+
         return "ok";
     }
 
@@ -3188,15 +3741,20 @@ public class AdminREST {
         SysUser user = em.find(SysUser.class, 2661l);//修改后的用户
         GoodsOrder order = em.find(GoodsOrder.class, 2179l);//要修改的订单
         SysUser oldAgentUser = em.find(SysUser.class, Long.parseLong(order.getRecommendIdList().get(0)));//原来的分成人
+
         order.setRecommendIds(user.getId().toString());
         order.setRecommendNames(user.getName());
         em.merge(order);//修改成新的分成人
         TypedQuery<WageLog> wageLogQueryad = em.createQuery("SELECT a FROM WageLog a WHERE a.user = :user AND a.goodsOrder = :goodsOrder AND a.deleted = FALSE ", WageLog.class);
-        wageLogQueryad.setParameter("user", oldAgentUser).setParameter("goodsOrder", order);
-        for (WageLog wageLog : wageLogQueryad.getResultList()) {
+
+        wageLogQueryad.setParameter(
+                "user", oldAgentUser).setParameter("goodsOrder", order);
+        for (WageLog wageLog
+                : wageLogQueryad.getResultList()) {
             wageLog.setUser(user);
             em.merge(wageLog);
         }
+
         return "ok";
     }
 
@@ -3214,20 +3772,29 @@ public class AdminREST {
         SysUser user = em.find(SysUser.class, 1966L);//用户
         SysUser toUser = em.find(SysUser.class, 2612L);//目标用户
         TypedQuery<GoodsOrder> qrderQuery = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.agentUser = :user AND a.deleted = FALSE ", GoodsOrder.class);
-        qrderQuery.setParameter("user", user);
-        for (GoodsOrder order : qrderQuery.getResultList()) {
+
+        qrderQuery.setParameter(
+                "user", user);
+        for (GoodsOrder order
+                : qrderQuery.getResultList()) {
             order.setAgentUser(toUser);//修改为新的代理
             em.merge(order);
         }
         TypedQuery<NewAd> newAdQueryad = em.createQuery("SELECT a FROM NewAd a WHERE a.user = :user AND a.deleted = FALSE ", NewAd.class);
-        newAdQueryad.setParameter("user", user);
-        for (NewAd ad : newAdQueryad.getResultList()) {
+
+        newAdQueryad.setParameter(
+                "user", user);
+        for (NewAd ad
+                : newAdQueryad.getResultList()) {
             ad.setUser(toUser);//修改广告的分成人
             em.merge(ad);
         }
         TypedQuery<WageLog> wageLogQueryad = em.createQuery("SELECT a FROM WageLog a WHERE a.user = :user AND a.deleted = FALSE ", WageLog.class);
-        wageLogQueryad.setParameter("user", user);
-        for (WageLog wageLog : wageLogQueryad.getResultList()) {
+
+        wageLogQueryad.setParameter(
+                "user", user);
+        for (WageLog wageLog
+                : wageLogQueryad.getResultList()) {
             wageLog.setUser(toUser);//修改工资
             em.merge(wageLog);
         }
@@ -3235,11 +3802,15 @@ public class AdminREST {
         //注意查看用户有没有推荐的平台
         //***********************************************
         //转移用户余额
+
         toUser.setBalance(toUser.getBalance().add(user.getBalance()));
         toUser.setDeposit(toUser.getDeposit().add(user.getDeposit()));
         em.merge(toUser);
+
         user.setDeleted(Boolean.TRUE);
+
         em.merge(user);
+
         return "ok";
     }
 
@@ -3254,9 +3825,12 @@ public class AdminREST {
     @Path("init_goods")
     public String initGoods(@CookieParam("auth") String auth) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
-        TypedQuery<Goods> goodsq = em.createQuery("SELECT a FROM Goods a WHERE a.deleted = FALSE AND a.category = :category", Goods.class);
-        goodsq.setParameter("category", CategoryEnum.MAKE_FRIENDS);
-        for (Goods goods : goodsq.getResultList()) {
+        TypedQuery<Goods> goodsq = em.createQuery("SELECT a FROM Goods a WHERE a.deleted = FALSE AND a.category = :category", Goods.class
+        );
+        goodsq.setParameter(
+                "category", CategoryEnum.MAKE_FRIENDS);
+        for (Goods goods
+                : goodsq.getResultList()) {
             TypedQuery<Long> countSql = em.createQuery("SELECT COUNT(a) FROM Goods a WHERE a.deleted = FALSE AND a.category = :category AND a.name = :name", Long.class);
             countSql.setParameter("category", CategoryEnum.MAKE_FRIENDS).setParameter("name", goods.getName());
             if (countSql.getSingleResult() > 1) {
@@ -3266,6 +3840,7 @@ public class AdminREST {
                 }
             }
         }
+
         return "ok";
     }
 
@@ -3280,9 +3855,12 @@ public class AdminREST {
     @Path("change_daqu")
     public String changeDaqu(@CookieParam("auth") String auth) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
-        TypedQuery<GoodsOrder> goodsq = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.deleted = FALSE AND a.category = :category AND a.goods.type = :type AND a.divideUser IS NOT NULL", GoodsOrder.class);
-        goodsq.setParameter("category", CategoryEnum.MAKE_FRIENDS).setParameter("type", GoodsTypeEnum.HOT);
-        for (GoodsOrder goods : goodsq.getResultList()) {
+        TypedQuery<GoodsOrder> goodsq = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.deleted = FALSE AND a.category = :category AND a.goods.type = :type AND a.divideUser IS NOT NULL", GoodsOrder.class
+        );
+        goodsq.setParameter(
+                "category", CategoryEnum.MAKE_FRIENDS).setParameter("type", GoodsTypeEnum.HOT);
+        for (GoodsOrder goods
+                : goodsq.getResultList()) {
             goods.setUserAmount(new BigDecimal(200));
             em.merge(goods);
             TypedQuery<UserWageLog> countSql = em.createQuery("SELECT a FROM UserWageLog a WHERE a.goodsOrder = :goodsOrder", UserWageLog.class);
@@ -3292,6 +3870,7 @@ public class AdminREST {
                 em.merge(log);
             }
         }
+
         return "ok";
     }
 
@@ -3355,25 +3934,37 @@ public class AdminREST {
 //            if (list.contains(newString)) {
 //                System.out.println("******" + newString);
 //            }
-            TypedQuery<GoodsOrder> goodsq = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.deleted = FALSE AND a.status != :status AND a.category = :category AND a.goods.name = :name", GoodsOrder.class);
-            goodsq.setParameter("category", CategoryEnum.MAKE_FRIENDS).setParameter("name", newString).setParameter("status", OrderStatusEnum.TERMINATION);
+            TypedQuery<GoodsOrder> goodsq = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.deleted = FALSE AND a.status != :status AND a.category = :category AND a.goods.name = :name", GoodsOrder.class
+            );
+            goodsq.setParameter(
+                    "category", CategoryEnum.MAKE_FRIENDS).setParameter("name", newString).setParameter("status", OrderStatusEnum.TERMINATION);
 //            if (goodsq.getResultList().size() != 1) {
 //                System.out.println(newString);
 //            }
             GoodsOrder order = goodsq.getSingleResult();
             Goods goods = order.getGoods();
             Query newAdq = em.createQuery("UPDATE NewAd a SET a.category = :newcategory WHERE a.deleted = FALSE AND a.category = :category AND a.goods = :goods");
-            newAdq.setParameter("category", CategoryEnum.MAKE_FRIENDS).setParameter("goods", goods).setParameter("newcategory", CategoryEnum.SERVICE_PEOPLE);
+
+            newAdq.setParameter(
+                    "category", CategoryEnum.MAKE_FRIENDS).setParameter("goods", goods).setParameter("newcategory", CategoryEnum.SERVICE_PEOPLE);
             j = j + newAdq.executeUpdate();
             Query userWageLogq = em.createQuery("UPDATE UserWageLog a SET a.category = :newcategory WHERE a.deleted = FALSE AND a.category = :category AND a.goodsOrder = :goodsOrder");
-            userWageLogq.setParameter("category", CategoryEnum.MAKE_FRIENDS).setParameter("goodsOrder", order).setParameter("newcategory", CategoryEnum.SERVICE_PEOPLE);
+
+            userWageLogq.setParameter(
+                    "category", CategoryEnum.MAKE_FRIENDS).setParameter("goodsOrder", order).setParameter("newcategory", CategoryEnum.SERVICE_PEOPLE);
             j = j + userWageLogq.executeUpdate();
             Query wageLogq = em.createQuery("UPDATE WageLog a SET a.category = :newcategory WHERE a.deleted = FALSE AND a.category = :category AND a.goodsOrder = :goodsOrder");
-            wageLogq.setParameter("category", CategoryEnum.MAKE_FRIENDS).setParameter("goodsOrder", order).setParameter("newcategory", CategoryEnum.SERVICE_PEOPLE);
+
+            wageLogq.setParameter(
+                    "category", CategoryEnum.MAKE_FRIENDS).setParameter("goodsOrder", order).setParameter("newcategory", CategoryEnum.SERVICE_PEOPLE);
             j = j + wageLogq.executeUpdate();
+
             order.setCategory(CategoryEnum.SERVICE_PEOPLE);
+
             goods.setCategory(CategoryEnum.SERVICE_PEOPLE);
+
             em.merge(order);
+
             em.merge(goods);
         }
         System.out.println(i);

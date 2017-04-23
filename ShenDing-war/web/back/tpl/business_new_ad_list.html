@@ -23,12 +23,27 @@
                             刷新
                         </button>
                     </div>
-                    <form role="form" name="form" ng-submit="getList(1, false)()">
+                    <form role="form" name="form" ng-submit="getList(1, false)()"  enctype="multipart/form-data">
                         <div class="col-sm-5">
                             <div class="input-group">
                                 <input class="input-sm form-control" ng-model="listSearch" type="text" placeholder="广告名称或广告主信息">
                                 <span class="input-group-btn">
                                     <button class="btn btn-sm btn-default" ng-disabled="list == null || listLoading || listLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="row wrapper">
+                    <form role="form" name="form">
+                        <div class="col-sm-12">
+                            <div class="input-group">
+                                <input class="input-sm form-control" type="file">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-sm btn-default" ng-click="uploadFile()" ng-disabled="listLoading || activeMyFile || listLoadingData" ng-class="{'active' : activeMyFile}">
+                                        <span class="text">上传</span>
+                                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>上传中...</span>
+                                    </button>
                                 </span>
                             </div>
                         </div>

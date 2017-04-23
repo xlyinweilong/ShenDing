@@ -25,7 +25,11 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,10 +44,12 @@ import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
@@ -54,6 +60,11 @@ import org.json.simple.JSONObject;
  * @author yin
  */
 @WebServlet(name = "AdminServlet", urlPatterns = {"/admin/order/*", "/admin/message/*", "/admin/account/*", "/admin/auth/*", "/admin/plate/*", "/admin/datadict/*", "/admin/common/*", "/admin/organization/*", "/admin/*"})
+@MultipartConfig(
+        fileSizeThreshold = 5_242_880, // 5M  
+        maxFileSize = 20_971_520L, //20M  
+        maxRequestSize = 41_943_040L //40M  
+)
 public class AdminServlet extends BaseServlet {
 
     @EJB
@@ -182,7 +193,7 @@ public class AdminServlet extends BaseServlet {
     public static enum PageEnum {
 
         INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
-        COSMETICS_LIST, COSMETICS_WAGE_LIST,COSMETICS_USER_WAGE_LIST;
+        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST;
 
     }
 
@@ -229,7 +240,7 @@ public class AdminServlet extends BaseServlet {
             case COSMETICS_WAGE_LIST:
                 return loadCosmeticsWageList(request, response);
             case COSMETICS_USER_WAGE_LIST:
-                return loadCosmeticsUserWageList(request,response);
+                return loadCosmeticsUserWageList(request, response);
             default:
                 throw new BadPageException();
         }
@@ -1619,7 +1630,7 @@ public class AdminServlet extends BaseServlet {
             s[5] = log.getAmount().toString();//对账用这个
             s[6] = cosmetics.getRemark() == null ? "" : cosmetics.getRemark();
             s[7] = cosmetics.getRegionalManager() == null ? "" : cosmetics.getRegionalManager().getName();
-            s[8] = cosmetics.getRegionalManagerAmount()== null ? "" : cosmetics.getRegionalManagerAmount().toString();
+            s[8] = cosmetics.getRegionalManagerAmount() == null ? "" : cosmetics.getRegionalManagerAmount().toString();
             vecCsvData.add(s);
         }
         //Exporting vector to csv file

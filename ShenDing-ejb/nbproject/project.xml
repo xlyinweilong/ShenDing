@@ -34,6 +34,7 @@
             <included-library dirs="200">file.reference.slf4j-api-1.7.7.jar</included-library>
             <included-library dirs="200">file.reference.velocity-1.7.jar</included-library>
             <included-library dirs="200">file.reference.zxing_core-3.2.0.jar</included-library>
+            <included-library dirs="200">file.reference.jxl.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>

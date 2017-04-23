@@ -26,4 +26,19 @@ public enum AdLevelEnum {
                 return "";
         }
     }
+    
+     public static AdLevelEnum getEnum(String mean) {
+        switch (mean) {
+            case "300初级":
+                return PRIMARY_300;
+            case "400初级":
+                return PRIMARY_400;
+            case "300高级":
+                return SUPER_300;
+            case "400高级":
+                return SUPER_400;
+            default:
+                return null;
+        }
+    }
 }
