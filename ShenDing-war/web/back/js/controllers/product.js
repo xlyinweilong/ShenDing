@@ -23,6 +23,41 @@ app.controller('ProductListController', ['$scope', '$http', '$modal', '$location
         $scope.dateOptions = {
             class: 'datepicker'
         };
+        
+        //上传文件
+        $scope.myFile = null;
+        $scope.activeMyFile = false;//正在上传
+        //上传方法
+        $scope.uploadFile = function () {
+            $scope.activeMyFile = true;
+            var fd = new FormData();
+            var file = document.querySelector('input[type=file]').files[0];
+            if (file == null || file.length < 1) {
+                $.scojs_message("请选择文件", $.scojs_message.TYPE_ERROR);
+                $scope.activeMyFile = false;
+            } else {
+                fd.append('file1', file);
+                $http({
+                    method: 'POST',
+                    url: "/webservice/product/upload_file_product",
+                    data: fd,
+                    headers: {'Content-Type': undefined},
+                    transformRequest: angular.identity
+                }).success(function (response) {
+                    if (response.success == 1) {
+                        //上传成功的操作
+                        $.scojs_message(response.msg, $.scojs_message.TYPE_OK);
+                    } else {
+                        $.scojs_message(response.msg, $.scojs_message.TYPE_ERROR);
+                    }
+                    $scope.activeMyFile = false;
+                    $scope.currentPage = 1;
+                    $scope.pageChanged();
+                });
+            }
+
+
+        }
         /**
          * pagination
          */
@@ -339,6 +374,43 @@ app.controller('CosmeticsListController', ['$scope', '$http', '$modal', '$locati
         $scope.dateOptions = {
             class: 'datepicker'
         };
+        
+        //上传文件
+        $scope.myFile = null;
+        $scope.activeMyFile = false;//正在上传
+        //上传方法
+        $scope.uploadFile = function () {
+            $scope.activeMyFile = true;
+            var fd = new FormData();
+            var file = document.querySelector('input[type=file]').files[0];
+            if (file == null || file.length < 1) {
+                $.scojs_message("请选择文件", $.scojs_message.TYPE_ERROR);
+                $scope.activeMyFile = false;
+            } else {
+                fd.append('file1', file);
+                $http({
+                    method: 'POST',
+                    url: "/webservice/product/upload_file_cosmetics",
+                    data: fd,
+                    headers: {'Content-Type': undefined},
+                    transformRequest: angular.identity
+                }).success(function (response) {
+                    if (response.success == 1) {
+                        //上传成功的操作
+                        $.scojs_message(response.msg, $.scojs_message.TYPE_OK);
+                    } else {
+                        $.scojs_message(response.msg, $.scojs_message.TYPE_ERROR);
+                    }
+                    $scope.activeMyFile = false;
+                    $scope.currentPage = 1;
+                    $scope.getList($scope.currentPage, false);
+
+                });
+            }
+
+
+        }
+        
         /**
          * pagination
          */

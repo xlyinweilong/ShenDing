@@ -1012,6 +1012,7 @@ app.controller('AdController', ['$scope', '$http', '$modal', '$location', "$stat
             var file = document.querySelector('input[type=file]').files[0];
             if (file == null || file.length < 1) {
                 $.scojs_message("请选择文件", $.scojs_message.TYPE_ERROR);
+                $scope.activeMyFile = false;
             } else {
                 fd.append('file1', file);
                 $http({
@@ -1021,7 +1022,6 @@ app.controller('AdController', ['$scope', '$http', '$modal', '$location', "$stat
                     headers: {'Content-Type': undefined},
                     transformRequest: angular.identity
                 }).success(function (response) {
-                    document.querySelector('input[type=file]').files[0] = null;
                     if (response.success == 1) {
                         //上传成功的操作
                         $.scojs_message(response.msg, $.scojs_message.TYPE_OK);

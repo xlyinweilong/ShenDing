@@ -7,6 +7,8 @@ import com.shending.support.*;
 import com.shending.support.enums.*;
 import com.shending.support.exception.EjbMessageException;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -17,6 +19,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.DefaultValue;
@@ -26,8 +29,14 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import jxl.Cell;
+import jxl.Sheet;
+import jxl.Workbook;
+import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * 后台管理
@@ -45,6 +54,283 @@ public class ProductREST {
     private AdminService adminService;
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
+
+    /**
+     * 导入产品
+     *
+     * @param servletRequest
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("upload_file_product")
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    public String importProduct(@CookieParam("auth") String auth, @Context HttpServletRequest servletRequest) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        FileUploadObj fileUploadObj = null;
+        Map map = Tools.getDMap();
+        try {
+            fileUploadObj = Tools.uploadFile(servletRequest, 100, null, null, null);
+        } catch (FileUploadException e) {
+            map.put("msg", e.getMessage());
+            return Tools.caseObjectToJson(map);
+        }
+        for (FileUploadItem item : fileUploadObj.getFileList()) {
+            if ("file1".equals(item.getFieldName())) {
+                File file = new File(item.getUploadFullPath());
+                jxl.Workbook readwb = null;
+                try {
+                    //构建Workbook对象, 只读Workbook对象   
+                    //直接从本地文件创建Workbook   
+                    InputStream instream = new FileInputStream(item.getUploadFullPath());
+                    readwb = Workbook.getWorkbook(instream);
+                    //Sheet的下标是从0开始   
+                    //获取第一张Sheet表   
+                    Sheet readsheet = readwb.getSheet(0);
+                    //获取Sheet表中所包含的总行数   
+                    int rsRows = readsheet.getRows();
+                    //到款时间
+                    for (int i = 1; i < rsRows; i++) {
+                        Cell[] cells = readsheet.getRow(i);
+                        String payDateStr = StringUtils.trim(cells[0].getContents());
+                        Date payDate = null;
+                        try {
+                            payDate = Tools.parseDate(payDateStr, "yyyy-MM-dd");
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行到款时间格式错误");
+                        }
+                        if (payDate == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行到款时间格式错误");
+                        }
+                        //分成代理
+                        String placeName = StringUtils.trim(cells[1].getContents());
+                        Map searchMap = new HashMap();
+                        searchMap.put("category", CategoryEnum.SERVICE_PEOPLE);
+                        searchMap.put("placeName", placeName);
+                        searchMap.put("status", OrderStatusEnum.SUCCESS);
+                        ResultList<GoodsOrder> list = adminService.findOrderList(searchMap, 1, 10, null, Boolean.TRUE);
+                        if (list.size() != 1) {
+                            throw new EjbMessageException("第" + (i + 1) + "行分成代理无法唯一定位，请手动录入该条");
+                        }
+                        GoodsOrder order = list.get(0);
+                        //产品
+                        ProductEnum productEnum = ProductEnum.getEnum(StringUtils.trim(cells[2].getContents()));
+                        if (productEnum == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行产品错误");
+                        }
+                        //数量
+                        int count = 0;
+                        try {
+                            count = Integer.parseInt(StringUtils.trimToNull(cells[3].getContents()));
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行数量错误");
+                        }
+                        //价格
+                        String amount = StringUtils.trimToNull(cells[4].getContents());
+                        BigDecimal amountBd = null;
+                        if (amount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行价格错误");
+                        }
+                        try {
+                            amountBd = new BigDecimal(amount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行价格错误");
+                        }
+                        //提成
+                        String commission = StringUtils.trimToNull(cells[5].getContents());
+                        BigDecimal commissionBd = null;
+                        if (commission == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                        }
+                        try {
+                            commissionBd = new BigDecimal(commission);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                        }
+                        //备注
+                        String remark = null;
+                        if (cells.length == 7) {
+                            remark = StringUtils.trimToNull(cells[6].getContents());
+                        }
+                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, productEnum, remark, count);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    map.put("success", "0");
+                    map.put("msg", e.getMessage());
+                    return Tools.caseObjectToJson(map);
+                } finally {
+                    readwb.close();
+                }
+                FileUtils.deleteQuietly(file);
+                map.put("msg", "上传成功");
+                map.put("success", "1");
+                map.put("data", "");
+                return Tools.caseObjectToJson(map);
+            }
+        }
+        map.put("msg", "未找到合法数据");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 导入化妆品
+     *
+     * @param servletRequest
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("upload_file_cosmetics")
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    public String importCosmetics(@CookieParam("auth") String auth, @Context HttpServletRequest servletRequest) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        FileUploadObj fileUploadObj = null;
+        Map map = Tools.getDMap();
+        try {
+            fileUploadObj = Tools.uploadFile(servletRequest, 100, null, null, null);
+        } catch (FileUploadException e) {
+            map.put("msg", e.getMessage());
+            return Tools.caseObjectToJson(map);
+        }
+        for (FileUploadItem item : fileUploadObj.getFileList()) {
+            if ("file1".equals(item.getFieldName())) {
+                File file = new File(item.getUploadFullPath());
+                jxl.Workbook readwb = null;
+                try {
+                    //构建Workbook对象, 只读Workbook对象   
+                    //直接从本地文件创建Workbook   
+                    InputStream instream = new FileInputStream(item.getUploadFullPath());
+                    readwb = Workbook.getWorkbook(instream);
+                    //Sheet的下标是从0开始   
+                    //获取第一张Sheet表   
+                    Sheet readsheet = readwb.getSheet(0);
+                    //获取Sheet表中所包含的总行数   
+                    int rsRows = readsheet.getRows();
+                    //到款时间
+                    for (int i = 1; i < rsRows; i++) {
+                        Cell[] cells = readsheet.getRow(i);
+                        String payDateStr = StringUtils.trim(cells[0].getContents());
+                        Date payDate = null;
+                        try {
+                            payDate = Tools.parseDate(payDateStr, "yyyy-MM-dd");
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行到款时间格式错误");
+                        }
+                        if (payDate == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行到款时间格式错误");
+                        }
+                        //分成代理
+                        String placeName = StringUtils.trim(cells[1].getContents());
+                        Map searchMap = new HashMap();
+                        searchMap.put("category", CategoryEnum.SERVICE_PEOPLE);
+                        searchMap.put("placeName", placeName);
+                        searchMap.put("status", OrderStatusEnum.SUCCESS);
+                        ResultList<GoodsOrder> list = adminService.findOrderList(searchMap, 1, 10, null, Boolean.TRUE);
+                        if (list.size() != 1) {
+                            throw new EjbMessageException("第" + (i + 1) + "行分成代理无法唯一定位，请手动录入该条");
+                        }
+                        GoodsOrder order = list.get(0);
+                        //产品
+                        String productName = StringUtils.trim(cells[2].getContents());
+                        int product = -1;
+                        if ("清颜原液".equals(productName)) {
+                            product = 1;
+                        } else if ("清滢柔肤洁面乳".equals(productName)) {
+                            product = 2;
+                        } else if ("舒缓清润精华液".equals(productName)) {
+                            product = 3;
+                        } else if ("馥活提亮精华液".equals(productName)) {
+                            product = 4;
+                        } else if ("多效蚕丝面膜".equals(productName)) {
+                            product = 5;
+                        } else if ("冻干粉修护套".equals(productName)) {
+                            product = 6;
+                        } else if ("冻干粉嫩肤套".equals(productName)) {
+                            product = 7;
+                        } else if ("冻干粉保湿套".equals(productName)) {
+                            product = 8;
+                        }
+                        if (product == -1) {
+                            throw new EjbMessageException("第" + (i + 1) + "行产品错误");
+                        }
+                        //数量
+                        int count = 0;
+                        try {
+                            count = Integer.parseInt(StringUtils.trimToNull(cells[3].getContents()));
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行数量错误");
+                        }
+                        //价格
+                        String amount = StringUtils.trimToNull(cells[4].getContents());
+                        BigDecimal amountBd = null;
+                        if (amount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行价格错误");
+                        }
+                        try {
+                            amountBd = new BigDecimal(amount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行价格错误");
+                        }
+                        //提成
+                        String commission = StringUtils.trimToNull(cells[5].getContents());
+                        BigDecimal commissionBd = null;
+                        if (commission == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                        }
+                        try {
+                            commissionBd = new BigDecimal(commission);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                        }
+                        //分成大区经理
+                        Long regionalManager = null;
+                        String regionalManagerName = StringUtils.trimToNull(cells[6].getContents());
+                        searchMap.clear();
+                        searchMap.put("name", regionalManagerName);
+                        searchMap.put("notStatus", SysUserStatus.PEDING);
+                        searchMap.put("adminType", SysUserTypeEnum.ADMIN);
+                        ResultList<SysUser> userList = adminService.findUserList(searchMap, 1, 10, null, Boolean.TRUE);
+                        if (userList.size() != 1) {
+                            throw new EjbMessageException("第" + (i + 1) + "行分成大区经理无法唯一定位，请手动录入该条");
+                        }
+                        regionalManager = userList.get(0).getId();
+
+                        //大区经理提成
+                        BigDecimal regionalManagerAmount = BigDecimal.ZERO;
+                        String regionalManagerAmountStr = StringUtils.trimToNull(cells[7].getContents());
+                        if (regionalManagerAmountStr != null) {
+                            try {
+                                regionalManagerAmount = new BigDecimal(regionalManagerAmountStr);
+                            } catch (Exception e) {
+                                throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                            }
+                        }
+                        //备注
+                        String remark = null;
+                        if (cells.length == 9) {
+                            remark = StringUtils.trimToNull(cells[8].getContents());
+                        }
+                        adminService.createOrUpdateCosmetics(null, order.getId(), amountBd, commissionBd, payDate, product, remark, count, regionalManager, regionalManagerAmount);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    map.put("success", "0");
+                    map.put("msg", e.getMessage());
+                    return Tools.caseObjectToJson(map);
+                } finally {
+                    readwb.close();
+                }
+                FileUtils.deleteQuietly(file);
+                map.put("msg", "上传成功");
+                map.put("success", "1");
+                map.put("data", "");
+                return Tools.caseObjectToJson(map);
+            }
+        }
+        map.put("msg", "未找到合法数据");
+        return Tools.caseObjectToJson(map);
+    }
 
     /**
      * 删除产品

@@ -644,6 +644,12 @@ public class AdminService {
         if (map.containsKey("search")) {
             criteria.add(builder.or(builder.equal(root.get("idCard"), map.get("search").toString()), builder.equal(root.get("account"), map.get("search").toString()), builder.like(root.get("name"), "%" + (String) map.get("search") + "%")));
         }
+        if (map.containsKey("name")) {
+            criteria.add(builder.equal(root.get("name"), map.get("name")));
+        }
+         if (map.containsKey("roleIdIsNotNull")) {
+            criteria.add(builder.isNotNull(root.get("sysRole")));
+        }
         if (map.containsKey("adminType")) {
             criteria.add(builder.equal(root.get("adminType"), map.get("adminType")));
         }
@@ -834,6 +840,9 @@ public class AdminService {
             } else {
                 criteria.add(builder.or(builder.equal(root.get("contractSerialId"), map.get("search").toString()), builder.equal(root.get("serialId"), map.get("search").toString()), builder.like(root.get("goods").get("name"), "%" + (String) map.get("search") + "%"), builder.like(root.get("goods").get("namePinyin"), "%" + (String) map.get("search") + "%")));
             }
+        }
+        if (map.containsKey("placeName")) {
+            criteria.add(builder.equal(root.get("goods").get("name"), map.get("placeName")));
         }
         if (map.containsKey("notStatus")) {
             criteria.add(builder.notEqual(root.get("status"), map.get("notStatus")));
@@ -1526,7 +1535,7 @@ public class AdminService {
         List<Long> longList1 = new ArrayList<>();//
         List<Long> longList2 = new ArrayList<>();//
         List<Long> longList3 = new ArrayList<>();//
-        Query query = em.createQuery("SELECT a.user.name,a.user.balance,a.user.deposit,a.user.balanceMf,a.user.depositMf,a.user.bankType,a.user.bankCardCode,SUM(a.userAmount),SUM(a.userBalanceAmount),a.user.id FROM NewAd a WHERE a.deleted = FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.user");
+        Query query = em.createQuery("SELECT a.user.name,a.user.balance,a.user.deposit,a.user.balanceMf,a.user.depositMf,a.user.bankType,a.user.bankCardCode,SUM(a.userAmount),SUM(a.userBalanceAmount),a.user.id FROM NewAd a WHERE a.deleted = FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.user.id");
         query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
         for (Object o : query.getResultList()) {
             Object[] os = (Object[]) o;
@@ -1550,7 +1559,7 @@ public class AdminService {
             str[10] = uid.toString();
             list1.add(str);
         }
-        Query queryProduct = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.productLog IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user");
+        Query queryProduct = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.productLog IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
         queryProduct.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
         for (Object o : queryProduct.getResultList()) {
             Object[] os = (Object[]) o;
@@ -1582,7 +1591,7 @@ public class AdminService {
             str[13] = "0";
             list2.add(str);
         }
-        Query query2 = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.goodsOrder IS NOT NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user");
+        Query query2 = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.goodsOrder IS NOT NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
         query2.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
         for (Object o : query2.getResultList()) {
             Object[] os = (Object[]) o;
@@ -1650,7 +1659,7 @@ public class AdminService {
         //查询化妆品
         Map<Long, String[]> listMap = new HashMap<>();
         List<Long> idCosmetics = new ArrayList<>();
-        Query queryCosmetics = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.cosmetics IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user");
+        Query queryCosmetics = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.cosmetics IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
         queryCosmetics.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
         for (Object o : queryCosmetics.getResultList()) {
             Object[] os = (Object[]) o;

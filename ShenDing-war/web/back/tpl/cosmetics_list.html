@@ -75,6 +75,21 @@
                         </p>
                     </div>
                 </div>
+                <div class="row wrapper">
+                    <form role="form" name="form">
+                        <div class="col-sm-12">
+                            <div class="input-group">
+                                <input class="input-sm form-control" type="file">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-sm btn-default" ng-click="uploadFile()" ng-disabled="listLoading || activeMyFile || listLoadingData" ng-class="{'active' : activeMyFile}">
+                                        <span class="text">上传</span>
+                                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>上传中...</span>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
                 <div class="text-center" ng-show="list == null || listLoading">
                     <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
                 </div>

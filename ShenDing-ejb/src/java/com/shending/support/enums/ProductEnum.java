@@ -28,4 +28,17 @@ public enum ProductEnum {
                 return "";
         }
     }
+    
+    public static ProductEnum getEnum(String mean){
+        switch (mean) {
+            case "玛咖加强型":
+                return MA_KA;
+            case "玛咖温和型":
+                return MA_KA_WEN_HE;
+            case "蓝莓花青素":
+                return LAN_MEI_HUA_QING_SU;
+            default:
+                return null;
+        }
+    }
 }
