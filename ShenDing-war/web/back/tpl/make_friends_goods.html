@@ -56,7 +56,11 @@
                     <thead>
                         <tr>
                             <th  style="width:5%"></th>
-                            <th  style="width:10%">名称</th>
+                            <th  style="width:10%">名称
+                                <a ng-click="orderTable('GOODS_NAME_ASC')">
+                                    <i ng-class="{'text-info':orderBy == 'GOODS_NAME_ASC'}" class="fa fa-sort-asc"></i>
+                                </a>
+                            </th>
                             <th  style="width:5%">微信</th>
                             <th  style="width:5%">QQ</th>
                             <th  style="width:10%">人数</th>

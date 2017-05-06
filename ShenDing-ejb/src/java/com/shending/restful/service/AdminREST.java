@@ -564,6 +564,9 @@ public class AdminREST {
         Map map = Tools.getDMap();
         Map subMap = new HashMap();
         subMap.put("name", user.getName());
+        subMap.put("bankCardCode", user.getBankCardCode());
+        subMap.put("idCard", user.getIdCard());
+        subMap.put("roleId", user.getRoleId());
         map.put("user", subMap);
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
@@ -1128,8 +1131,8 @@ public class AdminREST {
     @GET
     @Path("goods_list")
     public String getGoodsList(@CookieParam("auth") String auth, @QueryParam("category") String category, @QueryParam("status") String status, @QueryParam("search") String search, @DefaultValue("1")
-            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
-            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+            @QueryParam("pageIndex") Integer pageIndex, @QueryParam("orderBy") String orderBy,
+            @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         Map map = Tools.getDMap();
         Map searchMap = new HashMap();
@@ -1177,6 +1180,9 @@ public class AdminREST {
             if (statusEnum != null) {
                 searchMap.put("status", statusEnum);
             }
+        }
+        if (StringUtils.isNotBlank(orderBy) && !"null".equals(orderBy)) {
+            searchMap.put("orderBy", orderBy);
         }
         ResultList<Goods> list = adminService.findGoodsList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
         map.put("totalCount", list.getTotalCount());
@@ -1306,7 +1312,7 @@ public class AdminREST {
     @GET
     @Path("order_list")
     public String getOrderList(@CookieParam("auth") String auth, @DefaultValue("false")
-            @QueryParam("limitEnd") boolean limitEnd, @QueryParam("category") String category, @QueryParam("user") Boolean userSelf, @QueryParam("uid") Long uid, @DefaultValue("false")
+            @QueryParam("limitEnd") boolean limitEnd, @QueryParam("orderBy") String orderBy, @QueryParam("category") String category, @QueryParam("user") Boolean userSelf, @QueryParam("uid") Long uid, @DefaultValue("false")
             @QueryParam("task") boolean task, @DefaultValue("false")
             @QueryParam("contract") boolean contract, @QueryParam("status") String status, @QueryParam("search") String search, @DefaultValue("1")
             @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
@@ -1353,6 +1359,9 @@ public class AdminREST {
             statusList.add(OrderStatusEnum.SUCCESS);
             searchMap.put("statuss", statusList);
             searchMap.put("limitEnd", true);
+        }
+        if (StringUtils.isNotBlank(orderBy) && !"null".equals(orderBy)) {
+            searchMap.put("orderBy", orderBy);
         }
         ResultList<com.shending.entity.GoodsOrder> list = adminService.findOrderList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
         map.put("totalCount", list.getTotalCount());
@@ -1537,7 +1546,7 @@ public class AdminREST {
             goodsOrder.setPaidPrice(new BigDecimal(amount));
             goodsOrder.setLastPayDate(Tools.parseDate(payDate, "yyyy-MM-dd"));
             goodsOrder.setGatewayType(PaymentGatewayTypeEnum.valueOf(gatewayType));
-            if (OrderRecordTypeEnum.valueOf(orderRecordType).equals(OrderRecordTypeEnum.FINAL_PAYMENT)) {
+            if (OrderRecordTypeEnum.valueOf(orderRecordType).equals(OrderRecordTypeEnum.FINAL_PAYMENT) || OrderRecordTypeEnum.valueOf(orderRecordType).equals(OrderRecordTypeEnum.ALL_PAYMENT)) {
                 goodsOrder.setStatus(OrderStatusEnum.WAIT_SIGN_CONTRACT);
                 goodsOrder.setLimitEnd(Tools.addYear(Tools.parseDate(payDate, "yyyy-MM-dd"), 1));
                 goodsOrder.setLimitStart(Tools.parseDate(payDate, "yyyy-MM-dd"));
@@ -2978,8 +2987,8 @@ public class AdminREST {
             }
             user.setAccount(account);
         }
-        if (!user.getIdCard().equals(idCard)) {
-            if (adminService.findSysUserByIdCardCount(idCard) != null) {
+        if (user.getIdCard() == null || !user.getIdCard().equals(idCard)) {
+            if (idCard != null && adminService.findSysUserByIdCardCount(idCard) > 0) {
                 throw new EjbMessageException("身份证号已经存在");
             }
             user.setIdCard(idCard);

@@ -49,7 +49,10 @@
                         <tr>
                             <th style="width:5%"></th>
                             <th style="width:15%">代理人名称</th>
-                            <th style="width:10%">区域名称</th>
+                            <th style="width:10%">区域名称
+                                <a ng-click="orderTable('GOODS_NAME_ASC')">
+                                    <i ng-class="{'text-info':orderBy == 'GOODS_NAME_ASC'}" class="fa fa-sort-asc"></i>
+                                </a></th>
                             <th style="width:10%">省份</th>
                             <th style="width:10%">序列号</th>
                             <th style="width:10%">大区</th>

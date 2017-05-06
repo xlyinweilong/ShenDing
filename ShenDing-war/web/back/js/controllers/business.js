@@ -33,6 +33,7 @@ app.controller('GoodsController', ['$scope', '$http', '$modal', '$location', "$s
         $scope.goodsStatusList = null;
         $scope.goods = {show: false, submitting: false};
         $scope.searchUserMsg = "";
+        $scope.orderBy = null;
         /**
          * pagination
          */
@@ -51,11 +52,25 @@ app.controller('GoodsController', ['$scope', '$http', '$modal', '$location', "$s
                 $scope.currentPage = params.page;
                 loadPage = true;
             }
+            if (params.orderBy != null & params.orderBy != $scope.orderBy) {
+                $scope.orderBy = params.orderBy;
+                loadPage = true;
+            }
             if (loadPage) {
                 $scope.pageChanged();
             }
         });
-
+        $scope.orderTable = function (orderBy) {
+            if ($scope.orderBy == orderBy) {
+                $scope.orderBy = null;
+            } else {
+                $scope.orderBy = orderBy;
+            }
+            $scope.pageChanged();
+        }
+        if ($location.search().orderBy != null) {
+            $scope.orderBy = $location.search().orderBy;
+        }
         if ($location.search().search != null) {
             $scope.listSearch = $location.search().search;
         }
@@ -76,10 +91,11 @@ app.controller('GoodsController', ['$scope', '$http', '$modal', '$location', "$s
                 $scope.listLoading = true;
             }
             $location.search("search", $scope.listSearch);
+            $location.search("orderBy", $scope.orderBy);
             if ($scope.currentPage != null) {
                 $location.search("page", $scope.currentPage);
             }
-            $http.get("/webservice/admin/goods_list?pageIndex=" + $scope.currentPage + "&category=SERVICE_PEOPLE&search=" + $scope.listSearch).success(function (responseData) {
+            $http.get("/webservice/admin/goods_list?pageIndex=" + $scope.currentPage + "&orderBy=" + $scope.orderBy + "&category=SERVICE_PEOPLE&search=" + $scope.listSearch).success(function (responseData) {
                 if (responseData.success !== "1") {
                     $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
                     if (responseData.success == "-1") {
@@ -265,6 +281,7 @@ app.controller('OrderController', ['$scope', '$http', '$modal', '$location', "$s
         $scope.listLoading = false;
         $scope.listLoadingData = false;
         $scope.listSearch = "";
+        $scope.orderBy = null;
         /**
          * pagination
          */
@@ -283,17 +300,32 @@ app.controller('OrderController', ['$scope', '$http', '$modal', '$location', "$s
                 $scope.currentPage = params.page;
                 loadPage = true;
             }
+            if (params.orderBy != null & params.orderBy != $scope.orderBy) {
+                $scope.orderBy = params.orderBy;
+                loadPage = true;
+            }
             if (loadPage) {
                 $scope.pageChanged();
             }
         });
 
+        $scope.orderTable = function (orderBy) {
+            if ($scope.orderBy == orderBy) {
+                $scope.orderBy = null;
+            } else {
+                $scope.orderBy = orderBy;
+            }
+            $scope.pageChanged();
+        }
         if ($location.search().search != null) {
             $scope.listSearch = $location.search().search;
         }
 
         if ($location.search().page != null) {
             $scope.currentPage = $location.search().page;
+        }
+        if ($location.search().orderBy != null) {
+            $scope.orderBy = $location.search().orderBy;
         }
         $scope.pageChanged = function () {
             $scope.getList($scope.currentPage, false);
@@ -307,10 +339,11 @@ app.controller('OrderController', ['$scope', '$http', '$modal', '$location', "$s
                 $scope.listLoading = true;
             }
             $location.search("search", $scope.listSearch);
+            $location.search("orderBy", $scope.orderBy);
             if ($scope.currentPage != null) {
                 $location.search("page", $scope.currentPage);
             }
-            $http.get("/webservice/admin/order_list?pageIndex=" + $scope.currentPage + "&search=" + $scope.listSearch + "&category=SERVICE_PEOPLE").success(function (responseData) {
+            $http.get("/webservice/admin/order_list?pageIndex=" + $scope.currentPage + "&search=" + $scope.listSearch + "&orderBy=" + $scope.orderBy + "&category=SERVICE_PEOPLE").success(function (responseData) {
                 if (responseData.success !== "1") {
                     $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
                     if (responseData.success == "-1") {
@@ -647,6 +680,18 @@ app.controller('CreateOrderController', ['$scope', '$http', '$modal', '$location
                 $scope.saleGoodsListLoadingData = false;
             });
         };
+        $scope.commission = {};
+        $http.get("/webservice/config/commission").success(function (responseData) {
+            if (responseData.success !== "1") {
+                $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                if (responseData.success == "-1") {
+                    $state.go('access.signin');
+                }
+            } else {
+                $scope.commission = responseData.data;
+            }
+        });
+
         $scope.checkAgent = function (ele) {
             $scope.saleGoodsList = null;
             $scope.checkedAgent = ele;
@@ -655,11 +700,11 @@ app.controller('CreateOrderController', ['$scope', '$http', '$modal', '$location
             }
             $scope.searchAgentMsg = ele.name + " (" + ele.provinceStr + ") " + ele.user.roleString + "：" + ele.user.name;
             if (ele.type == 'GOVERNMENT_DIRECTLY' || ele.type == 'PROVINCIAL_CAPITAL') {
-                $scope.order.divideAmount = 2500;
+                $scope.order.divideAmount = $scope.commission.PROVINCIAL_CAPITAL;
             } else if (ele.type == 'HOT' || ele.type == 'PREFECTURE') {
-                $scope.order.divideAmount = 2200;
+                $scope.order.divideAmount = $scope.commission.PREFECTURE;
             } else {
-                $scope.order.divideAmount = 2000;
+                $scope.order.divideAmount = $scope.commission.OTHERS;
             }
         };
         $scope.divideUserList = null;

@@ -105,6 +105,26 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/order_info/:id',
                     templateUrl: '/back/tpl/order_info.html'
                 })
+                .state('app.config', {
+                    url: '/config',
+                    template: '<div ui-view></div>',
+                    resolve: {
+                        deps: [
+                            'uiLoad',
+                            function (uiLoad) {
+                                return uiLoad.load(['/back/js/controllers/config.js']);
+                            }
+                        ]
+                    }
+                })
+                .state('app.config.commission', {
+                    url: '/commission',
+                    templateUrl: '/back/tpl/config_commission.html'
+                })
+                .state('app.config.excitation', {
+                    url: '/excitation',
+                    templateUrl: '/back/tpl/config_excitation.html'
+                })
                 .state('app.goods', {
                     url: '/goods',
                     template: '<div ui-view></div>',

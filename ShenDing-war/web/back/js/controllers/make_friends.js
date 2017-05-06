@@ -33,6 +33,7 @@ app.controller('MFGoodsController', ['$scope', '$http', '$modal', '$location', "
         $scope.goodsStatusList = null;
         $scope.goods = {show: false, submitting: false};
         $scope.searchUserMsg = "";
+        $scope.orderBy = null;
         /**
          * pagination
          */
@@ -51,11 +52,25 @@ app.controller('MFGoodsController', ['$scope', '$http', '$modal', '$location', "
                 $scope.currentPage = params.page;
                 loadPage = true;
             }
+            if (params.orderBy != null & params.orderBy != $scope.orderBy) {
+                $scope.orderBy = params.orderBy;
+                loadPage = true;
+            }
             if (loadPage) {
                 $scope.pageChanged();
             }
         });
-
+        $scope.orderTable = function (orderBy) {
+            if ($scope.orderBy == orderBy) {
+                $scope.orderBy = null;
+            } else {
+                $scope.orderBy = orderBy;
+            }
+            $scope.pageChanged();
+        }
+        if ($location.search().orderBy != null) {
+            $scope.orderBy = $location.search().orderBy;
+        }
         if ($location.search().search != null) {
             $scope.listSearch = $location.search().search;
         }
@@ -76,10 +91,11 @@ app.controller('MFGoodsController', ['$scope', '$http', '$modal', '$location', "
                 $scope.listLoading = true;
             }
             $location.search("search", $scope.listSearch);
+            $location.search("orderBy", $scope.orderBy);
             if ($scope.currentPage != null) {
                 $location.search("page", $scope.currentPage);
             }
-            $http.get("/webservice/admin/goods_list?pageIndex=" + $scope.currentPage + "&category=MAKE_FRIENDS&search=" + $scope.listSearch).success(function (responseData) {
+            $http.get("/webservice/admin/goods_list?pageIndex=" + $scope.currentPage + "&orderBy=" + $scope.orderBy + "&category=MAKE_FRIENDS&search=" + $scope.listSearch).success(function (responseData) {
                 if (responseData.success !== "1") {
                     $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
                     if (responseData.success == "-1") {
@@ -265,6 +281,7 @@ app.controller('MFOrderController', ['$scope', '$http', '$modal', '$location', "
         $scope.listLoading = false;
         $scope.listLoadingData = false;
         $scope.listSearch = "";
+        $scope.orderBy = null;
         /**
          * pagination
          */
@@ -283,15 +300,28 @@ app.controller('MFOrderController', ['$scope', '$http', '$modal', '$location', "
                 $scope.currentPage = params.page;
                 loadPage = true;
             }
+            if (params.orderBy != null & params.orderBy != $scope.orderBy) {
+                $scope.orderBy = params.orderBy;
+                loadPage = true;
+            }
             if (loadPage) {
                 $scope.pageChanged();
             }
         });
-
+        $scope.orderTable = function (orderBy) {
+            if ($scope.orderBy == orderBy) {
+                $scope.orderBy = null;
+            } else {
+                $scope.orderBy = orderBy;
+            }
+            $scope.pageChanged();
+        }
         if ($location.search().search != null) {
             $scope.listSearch = $location.search().search;
         }
-
+        if ($location.search().orderBy != null) {
+            $scope.orderBy = $location.search().orderBy;
+        }
         if ($location.search().page != null) {
             $scope.currentPage = $location.search().page;
         }
@@ -306,11 +336,12 @@ app.controller('MFOrderController', ['$scope', '$http', '$modal', '$location', "
                 $scope.listSearch = "";
                 $scope.listLoading = true;
             }
+            $location.search("orderBy", $scope.orderBy);
             $location.search("search", $scope.listSearch);
             if ($scope.currentPage != null) {
                 $location.search("page", $scope.currentPage);
             }
-            $http.get("/webservice/admin/order_list?pageIndex=" + $scope.currentPage + "&search=" + $scope.listSearch + "&category=MAKE_FRIENDS").success(function (responseData) {
+            $http.get("/webservice/admin/order_list?pageIndex=" + $scope.currentPage + "&search=" + $scope.listSearch + "&orderBy=" + $scope.orderBy + "&category=MAKE_FRIENDS").success(function (responseData) {
                 if (responseData.success !== "1") {
                     $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
                     if (responseData.success == "-1") {
@@ -607,7 +638,7 @@ app.controller('MFContractListController', ['$scope', '$http', '$modal', '$locat
             var lastRenewDate = "";
             if ($scope.order.lastRenewDate instanceof Date) {
                 lastRenewDate = $scope.order.lastRenewDate.getFullYear() + "-" + ($scope.order.lastRenewDate.getMonth() + 1) + "-" + $scope.order.lastRenewDate.getDate();
-            }else if($scope.order.lastRenewDate != null){
+            } else if ($scope.order.lastRenewDate != null) {
                 lastRenewDate = $scope.order.lastRenewDate;
             }
             $http.post("/webservice/admin/sign_contract", {id: $scope.order.id, uid: $scope.checkedUser.id, contractSerialId: $scope.order.contractSerialId, lastRenew: lastRenewDate}).success(function (responseData) {
@@ -686,7 +717,7 @@ app.controller('MFCreateOrderController', ['$scope', '$http', '$modal', '$locati
                 $scope.divideUserListLoadingData = false;
             });
         };
-        
+
         $scope.dicUserAmountList = [];
 
         $http.get("/webservice/admin/dic_def_user_amount_list?category=MAKE_FRIENDS").success(function (responseData) {
@@ -699,7 +730,7 @@ app.controller('MFCreateOrderController', ['$scope', '$http', '$modal', '$locati
                 $scope.dicUserAmountList = responseData.data;
             }
         });
-        
+
         $scope.checkDivideUser = function (ele) {
             $scope.checkedDivideUser = ele;
             $scope.searchDivideUserMsg = ele.name + " (" + ele.roleString + ") ";

@@ -2,9 +2,26 @@ var userInfo = null;//user info
 /**
  *get nav
  */
-app.controller('NavCtrl', ['$scope', '$http', function ($scope, $http) {
+app.controller('NavCtrl', ['$scope', '$http', '$modal', '$state', function ($scope, $http, $modal, $state) {
         $http.get('/webservice/admin/nav').success(function (data) {
             $scope.navs = data.data;
+            if (userInfo != null && userInfo.roleId == -1 && (userInfo.idCard == null || userInfo.bankCardCode == null)) {
+                var modalInstance = $modal.open({
+                    templateUrl: '/back/tpl/go_my_info.html',
+                    controller: 'ConfirmCtrl', resolve: {
+                        modal: function () {
+                            return {title: "删除确认", content: "确定要删除已经选定的用户吗？", ok: "确定", cancel: "取消"};
+                        }
+                    }
+                });
+                modalInstance.result.then(function (confirm) {
+                    if (confirm) {
+                        userInfo.idCard = '';
+                        userInfo.bankCardCode = '';
+                        $state.go('app.setting.myinfo');
+                    }
+                });
+            }
         });
     }]);
 /**

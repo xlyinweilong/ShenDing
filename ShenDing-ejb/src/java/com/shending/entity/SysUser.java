@@ -82,7 +82,7 @@ public class SysUser implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private SysRole sysRole;
     @Column(name = "sex")
-    private int sex = 1;
+    private Integer sex = 1;
     @Column(name = "birthday")
     @Temporal(TemporalType.TIMESTAMP)
     private Date birthday;
@@ -141,6 +141,10 @@ public class SysUser implements Serializable {
     @Transient
     private boolean inLastWageDate = false;
 
+    public Integer getSex() {
+        return sex;
+    }
+
     public Long getId() {
         return id;
     }
@@ -184,6 +188,9 @@ public class SysUser implements Serializable {
     }
 
     public Long getRoleId() {
+        if (adminType != SysUserTypeEnum.MANAGE) {
+            return 0l;
+        }
         if (sysRole == null) {
             return -1l;
         }
@@ -281,15 +288,11 @@ public class SysUser implements Serializable {
         this.sysRole = sysRole;
     }
 
-    public int getSex() {
-        return sex;
-    }
-
     public String getSexStr() {
         return sex == 1 ? "男" : "女";
     }
 
-    public void setSex(int sex) {
+    public void setSex(Integer sex) {
         this.sex = sex;
     }
 

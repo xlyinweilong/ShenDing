@@ -398,7 +398,7 @@ public class Tools {
         JSONSerializer serializer = new JSONSerializer();
         return serializer.deepSerialize(o);
     }
-
+    
     public static void outputServletResponse(HttpServletResponse response, String text) throws IOException {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();

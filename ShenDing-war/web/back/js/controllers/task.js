@@ -214,6 +214,18 @@ app.controller('TaskMyNewOrderController', ['$scope', '$http', '$modal', '$locat
         $scope.dateOptions = {
             class: 'datepicker'
         };
+        
+        $http.get("/webservice/config/excitation").success(function (responseData) {
+            if (responseData.success !== "1") {
+                $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                if (responseData.success == "-1") {
+                    $state.go('access.signin');
+                }
+            } else if (responseData.data != null && responseData.data != '') {
+                $.scojs_message(responseData.data, $.scojs_message.TYPE_OK);
+            }
+        });
+        
         $scope.pageChanged = function () {
             $scope.getList($scope.currentPage, false);
         };
@@ -278,7 +290,20 @@ app.controller('MyNewAdController', ['$scope', '$http', '$modal', '$location', "
         $scope.dateOptions = {
             class: 'datepicker'
         };
+
+        $http.get("/webservice/config/excitation").success(function (responseData) {
+            if (responseData.success !== "1") {
+                $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                if (responseData.success == "-1") {
+                    $state.go('access.signin');
+                }
+            } else if (responseData.data != null && responseData.data != '') {
+                $.scojs_message(responseData.data, $.scojs_message.TYPE_OK);
+            }
+        });
+
         $scope.pageChanged = function () {
+            //提示激励语
             $scope.getList($scope.currentPage, false);
         };
         $scope.getList = function (page, isInit) {
@@ -343,6 +368,18 @@ app.controller('MyProductController', ['$scope', '$http', '$modal', '$location',
         $scope.dateOptions = {
             class: 'datepicker'
         };
+        
+        $http.get("/webservice/config/excitation").success(function (responseData) {
+            if (responseData.success !== "1") {
+                $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                if (responseData.success == "-1") {
+                    $state.go('access.signin');
+                }
+            } else if (responseData.data != null && responseData.data != '') {
+                $.scojs_message(responseData.data, $.scojs_message.TYPE_OK);
+            }
+        });
+        
         $scope.pageChanged = function () {
             $scope.getList($scope.currentPage, false);
         };

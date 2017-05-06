@@ -14,14 +14,14 @@
                 </div>
                 <div class="list-group-item">
                     <input type="text" placeholder="姓名" class="form-control no-border" ng-model="user.name">
-                </div>
+                </div><!--
                 <div class="list-group-item">
                     <div class="btn-group" ng-init="user.sex = '1'">
                         <label class="btn btn-sm btn-info"    ng-model="user.sex" btn-radio="'1'"><i class="fa fa-check text-active"></i> 男</label>
                         <label class="btn btn-sm btn-success" ng-model="user.sex" btn-radio="'0'"><i class="fa fa-check text-active"></i> 女</label>
                     </div>
-                </div>
-                <div class="list-group-item">
+                </div>-->
+<!--                <div class="list-group-item">
                     <input type="email" placeholder="邮箱" class="form-control no-border" ng-model="user.email">
                 </div>
                 <div class="list-group-item">
@@ -31,8 +31,8 @@
                             <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
                         </span>
                     </p>
-                </div>
-                <div class="list-group-item">
+                </div>-->
+<!--                <div class="list-group-item">
                     <input type="text" placeholder="身份证" class="form-control no-border" ng-model="user.idCard">
                 </div>
                 <div class="list-group-item">
@@ -40,17 +40,17 @@
                 </div>
                 <div class="list-group-item">
                     <input type="text" placeholder="收款卡号" class="form-control no-border" ng-model="user.bankCardCode">
-                </div>
+                </div>-->
                 <div class="list-group-item">
                     <input type="text" placeholder="手机" class="form-control no-border" ng-model="user.mobile">
                 </div>
-                <div class="list-group-item">
+<!--                <div class="list-group-item">
                     <input type="text" placeholder="微信号" class="form-control no-border" ng-model="user.weChatCode">
-                </div>
-                <div class="list-group-item">
+                </div>-->
+<!--                <div class="list-group-item">
                     <input type="text" placeholder="QQ号" class="form-control no-border" ng-model="user.qq">
-                </div>
-                <div class="list-group-item">
+                </div>-->
+<!--                <div class="list-group-item">
                     省份：
                     <select id="province" ui-jq="select2"  class="w-md" ng-model="province" ng-change="changeProvince()">
                         <option ng-repeat="ele in provinceList" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
@@ -70,7 +70,7 @@
                 </div>
                 <div class="list-group-item" ng-show="area != null && area != ''">
                     <input type="text" placeholder="详细地址(如：清华路433号)" class="form-control no-border" ng-model="user.address">
-                </div>
+                </div>-->
                 <div class="list-group-item">
                     <img alt="验证码" name="randImage" id="randImage" src="/admin/verification_code" width="60" height="20">
                     <a href="javascript:loadimage();"><font>看不清？</font></a>
@@ -82,7 +82,8 @@
             <div class="text-danger wrapper text-center" ng-show="authError != null">
                 {{authError}}
             </div>
-            <button type="submit" class="btn btn-lg btn-primary btn-block" ng-click="signup()" ng-disabled='user.code == null || user.code.length != 4 || user.bankCardCode == null || user.bankCardCode == "" || user.bankType == null || user.bankType == "" || user.idCard == null || user.idCard == "" || user.name == null || user.name == "" || user.passwd == null || user.passwd == "" || user.passwd.length < 6 || user.account == null || user.account == ""'>注册</button>
+            <button type="submit" class="btn btn-lg btn-primary btn-block" ng-click="signup()" ng-disabled='user.code == null || user.code.length != 4 || user.name == null || user.name == "" || user.passwd == null || user.passwd == "" || user.passwd.length < 6 || user.account == null || user.account == ""'>注册</button>
+<!--            <button type="submit" class="btn btn-lg btn-primary btn-block" ng-click="signup()" ng-disabled='user.code == null || user.code.length != 4 || user.bankCardCode == null || user.bankCardCode == "" || user.bankType == null || user.bankType == "" || user.idCard == null || user.idCard == "" || user.name == null || user.name == "" || user.passwd == null || user.passwd == "" || user.passwd.length < 6 || user.account == null || user.account == ""'>注册</button>-->
             <div class="line line-dashed"></div>
             <p class="text-center"><small>已经有帐号?</small></p>
             <a ui-sref="access.signin" class="btn btn-lg btn-default btn-block">去登录</a>

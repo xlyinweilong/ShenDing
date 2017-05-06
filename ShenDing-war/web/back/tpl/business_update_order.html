@@ -84,7 +84,7 @@
                             <td>{{item.price}}</td>
                             <td>{{item.payDate| date:"yyyy-MM-dd"}}</td>
                             <td>
-                                <span ng-class="{'bg-success': item.type == 'FINAL_PAYMENT', 'bg-warning':item.type == 'EARNEST'}" class="label ng-binding" title="{{item.typeMean}}">{{item.typeMean}}</span>
+                                <span ng-class="{'bg-success': item.type == 'FINAL_PAYMENT' || item.type == 'ALL_PAYMENT', 'bg-warning':item.type == 'EARNEST'}" class="label ng-binding" title="{{item.typeMean}}">{{item.typeMean}}</span>
                             </td>
                             <td>
                                 <span class="label ng-binding bg-success" title="{{item.gatewayTypeStr}}">{{item.gatewayTypeStr}}</span>

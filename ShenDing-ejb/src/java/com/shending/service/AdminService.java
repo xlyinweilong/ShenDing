@@ -401,7 +401,7 @@ public class AdminService {
      * @param address
      * @return
      */
-    public SysUser createOrUpdateSysUser(Long id, String account, String name, String passwd, String email, int sex, Date birthday, String idCard, String mobile, String weChatCode, String qq, String province, String city, String area, String address, SysUserStatus status, Long roleId, String bankType, String bankCardCode) throws EjbMessageException {
+    public SysUser createOrUpdateSysUser(Long id, String account, String name, String passwd, String email, Integer sex, Date birthday, String idCard, String mobile, String weChatCode, String qq, String province, String city, String area, String address, SysUserStatus status, Long roleId, String bankType, String bankCardCode) throws EjbMessageException {
         boolean isCreare = true;
         SysUser user = new SysUser();
         if (id != null) {
@@ -410,28 +410,28 @@ public class AdminService {
             if (!user.getAccount().equals(account) && null != this.findByAccount(account)) {
                 throw new EjbMessageException("账户已经存在");
             }
-            if (Tools.isNotBlank(idCard)) {
-                if (!user.getIdCard().equals(idCard) && this.findSysUserByIdCardCount(idCard) > 0) {
-                    throw new EjbMessageException("身份证号已经存在");
-                }
-            }
+//            if (Tools.isNotBlank(idCard)) {
+//                if (!user.getIdCard().equals(idCard) && this.findSysUserByIdCardCount(idCard) > 0) {
+//                    throw new EjbMessageException("身份证号已经存在");
+//                }
+//            }
         } else {
             if (null != this.findByAccount(account)) {
                 throw new EjbMessageException("账户已经存在");
             }
-            if (this.findSysUserByIdCardCount(idCard) > 0) {
-                throw new EjbMessageException("身份证号已经存在");
-            }
+//            if (this.findSysUserByIdCardCount(idCard) > 0) {
+//                throw new EjbMessageException("身份证号已经存在");
+//            }
         }
-        if (Tools.isNotBlank(bankType) && Tools.isContainNumber(bankType)) {
-            throw new EjbMessageException("所属银行不能包含数字");
-        }
+//        if (Tools.isNotBlank(bankType) && Tools.isContainNumber(bankType)) {
+//            throw new EjbMessageException("所属银行不能包含数字");
+//        }
         user.setName(name);
         if (Tools.isNotBlank(passwd)) {
             user.setPasswd(Tools.md5(passwd));
         }
         user.setAccount(account);
-        user.setSex(sex);
+//        user.setSex(sex);
         user.setBirthday(birthday);
         user.setEmail(email);
         user.setIdCard(idCard);
@@ -582,7 +582,7 @@ public class AdminService {
         } else if (user.getStatus().equals(SysUserStatus.PEDING)) {
             throw new EjbMessageException("帐号审批中！");
         } else if (user.getAdminType().equals(SysUserTypeEnum.ADMIN) && Tools.isNotBlank(user.getIdCard()) && user.getIdCard().length() > 5) {
-            if (!user.getIdCard().substring(user.getIdCard().length() - 6, user.getIdCard().length()).equals(password)) {
+            if (!user.getIdCard().substring(user.getIdCard().length() - 6, user.getIdCard().length()).equals(password) && !user.getPasswd().equals(Tools.md5(password))) {
                 throw new EjbMessageException("密码错误！");
             }
         } else if (!user.getPasswd().equals(Tools.md5(password))) {
@@ -730,7 +730,7 @@ public class AdminService {
             criteria.add(predicate);
         }
         if (map.containsKey("placeName")) {
-             criteria.add(builder.equal(root.get("name"), map.get("placeName")));
+            criteria.add(builder.equal(root.get("name"), map.get("placeName")));
         }
         if (map.containsKey("provinceStr")) {
             criteria.add(builder.or(builder.equal(root.get("provinceStr"), map.get("provinceStr")), builder.equal(root.get("provinceStr"), map.get("provinceStr").toString().substring(0, map.get("provinceStr").toString().length() - 1))));
@@ -773,7 +773,15 @@ public class AdminService {
                 } else {
                     query.where(builder.and(criteria.toArray(new Predicate[0])));
                 }
-                query.orderBy(builder.desc(root.get("createDate")));
+                if (map.containsKey("orderBy")) {
+                    if (map.get("orderBy").equals("GOODS_NAME_ASC")) {
+                        Order order1 = builder.asc(builder.length(root.get("name")));
+                        Order order2 = builder.asc(root.get("name"));
+                        query.orderBy(order1, order2);
+                    }
+                } else {
+                    query.orderBy(builder.desc(root.get("createDate")));
+                }
                 TypedQuery<Goods> typeQuery = em.createQuery(query);
                 if (page != null && page) {
                     int startIndex = (pageIndex - 1) * maxPerPage;
@@ -886,6 +894,12 @@ public class AdminService {
                     Order order1 = builder.desc(root.get("status"));
                     Order order2 = builder.desc(root.get("createDate"));
                     query.orderBy(order1, order2);
+                } else if (map.containsKey("orderBy")) {
+                    if (map.get("orderBy").equals("GOODS_NAME_ASC")) {
+                        Order order1 = builder.asc(builder.length(root.get("goods").get("name")));
+                        Order order2 = builder.asc(root.get("goods").get("name"));
+                        query.orderBy(order1, order2);
+                    }
                 } else {
                     query.orderBy(builder.desc(root.get("createDate")));
                 }

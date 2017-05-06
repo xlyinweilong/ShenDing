@@ -308,6 +308,9 @@ public class AdminServlet extends BaseServlet {
         Map subMap = new HashMap();
         subMap.put("name", user.getName());
         subMap.put("headImageUrl", user.getHeadImageUrl());
+        subMap.put("bankCardCode", user.getBankCardCode());
+        subMap.put("roleId", user.getRoleId());
+        subMap.put("idCard", user.getIdCard());
         user = adminService.setAccountLoginCode(user);
         map.put("user", subMap);
         PrintWriter out = response.getWriter();
@@ -385,7 +388,7 @@ public class AdminServlet extends BaseServlet {
         }
         SysUser user = null;
         try {
-            user = adminService.createOrUpdateSysUser(null, account, name, passwd, email, sex, birthdayDate, idCard, mobile, weChatCode, qq, province, city, area, address, SysUserStatus.PEDING, null, bankType, bankCardCode);
+            user = adminService.createOrUpdateSysUser(null, account, name, passwd, email, sex, birthdayDate, idCard, mobile, weChatCode, qq, province, city, area, address, SysUserStatus.NORMAL, null, bankType, bankCardCode);
         } catch (EjbMessageException ex) {
             map.put("msg", ex.getMessage());
             super.setSessionValue(request, "rand", Tools.generateRandom8Chars());//清除原验证码

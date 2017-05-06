@@ -49,8 +49,14 @@
                         <tr>
                             <th style="width:5%"></th>
                             <th style="width:15%">代理人名称</th>
-                            <th style="width:10%">区域名称</th>
+                            <th style="width: 10%">
+                                区域名称
+                                <a ng-click="orderTable('GOODS_NAME_ASC')">
+                                    <i ng-class="{'text-info':orderBy == 'GOODS_NAME_ASC'}" class="fa fa-sort-asc"></i>
+                                </a>
+                            </th>
                             <th style="width:10%">省份</th>
+                            <th style="width:10%">人數</th>
                             <th style="width:10%">序列号</th>
                             <th style="width:10%">大区</th>
                             <th style="width:10%">价钱</th>
@@ -67,6 +73,9 @@
                             <td><a class="text-info" href="#/app/user/user_info/{{item.agentUser.id}}">{{item.agentUser.name}}</a></td>
                             <td><a class="text-info" href="#/app/goods/goods_info/{{item.goods.id}}">{{item.goods.name}}</a></td>
                             <td>{{item.goods.provinceStr}}</td>
+                             <td>
+                                {{item.goods.peopleCount}}
+                            </td>
                             <td>
                                 <a class="text-info" href="#/app/order/order_info/{{item.id}}">{{item.serialId}}</a>
                             </td>
@@ -80,7 +89,7 @@
                                 {{item.paidPrice}}
                             </td>
                             <td>
-                                <span ng-if="item.status == 'SUCCESS' || item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT' || item.status == 'PAYMENT_TIMEOUT'" ng-class="{'bg-success': item.status == 'SUCCESS' || item.status == 'WAIT_SIGN_CONTRACT'|| item.status == 'PAYMENT_TIMEOUT','bg-warning':item.status == 'TERMINATION'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
+                                <span ng-if="item.status == 'SUCCESS' || item.status == 'TERMINATION' || item.status == 'WAIT_SIGN_CONTRACT' || item.status == 'PAYMENT_TIMEOUT'" ng-class="{'bg-success': item.status == 'SUCCESS' || item.status == 'WAIT_SIGN_CONTRACT' || item.status == 'PAYMENT_TIMEOUT','bg-warning':item.status == 'TERMINATION'}" class="label ng-binding" title="{{item.statusMean}}">{{item.statusMean}}</span>
                                 <a href="#/app/business/update_order/{{item.id}}" ng-if="item.status == 'PENDING_PAYMENT' || item.status == 'EARNEST'" class="text-info" title="{{item.statusMean}}">{{item.statusMean}}</a>
                                 <a href="#/app/business/update_success_order/{{item.id}}" ng-if="item.status == 'SUCCESS'" class="text-info" title="修改">修改</a>
                                 <a href="#/app/business/delete_earnest_order/{{item.id}}" ng-if="item.status == 'EARNEST'" class="text-info" title="作废提成">作废提成</a>

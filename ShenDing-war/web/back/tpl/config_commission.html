@@ -1,0 +1,34 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">默认代理分成配置</h1>
+</div>
+<div class="wrapper-md" ng-controller="CommissionController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                默认代理分成配置
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>默认分成-省会<i class="text-danger">*</i></label>
+                    <input class="form-control" type="text" ng-model="commission.PROVINCIAL_CAPITAL" placeholder="输入金额">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>默认分成-地级市<i class="text-danger">*</i></label>
+                    <input class="form-control" type="text" ng-model="commission.PREFECTURE" placeholder="输入金额">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>默认分成-其他<i class="text-danger">*</i></label>
+                    <input class="form-control" type="text" ng-model="commission.OTHERS" placeholder="输入金额">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm btn-info" ng-click="submitForm()" ng-disabled="commission.submitting || commission.PROVINCIAL_CAPITAL == null || commission.PREFECTURE == null || commission.OTHERS == null|| commission.PROVINCIAL_CAPITAL == '' || commission.PREFECTURE == '' || commission.OTHERS == ''" ng-class="{'active' : commission.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
