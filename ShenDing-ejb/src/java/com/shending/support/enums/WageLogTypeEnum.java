@@ -11,6 +11,7 @@ public enum WageLogTypeEnum {
 
     PRODUCT,//产品销售
     RECOMMEND,//推荐代理
+    GRAND_SLAM,//大满贯
     SEND_AND_ACCEPT,//发送，接受
     SEND, //发送者
     ACCEPT; //接广告的人，业务员
@@ -27,6 +28,8 @@ public enum WageLogTypeEnum {
                 return "推荐代理";
             case PRODUCT:
                 return "产品销售";
+            case GRAND_SLAM:
+                return "大满贯";
             default:
                 return "";
         }
@@ -44,6 +47,8 @@ public enum WageLogTypeEnum {
                 return RECOMMEND;
             case "产品销售":
                 return PRODUCT;
+            case "大满贯":
+                return GRAND_SLAM;
             default:
                 return null;
         }

@@ -471,6 +471,128 @@ public class ProductREST {
     }
 
     /**
+     * 创建/更新大满贯
+     *
+     * @param auth
+     * @param id
+     * @param amount
+     * @param goodsOrderId
+     * @param remark
+     * @param payDate
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("create_or_update_grand_slam")
+    public String createOrUpdateGrandSlam(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("amount") String amount, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        Date payDateTime = null;
+        try {
+            payDateTime = Tools.parseDate(payDate, "yyyy-MM-dd");
+        } catch (Exception e) {
+            payDateTime = Tools.getBeginOfDay(new Date());
+        }
+        if (new BigDecimal(amount).compareTo(BigDecimal.ZERO) < 0) {
+            throw new EjbMessageException("参数异常");
+        }
+        adminService.createOrUpdateGrandSlam(id, goodsOrderId, new BigDecimal(amount), payDateTime, remark);
+        map.put("msg", "操作成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 获取大满贯列表
+     *
+     * @param auth
+     * @param search
+     * @param start
+     * @param end
+     * @param pageIndex
+     * @param maxPerPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("grand_slam_list")
+    public String getGrandSlamList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        String category = null;
+        if (Tools.isNotBlank(search)) {
+            search = search.split(" ")[0];
+            searchMap.put("search", search);
+        }
+        if (Tools.isNotBlank(search)) {
+            searchMap.put("search", search);
+        }
+        if (Tools.isNotBlank(start)) {
+            searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+        }
+        if (Tools.isNotBlank(end)) {
+            searchMap.put("endDate", Tools.getEndOfDay(Tools.parseDate(end, "yyy-MM-dd")));
+        }
+        ResultList<ProductGrandSlam> list = adminService.findProductGrandSlamList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("totalCount", list.getTotalCount());
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 获取大满贯信息
+     *
+     * @param auth
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("grand_slam_info")
+    public String getProductGrandSlamInfo(@CookieParam("auth") String auth, @QueryParam("id") Long id) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        ProductGrandSlam productGrandSlam = em.find(ProductGrandSlam.class, id);
+        map.put("data", productGrandSlam);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+    
+    /**
+     * 删除产品
+     *
+     * @param auth
+     * @param ids
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("delete_grand_slam")
+    public String delGrandSlam(@CookieParam("auth") String auth, @FormParam("ids") List<Long> ids) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        for (Long id : ids) {
+            ProductGrandSlam productGrandSlam = em.find(ProductGrandSlam.class, id);
+            productGrandSlam.setDeleted(true);
+            em.merge(productGrandSlam);
+            WageLog wageLog = adminService.findWageLogByProductGrandSlam(productGrandSlam);
+            wageLog.setDeleted(Boolean.TRUE);
+            em.merge(wageLog);
+        }
+        map.put("msg", "删除成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
      * 产品查找订单
      *
      * @param auth
@@ -548,6 +670,51 @@ public class ProductREST {
         sql += " GROUP BY w.user";
         Query queryTotal = em.createQuery(sql);
         queryTotal.setParameter("user", user).setParameter("type", WageLogTypeEnum.PRODUCT);
+        if (Tools.isNotBlank(start)) {
+            queryTotal.setParameter("start", Tools.addDay(Tools.parseDate(start, "yyyy-MM-dd"), -1));
+        }
+        if (Tools.isNotBlank(end)) {
+            queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
+        }
+        ResultList<WageLog> list = adminService.findWageLogList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("totalCount", list.getTotalCount());
+        map.put("totalAmount", queryTotal.getResultList().isEmpty() ? null : queryTotal.getSingleResult());
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+    
+    /**
+     * 我的产品列表
+     *
+     * @param auth
+     * @param start
+     * @param end
+     * @param pageIndex
+     * @param maxPerPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("my_grand_slam_list")
+    public String myGrandSlamList(@CookieParam("auth") String auth, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        searchMap.put("type", WageLogTypeEnum.GRAND_SLAM);
+        searchMap.put("user", user);
+        String sql = "SELECT SUM(w.amount) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.type = :type";
+        if (Tools.isNotBlank(start)) {
+            searchMap.put("startDate", Tools.parseDate(start, "yyyy-MM-dd"));
+            sql += " AND w.payDate > :start";
+        }
+        if (Tools.isNotBlank(end)) {
+            searchMap.put("endDate", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
+            sql += " AND w.payDate < :end";
+        }
+        sql += " GROUP BY w.user";
+        Query queryTotal = em.createQuery(sql);
+        queryTotal.setParameter("user", user).setParameter("type", WageLogTypeEnum.GRAND_SLAM);
         if (Tools.isNotBlank(start)) {
             queryTotal.setParameter("start", Tools.addDay(Tools.parseDate(start, "yyyy-MM-dd"), -1));
         }

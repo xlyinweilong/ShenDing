@@ -10,6 +10,7 @@ import com.shending.entity.GoodsOrder;
 import com.shending.entity.Log;
 import com.shending.entity.NewAd;
 import com.shending.entity.OrderRecord;
+import com.shending.entity.ProductGrandSlam;
 import com.shending.entity.ProductLog;
 import com.shending.entity.SysMenu;
 import com.shending.entity.SysRole;
@@ -19,6 +20,7 @@ import com.shending.entity.UserWageLog;
 import com.shending.entity.Vote;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
+import com.shending.support.bo.UserWages;
 import com.shending.support.enums.AdGoodsTypeEnum;
 import com.shending.support.enums.AdLevelEnum;
 import com.shending.support.enums.AdLimitTypeEnum;
@@ -647,7 +649,7 @@ public class AdminService {
         if (map.containsKey("name")) {
             criteria.add(builder.equal(root.get("name"), map.get("name")));
         }
-         if (map.containsKey("roleIdIsNotNull")) {
+        if (map.containsKey("roleIdIsNotNull")) {
             criteria.add(builder.isNotNull(root.get("sysRole")));
         }
         if (map.containsKey("adminType")) {
@@ -1527,7 +1529,7 @@ public class AdminService {
      * @param endDate
      * @return
      */
-    public List<String[]> findWageTotalListAll(Date startDate, Date endDate) {
+    public List<String[]> findWageTotalListAllOld(Date startDate, Date endDate) {
         //下次再修改这里，把这里改成map
         List<String[]> list1 = new ArrayList<>();
         List<String[]> list2 = new ArrayList<>();
@@ -1737,6 +1739,159 @@ public class AdminService {
             newStr[10] = str[11];
             newStr[11] = str[12];
             newStr[8] = str[13];
+            returnList.add(newStr);
+        }
+        return returnList;
+    }
+
+    public List<String[]> findWageTotalListAll(Date startDate, Date endDate) {
+        //下次再修改这里，把这里改成map
+        Map<Long, UserWages> userMap = new HashMap<>();
+
+        //查询广告工资
+        Query query = em.createQuery("SELECT a.user.name,a.user.balance,a.user.deposit,a.user.balanceMf,a.user.depositMf,a.user.bankType,a.user.bankCardCode,SUM(a.userAmount),SUM(a.userBalanceAmount),a.user.id FROM NewAd a WHERE a.deleted = FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.user.id");
+        query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : query.getResultList()) {
+            UserWages userWages = new UserWages();
+            Object[] os = (Object[]) o;
+            userWages.setName(os[0].toString());//用户姓名
+            userWages.setBalance(os[1].toString());//用户余额
+            userWages.setDeposit(os[2].toString());//用户押金
+            userWages.setBankType(os[5] == null ? "" : os[5].toString());//银行类型
+            String code = os[6] == null ? "" : os[6].toString();
+            if (code.length() > 10) {
+                code = code.substring(0, 4) + "-" + code.substring(4, code.length());//修改后的银行卡号
+            }
+            userWages.setBankCardCode(code);//银行卡号
+            userWages.setUserAmount(os[7].toString());//提成
+            userWages.setUserBalanceAmount(os[8].toString());//返款
+            Long uid = (Long) os[9];//用户ID
+            userWages.setUid(uid);
+            userMap.put(uid, userWages);
+        }
+        //产品工资
+        Query queryProduct = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.productLog IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
+        queryProduct.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryProduct.getResultList()) {
+            Object[] os = (Object[]) o;
+            Long uid = (Long) os[8];
+            UserWages userWages = null;
+            if (userMap.containsKey(uid)) {
+                userWages = userMap.get(uid);
+            } else {
+                userWages = new UserWages();
+                userWages.setName(os[0].toString());//用户姓名
+                userWages.setBalance(os[1].toString());//用户余额
+                userWages.setDeposit(os[2].toString());//用户押金
+                userWages.setBankType(os[5] == null ? "" : os[5].toString());//银行类型
+                String code = os[6] == null ? "" : os[6].toString();
+                if (code.length() > 10) {
+                    code = code.substring(0, 4) + "-" + code.substring(4, code.length());//修改后的银行卡号
+                }
+                userWages.setBankCardCode(code);//银行卡号
+                userMap.put(uid, userWages);
+            }
+            userWages.setPorducetAmount(os[7].toString());//产品工资
+        }
+        //加盟推荐
+        Query query2 = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.goodsOrder IS NOT NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
+        query2.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : query2.getResultList()) {
+            Object[] os = (Object[]) o;
+            Long uid = (Long) os[8];
+            UserWages userWages = null;
+            if (userMap.containsKey(uid)) {
+                userWages = userMap.get(uid);
+            } else {
+                userWages = new UserWages();
+                userWages.setName(os[0].toString());//用户姓名
+                userWages.setBalance(os[1].toString());//用户余额
+                userWages.setDeposit(os[2].toString());//用户押金
+                userWages.setBankType(os[5] == null ? "" : os[5].toString());//银行类型
+                String code = os[6] == null ? "" : os[6].toString();
+                if (code.length() > 10) {
+                    code = code.substring(0, 4) + "-" + code.substring(4, code.length());//修改后的银行卡号
+                }
+                userWages.setBankCardCode(code);//银行卡号
+                userMap.put(uid, userWages);
+            }
+            userWages.setRecommendAmount(os[7].toString());//加盟提成工资
+        }
+
+        //查询化妆品
+        Query queryCosmetics = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.cosmetics IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
+        queryCosmetics.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryCosmetics.getResultList()) {
+            Object[] os = (Object[]) o;
+            Long uid = (Long) os[8];
+            UserWages userWages = null;
+            if (userMap.containsKey(uid)) {
+                userWages = userMap.get(uid);
+            } else {
+                userWages = new UserWages();
+                userWages.setName(os[0].toString());//用户姓名
+                userWages.setBalance(os[1].toString());//用户余额
+                userWages.setDeposit(os[2].toString());//用户押金
+                userWages.setBankType(os[5] == null ? "" : os[5].toString());//银行类型
+                String code = os[6] == null ? "" : os[6].toString();
+                if (code.length() > 10) {
+                    code = code.substring(0, 4) + "-" + code.substring(4, code.length());//修改后的银行卡号
+                }
+                userWages.setBankCardCode(code);//银行卡号
+                userMap.put(uid, userWages);
+            }
+            userWages.setCosmeticsAmount(os[7].toString());//加盟提成工资
+        }
+
+        //查询大满贯
+        Query queryGrandSlam = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.productGrandSlam IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
+        queryGrandSlam.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryGrandSlam.getResultList()) {
+            Object[] os = (Object[]) o;
+            Long uid = (Long) os[8];
+            UserWages userWages = null;
+            if (userMap.containsKey(uid)) {
+                userWages = userMap.get(uid);
+            } else {
+                userWages = new UserWages();
+                userWages.setName(os[0].toString());//用户姓名
+                userWages.setBalance(os[1].toString());//用户余额
+                userWages.setDeposit(os[2].toString());//用户押金
+                userWages.setBankType(os[5] == null ? "" : os[5].toString());//银行类型
+                String code = os[6] == null ? "" : os[6].toString();
+                if (code.length() > 10) {
+                    code = code.substring(0, 4) + "-" + code.substring(4, code.length());//修改后的银行卡号
+                }
+                userWages.setBankCardCode(code);//银行卡号
+                userMap.put(uid, userWages);
+            }
+            userWages.setGrandSlamAmount(os[7].toString());//加盟提成工资
+        }
+        for (Long uid : userMap.keySet()) {
+            UserWages userWages = userMap.get(uid);
+            userWages.setUserOrderNames(this.getUserOrderNames(uid));
+            TypedQuery<Long> queryBack = em.createQuery("SELECT COUNT(go) FROM GoodsOrder go WHERE go.category = :category AND go.deleted = FALSE AND go.status = :status AND go.recommendIds = :user AND go.lastPayDate > :startDate AND go.lastPayDate < :endDate", Long.class);
+            queryBack.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", uid.toString()).setParameter("status", OrderStatusEnum.TERMINATION).setParameter("category", CategoryEnum.MAKE_FRIENDS);
+            userWages.setBack(queryBack.getSingleResult() > 0 ? "含有" : "");
+        }
+        //去掉list3中的数组的3和4
+        List returnList = new ArrayList();
+        for (Long uid : userMap.keySet()) {
+            UserWages userWages = userMap.get(uid);
+            String[] newStr = new String[13];
+            newStr[0] = userWages.getName();//用户
+            newStr[1] = userWages.getBalance();//便民余额
+            newStr[2] = userWages.getDeposit();//便民押金
+            newStr[3] = userWages.getBankType();//银行类型
+            newStr[4] = userWages.getBankCardCode();//银行卡号
+            newStr[5] = userWages.getAdAmount();//广告工资
+            newStr[6] = userWages.getRecommendAmount();//加盟提成工资
+            newStr[7] = userWages.getPorducetAmount();//产品工资
+            newStr[8] = userWages.getCosmeticsAmount();//化妆品工资
+            newStr[9] = userWages.getGrandSlamAmount();//大满贯工资
+            newStr[10] = userWages.getTotalAmount();//总工资
+            newStr[11] = userWages.getUserOrderNames();//代理的平台
+            newStr[12] = userWages.getBack();//含有回收
             returnList.add(newStr);
         }
         return returnList;
@@ -2012,6 +2167,33 @@ public class AdminService {
     }
 
     /**
+     * 根据大满贯创建/更新用户收益
+     *
+     * @param id
+     * @param productGrandSlam
+     * @return
+     */
+    public WageLog createOrUpdateWageLog(Long id, ProductGrandSlam productGrandSlam) {
+        WageLog wageLog = new WageLog();
+        if (id != null) {
+            wageLog = em.find(WageLog.class, id);
+        }
+        wageLog.setCategory(productGrandSlam.getGoodsOrder().getCategory());
+        wageLog.setUser(productGrandSlam.getUser());
+        wageLog.setAmount(productGrandSlam.getAmount());
+        wageLog.setType(WageLogTypeEnum.GRAND_SLAM);
+        wageLog.setFee(BigDecimal.ZERO);
+        wageLog.setPayDate(productGrandSlam.getPayDate());
+        wageLog.setProductGrandSlam(productGrandSlam);
+        if (id == null) {
+            em.persist(wageLog);
+        } else {
+            em.merge(wageLog);
+        }
+        return wageLog;
+    }
+
+    /**
      * 根据化妆品生成用户收益
      *
      * @param id
@@ -2241,6 +2423,41 @@ public class AdminService {
     }
 
     /**
+     * 创建或更新大满贯
+     *
+     * @param id
+     * @param orderId
+     * @param amount
+     * @param payDate
+     * @param remark
+     */
+    public void createOrUpdateGrandSlam(Long id, Long orderId, BigDecimal amount, Date payDate, String remark) {
+        ProductGrandSlam productGrandSlam = new ProductGrandSlam();
+        if (id != null) {
+            productGrandSlam = em.find(ProductGrandSlam.class, id);
+        }
+        GoodsOrder order = em.find(GoodsOrder.class, orderId);
+        productGrandSlam.setGoodsOrderId(order.getId());
+        productGrandSlam.setGoodsOrder(order);
+        productGrandSlam.setUser(order.getAgentUser());
+        productGrandSlam.setGoods(order.getGoods());
+        productGrandSlam.setGoodsId(order.getGoods().getId());
+        productGrandSlam.setUserId(order.getAgentUser().getId());
+        productGrandSlam.setAmount(amount);
+        productGrandSlam.setPayDate(payDate);
+        productGrandSlam.setRemark(remark);
+        Long wageLogId = null;
+        if (id == null) {
+            em.persist(productGrandSlam);
+//            em.flush();
+        } else {
+            em.merge(productGrandSlam);
+            wageLogId = this.findWageLogByProductGrandSlam(productGrandSlam).getId();
+        }
+        this.createOrUpdateWageLog(wageLogId, productGrandSlam);
+    }
+
+    /**
      * 创建或更新化妆品
      *
      * @param id
@@ -2354,6 +2571,73 @@ public class AdminService {
     }
 
     /**
+     * 获取大满贯
+     *
+     * @param map
+     * @param pageIndex
+     * @param maxPerPage
+     * @param list
+     * @param page
+     * @return
+     */
+    public ResultList<ProductGrandSlam> findProductGrandSlamList(Map<String, Object> map, int pageIndex, int maxPerPage, Boolean list, Boolean page) {
+        ResultList<ProductGrandSlam> resultList = new ResultList<>();
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<ProductGrandSlam> query = builder.createQuery(ProductGrandSlam.class);
+        Root root = query.from(ProductGrandSlam.class);
+        List<Predicate> criteria = new ArrayList<>();
+        criteria.add(builder.equal(root.get("deleted"), false));
+        if (map.containsKey("startDate")) {
+            criteria.add(builder.greaterThanOrEqualTo(root.get("payDate"), (Date) map.get("startDate")));
+        }
+        if (map.containsKey("endDate")) {
+            criteria.add(builder.lessThan(root.get("payDate"), (Date) map.get("endDate")));
+        }
+        if (map.containsKey("search")) {
+            criteria.add(builder.or(builder.like(root.get("goods").get("name"), "%" + (String) map.get("search") + "%"), builder.like(root.get("goods").get("namePinyin"), "%" + (String) map.get("search") + "%")));
+        }
+        try {
+            if (list == null || !list) {
+                CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+                countQuery.select(builder.count(root));
+                if (criteria.isEmpty()) {
+                    throw new RuntimeException("no criteria");
+                } else if (criteria.size() == 1) {
+                    countQuery.where(criteria.get(0));
+                } else {
+                    countQuery.where(builder.and(criteria.toArray(new Predicate[0])));
+                }
+                Long totalCount = em.createQuery(countQuery).getSingleResult();
+                resultList.setTotalCount(totalCount.intValue());
+            }
+            if (list == null || list) {
+                query = query.select(root);
+                if (criteria.isEmpty()) {
+                    throw new RuntimeException("no criteria");
+                } else if (criteria.size() == 1) {
+                    query.where(criteria.get(0));
+                } else {
+                    query.where(builder.and(criteria.toArray(new Predicate[0])));
+                }
+                query.orderBy(builder.desc(root.get("payDate")));
+                TypedQuery<ProductGrandSlam> typeQuery = em.createQuery(query);
+                if (page != null && page) {
+                    int startIndex = (pageIndex - 1) * maxPerPage;
+                    typeQuery.setFirstResult(startIndex);
+                    typeQuery.setMaxResults(maxPerPage);
+                    resultList.setPageIndex(pageIndex);
+                    resultList.setStartIndex(startIndex);
+                    resultList.setMaxPerPage(maxPerPage);
+                }
+                List<ProductGrandSlam> dataList = typeQuery.getResultList();
+                resultList.addAll(dataList);
+            }
+        } catch (NoResultException ex) {
+        }
+        return resultList;
+    }
+
+    /**
      * 获取化妆品列表
      *
      * @param map
@@ -2433,6 +2717,24 @@ public class AdminService {
         WageLog log = null;
         TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.productLog = :productLog", WageLog.class);
         query.setParameter("productLog", productLog);
+        try {
+            log = query.getSingleResult();
+        } catch (NoResultException e) {
+            log = null;
+        }
+        return log;
+    }
+
+    /**
+     * 根据大滿貫获取工资
+     *
+     * @param productLog
+     * @return
+     */
+    public WageLog findWageLogByProductGrandSlam(ProductGrandSlam productGrandSlam) {
+        WageLog log = null;
+        TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.productGrandSlam = :productGrandSlam", WageLog.class);
+        query.setParameter("productGrandSlam", productGrandSlam);
         try {
             log = query.getSingleResult();
         } catch (NoResultException e) {

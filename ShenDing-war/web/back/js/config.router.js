@@ -365,6 +365,14 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                         ]
                     }
                 })
+                .state('app.product.grand_slam_list', {
+                    url: '/grand_slam_list',
+                    templateUrl: '/back/tpl/product_grand_slam_list.html'
+                })
+                .state('app.product.grand_slam_create_or_update', {
+                    url: '/grand_slam_create_or_update/:id',
+                    templateUrl: '/back/tpl/product_grand_slam_create_update.html'
+                })
                 .state('app.product.product_list', {
                     url: '/product_list',
                     templateUrl: '/back/tpl/product_list.html'
@@ -404,6 +412,10 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                 .state('app.task.my_product', {
                     url: '/my_product',
                     templateUrl: '/back/tpl/task_my_product.html'
+                })
+                .state('app.task.my_grand_slam', {
+                    url: '/my_grand_slam',
+                    templateUrl: '/back/tpl/task_my_grand_slam.html'
                 })
                 .state('app.task.my_new_order', {
                     url: '/my_new_order',

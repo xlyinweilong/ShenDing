@@ -2378,15 +2378,12 @@ public class AdminREST {
                 throw new EjbMessageException("您没有权限删除");
             }
 
-            ad.setDeleted(
-                    true);
+            ad.setDeleted(true);
             SysUser sysUser = ad.getUser();//分成人
 
-            if (ad.getCategory()
-                    .equals(CategoryEnum.SERVICE_PEOPLE)) {
+            if (ad.getCategory() .equals(CategoryEnum.SERVICE_PEOPLE)) {
                 sysUser.setBalance(sysUser.getBalance().add(ad.getUserBalanceAmount()));
-            } else if (ad.getCategory()
-                    .equals(CategoryEnum.MAKE_FRIENDS)) {
+            } else if (ad.getCategory().equals(CategoryEnum.MAKE_FRIENDS)) {
                 sysUser.setBalance(sysUser.getBalance().add(ad.getUserBalanceAmount()));
             } else {
                 throw new EjbMessageException("数据异常");
@@ -2396,8 +2393,7 @@ public class AdminREST {
 
             em.merge(sysUser);
 
-            adminService.saveLog(user,
-                    "广告作废", " id：" + ad.getId() + " 名字：" + Tools.getString(ad.getName()));
+            adminService.saveLog(user,"广告作废", " id：" + ad.getId() + " 名字：" + Tools.getString(ad.getName()));
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");

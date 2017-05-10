@@ -1081,7 +1081,7 @@ public class AdminServlet extends BaseServlet {
             }
         }
         List<String[]> resultList = adminService.findWageTotalListAll(startDate, endDate);
-        String[] headLine = new String[12];
+        String[] headLine = new String[13];
         headLine[0] = "用户";
         headLine[1] = "便民余额";
         headLine[2] = "便民押金";
@@ -1093,9 +1093,10 @@ public class AdminServlet extends BaseServlet {
         headLine[6] = "加盟提成工资";
         headLine[7] = "产品工资";
         headLine[8] = "化妆品工资";
-        headLine[9] = "总工资";
-        headLine[10] = "代理的平台";
-        headLine[11] = "含有回收";
+        headLine[9] = "大满贯工资";
+        headLine[10] = "总工资";
+        headLine[11] = "代理的平台";
+        headLine[12] = "含有回收";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);
