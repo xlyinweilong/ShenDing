@@ -20,6 +20,7 @@ import com.shending.entity.UserWageLog;
 import com.shending.entity.Vote;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
+import com.shending.support.bo.PlaceWages;
 import com.shending.support.bo.UserWages;
 import com.shending.support.enums.AdGoodsTypeEnum;
 import com.shending.support.enums.AdLevelEnum;
@@ -742,6 +743,9 @@ public class AdminService {
         }
         if (map.containsKey("provinceStr")) {
             criteria.add(builder.or(builder.equal(root.get("provinceStr"), map.get("provinceStr")), builder.equal(root.get("provinceStr"), map.get("provinceStr").toString().substring(0, map.get("provinceStr").toString().length() - 1))));
+        }
+        if (map.containsKey("province")) {
+            criteria.add(builder.equal(root.get("province"), map.get("province")));
         }
         if (map.containsKey("searchStartPeopleCount")) {
             criteria.add(builder.greaterThanOrEqualTo(root.get("peopleCount"), (Integer) map.get("searchStartPeopleCount")));
@@ -1744,6 +1748,13 @@ public class AdminService {
         return returnList;
     }
 
+    /**
+     * 总工资
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
     public List<String[]> findWageTotalListAll(Date startDate, Date endDate) {
         //下次再修改这里，把这里改成map
         Map<Long, UserWages> userMap = new HashMap<>();
@@ -1893,6 +1904,106 @@ public class AdminService {
             newStr[11] = userWages.getUserOrderNames();//代理的平台
             newStr[12] = userWages.getBack();//含有回收
             returnList.add(newStr);
+        }
+        return returnList;
+    }
+
+    /**
+     * 总工资通过地区
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    public List<PlaceWages> findWageTotalListAllByPlace(Date startDate, Date endDate) {
+        //下次再修改这里，把这里改成map
+        Map<Long, PlaceWages> placeMap = new HashMap<>();
+
+        //查询广告工资
+        Query query = em.createQuery("SELECT SUM(a.userAmount),SUM(a.userBalanceAmount),a.goods.name,a.goods.id FROM NewAd a WHERE a.deleted = FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.goods.id,a.goods.name");
+        query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : query.getResultList()) {
+            PlaceWages pw = new PlaceWages();
+            Object[] os = (Object[]) o;
+            pw.setGoodsName(os[2].toString());//商品名称
+            pw.setUserAmount(os[0].toString());//提成
+            pw.setUserBalanceAmount(os[1].toString());//返款
+            Long goodsId = (Long) os[3];//商品ID
+            pw.setGoodsId(goodsId);
+            placeMap.put(goodsId, pw);
+        }
+        //产品工资
+        Query queryProduct = em.createQuery("SELECT SUM(w.amount)-SUM(w.fee),w.productLog.goods.name,w.productLog.goods.id FROM WageLog w WHERE w.productLog IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.productLog.goods.id,w.productLog.goods.name");
+        queryProduct.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryProduct.getResultList()) {
+            Object[] os = (Object[]) o;
+            PlaceWages pw = new PlaceWages();
+            Long goodsId = (Long) os[2];//商品ID
+            if (placeMap.containsKey(goodsId)) {
+                pw = placeMap.get(goodsId);
+            } else {
+                placeMap.put(goodsId, pw);
+            }
+            pw.setGoodsName(os[1].toString());//商品名称
+            pw.setPorducetAmount(os[0].toString());//产品提成
+            pw.setGoodsId(goodsId);
+        }
+        //加盟推荐
+        Query query2 = em.createQuery("SELECT SUM(w.amount)-SUM(w.fee),w.goodsOrder.goods.name,w.goodsOrder.goods.id FROM WageLog w WHERE w.goodsOrder IS NOT NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.goodsOrder.goods.id,w.goodsOrder.goods.name");
+        query2.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : query2.getResultList()) {
+            Object[] os = (Object[]) o;
+            PlaceWages pw = new PlaceWages();
+            Long goodsId = (Long) os[2];//商品ID
+            if (placeMap.containsKey(goodsId)) {
+                pw = placeMap.get(goodsId);
+            } else {
+                placeMap.put(goodsId, pw);
+            }
+            pw.setGoodsName(os[1].toString());//商品名称
+            pw.setRecommendAmount(os[0].toString());//加盟推荐
+            pw.setGoodsId(goodsId);
+        }
+        
+        //查询化妆品
+        Query queryCosmetics = em.createQuery("SELECT SUM(w.amount)-SUM(w.fee),w.cosmetics.goods.name,w.cosmetics.goods.id FROM WageLog w WHERE w.cosmetics IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.cosmetics.goods.id,w.cosmetics.goods.name");
+        queryCosmetics.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryCosmetics.getResultList()) {
+            Object[] os = (Object[]) o;
+            PlaceWages pw = new PlaceWages();
+            Long goodsId = (Long) os[2];//商品ID
+            if (placeMap.containsKey(goodsId)) {
+                pw = placeMap.get(goodsId);
+            } else {
+                placeMap.put(goodsId, pw);
+            }
+            pw.setGoodsName(os[1].toString());//商品名称
+            pw.setCosmeticsAmount(os[0].toString());//化妆品
+            pw.setGoodsId(goodsId);
+        }
+
+        //查询大满贯
+        Query queryGrandSlam = em.createQuery("SELECT SUM(w.amount)-SUM(w.fee),w.productGrandSlam.goods.name,w.productGrandSlam.goods.id FROM WageLog w WHERE w.productGrandSlam IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.productGrandSlam.goods.id,w.productGrandSlam.goods.name");
+        queryGrandSlam.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryCosmetics.getResultList()) {
+            Object[] os = (Object[]) o;
+            PlaceWages pw = new PlaceWages();
+            Long goodsId = (Long) os[2];//商品ID
+            if (placeMap.containsKey(goodsId)) {
+                pw = placeMap.get(goodsId);
+            } else {
+                placeMap.put(goodsId, pw);
+            }
+            pw.setGoodsName(os[1].toString());//商品名称
+            pw.setGrandSlamAmount(os[0].toString());//大满贯
+            pw.setGoodsId(goodsId);
+        }
+        
+        //去掉list3中的数组的3和4
+        List<PlaceWages> returnList = new ArrayList();
+        for (Long uid : placeMap.keySet()) {
+           PlaceWages pw  = placeMap.get(uid);
+           returnList.add(pw);
         }
         return returnList;
     }

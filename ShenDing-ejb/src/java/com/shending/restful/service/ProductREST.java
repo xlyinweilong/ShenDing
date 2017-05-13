@@ -290,6 +290,7 @@ public class ProductREST {
                         searchMap.put("name", regionalManagerName);
                         searchMap.put("notStatus", SysUserStatus.PEDING);
                         searchMap.put("adminType", SysUserTypeEnum.ADMIN);
+                        searchMap.put("roleIdIsNotNull", true);
                         ResultList<SysUser> userList = adminService.findUserList(searchMap, 1, 10, null, Boolean.TRUE);
                         if (userList.size() != 1) {
                             throw new EjbMessageException("第" + (i + 1) + "行分成大区经理无法唯一定位，请手动录入该条");

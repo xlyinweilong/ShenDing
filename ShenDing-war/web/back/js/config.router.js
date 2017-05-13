@@ -349,6 +349,10 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/user_wage',
                     templateUrl: '/back/tpl/statistics_user_wage.html'
                 })
+                .state('app.statistics.place', {
+                    url: '/place',
+                    templateUrl: '/back/tpl/statistics_place.html'
+                })
                 .state('app.statistics.region', {
                     url: '/region',
                     templateUrl: '/back/tpl/statistics_region.html'

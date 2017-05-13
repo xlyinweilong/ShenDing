@@ -60,6 +60,7 @@
                             <th style="width:10%">序列号</th>
                             <th style="width:10%">大区</th>
                             <th style="width:10%">价钱</th>
+                            <th style="width:10%">人数费</th>
                             <th style="width:10%">实付</th>
                             <th style="width:10%">状态</th>
                         </tr>
@@ -73,7 +74,7 @@
                             <td><a class="text-info" href="#/app/user/user_info/{{item.agentUser.id}}">{{item.agentUser.name}}</a></td>
                             <td><a class="text-info" href="#/app/goods/goods_info/{{item.goods.id}}">{{item.goods.name}}</a></td>
                             <td>{{item.goods.provinceStr}}</td>
-                             <td>
+                            <td>
                                 {{item.goods.peopleCount}}
                             </td>
                             <td>
@@ -84,6 +85,9 @@
                             </td>
                             <td>
                                 {{item.price}}
+                            </td>
+                            <td>
+                                {{item.peopleCountFee}}
                             </td>
                             <td>
                                 {{item.paidPrice}}

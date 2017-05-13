@@ -41,6 +41,7 @@ import com.shending.support.enums.SysMenuPopedomEnum;
 import com.shending.support.enums.SysUserStatus;
 import com.shending.support.enums.SysUserTypeEnum;
 import com.shending.support.exception.EjbMessageException;
+import com.shending.support.vo.PlaceStatistics;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -487,12 +488,9 @@ public class AdminREST {
     @Path("data_province")
     public String getDataProvince() throws Exception {
         Map map = Tools.getDMap();
-        TypedQuery<DataProvince> query = em.createQuery("SELECT d FROM DataProvince d", DataProvince.class
-        );
-        map.put(
-                "data", query.getResultList());
-        map.put(
-                "success", "1");
+        TypedQuery<DataProvince> query = em.createQuery("SELECT d FROM DataProvince d", DataProvince.class);
+        map.put("data", query.getResultList());
+        map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -514,12 +512,9 @@ public class AdminREST {
         }
         TypedQuery<DataCity> query = em.createQuery("SELECT d FROM DataCity d WHERE d.provinceCode = :provinceCode", DataCity.class
         );
-        query.setParameter(
-                "provinceCode", provinceCode);
-        map.put(
-                "data", query.getResultList());
-        map.put(
-                "success", "1");
+        query.setParameter("provinceCode", provinceCode);
+        map.put("data", query.getResultList());
+        map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -1187,6 +1182,38 @@ public class AdminREST {
         ResultList<Goods> list = adminService.findGoodsList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
         map.put("totalCount", list.getTotalCount());
         map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 分析某一
+     *
+     * @param auth
+     * @param status
+     * @param provinceStr
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("goods_list_province")
+    public String getGoodsByProvince(@CookieParam("auth") String auth) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        TypedQuery<Object[]> queryGoods = em.createQuery("SELECT g.goods.provinceStr,count(g.id),count(DISTINCT(g.agentUser.id)) FROM GoodsOrder g WHERE g.status = :status and g.deleted = false group by g.goods.provinceStr order by count(g.id) desc", Object[].class);
+        queryGoods.setParameter("status", OrderStatusEnum.SUCCESS);
+        List<Object[]> goodsList = queryGoods.getResultList();
+        List<PlaceStatistics> list = new LinkedList<>();
+        for (Object[] os : goodsList) {
+            PlaceStatistics ps = new PlaceStatistics();
+            ps.setGoodsCount((long) os[1]);
+            ps.setPlaceName(os[0].toString());
+            ps.setOrderCount((long) os[1]);
+            ps.setUidCount((long) os[2]);
+            list.add(ps);
+        }
+        map.put("data", list);
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
@@ -2381,7 +2408,7 @@ public class AdminREST {
             ad.setDeleted(true);
             SysUser sysUser = ad.getUser();//分成人
 
-            if (ad.getCategory() .equals(CategoryEnum.SERVICE_PEOPLE)) {
+            if (ad.getCategory().equals(CategoryEnum.SERVICE_PEOPLE)) {
                 sysUser.setBalance(sysUser.getBalance().add(ad.getUserBalanceAmount()));
             } else if (ad.getCategory().equals(CategoryEnum.MAKE_FRIENDS)) {
                 sysUser.setBalance(sysUser.getBalance().add(ad.getUserBalanceAmount()));
@@ -2393,7 +2420,7 @@ public class AdminREST {
 
             em.merge(sysUser);
 
-            adminService.saveLog(user,"广告作废", " id：" + ad.getId() + " 名字：" + Tools.getString(ad.getName()));
+            adminService.saveLog(user, "广告作废", " id：" + ad.getId() + " 名字：" + Tools.getString(ad.getName()));
         }
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -2472,20 +2499,14 @@ public class AdminREST {
         GoodsOrder order = adminService.findOrderByOrder(goods);
         TypedQuery<GoodsWeChat> query = em.createQuery("SELECT gwc FROM GoodsWeChat gwc WHERE gwc.goods = :goods AND gwc.deleted = FALSE ORDER BY gwc.createDate DESC", GoodsWeChat.class);
 
-        query.setParameter(
-                "goods", goods);
+        query.setParameter("goods", goods);
         List<GoodsWeChat> list = query.getResultList();
 
-        map.put(
-                "data", goods);
-        map.put(
-                "order", order);
-        map.put(
-                "list", list);
-        map.put(
-                "total", list.size());
-        map.put(
-                "success", "1");
+        map.put("data", goods);
+        map.put("order", order);
+        map.put("list", list);
+        map.put("total", list.size());
+        map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -2674,15 +2695,13 @@ public class AdminREST {
         //订单部分
         TypedQuery<WageLog> wageQuery = em.createQuery("SELECT w FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate <= :endDate AND w.payDate >= :startDate AND w.type = :type ORDER BY w.payDate DESC", WageLog.class);
 
-        wageQuery.setParameter(
-                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.RECOMMEND);
+        wageQuery.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.RECOMMEND);
         List<WageLog> wageList = wageQuery.getResultList();
 
         //广告部分
         Query countQuery = em.createQuery("SELECT COUNT(w) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate <= :endDate AND w.payDate >= :startDate AND w.type = :type");
 
-        countQuery.setParameter(
-                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.ACCEPT);
+        countQuery.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.ACCEPT);
         Long totalCount = (Long) countQuery.getSingleResult();
         TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate <= :endDate AND w.payDate >= :startDate AND w.type = :type ORDER BY w.payDate DESC", WageLog.class);
         int startIndex = (pageIndex - 1) * maxPerPage;
@@ -2691,18 +2710,13 @@ public class AdminREST {
 
         query.setMaxResults(maxPerPage);
 
-        query.setParameter(
-                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.ACCEPT);
+        query.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.ACCEPT);
         List<WageLog> list = query.getResultList();
 
-        map.put(
-                "totalCount", totalCount);
-        map.put(
-                "data", list);
-        map.put(
-                "wageList", wageList.size() < 1 ? null : wageList);
-        map.put(
-                "success", "1");
+        map.put("totalCount", totalCount);
+        map.put("data", list);
+        map.put("wageList", wageList.size() < 1 ? null : wageList);
+        map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -2757,71 +2771,15 @@ public class AdminREST {
 
         query.setMaxResults(maxPerPage);
 
-        query.setParameter(
-                "startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.SEND);
+        query.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser).setParameter("type", WageLogTypeEnum.SEND);
         List list = query.getResultList();
 
-        map.put(
-                "totalCount", totalCount);
-        map.put(
-                "data", list);
-        map.put(
-                "success", "1");
+        map.put("totalCount", totalCount);
+        map.put("data", list);
+        map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
 
-    /**
-     * 发送工资
-     *
-     * @param auth
-     * @param uids
-     * @param start
-     * @param end
-     * @return
-     * @throws Exception
-     */
-//    @POST
-//    @Path("user_wage")
-//    public String userWage(@CookieParam("auth") String auth, @FormParam("uids") List<Long> uids, @FormParam("start") String start, @FormParam("end") String end) throws Exception {
-//        SysUser user = adminService.getUserByLoginCode(auth);
-//        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
-//            throw new EjbMessageException("您没有权限");
-//        }
-//        Date startDate = null;
-//        try {
-//            if (Tools.isNotBlank(start)) {
-//                startDate = Tools.parseDate(start, "yyyy-MM-dd");
-//            }
-//        } catch (Exception e) {
-//            startDate = null;
-//        }
-//        Date endDate = null;
-//        try {
-//            if (Tools.isNotBlank(start)) {
-//                endDate = Tools.parseDate(end, "yyyy-MM-dd");
-//            }
-//        } catch (Exception e) {
-//            endDate = null;
-//        }
-//        for (Long uid : uids) {
-//            SysUser sysUser = em.find(SysUser.class, uid);
-//            Query query = em.createQuery("SELECT SUM(w.amount) FROM WageLog w WHERE w.payDate <= :endDate AND w.payDate >= :startDate AND w.deleted = FALSE AND w.user = :user");
-//            query.setParameter("startDate", startDate).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", sysUser);
-//            BigDecimal amount = new BigDecimal(query.getSingleResult().toString());
-//            sysUser.setLastWageDate(new Date());
-//            em.merge(sysUser);
-//            SalaryLog salaryLog = new SalaryLog();
-//            salaryLog.setAmount(amount);
-//            salaryLog.setSignUser(user);
-//            salaryLog.setUser(sysUser);
-//            em.persist(salaryLog);
-//        }
-//        Map map = Tools.getDMap();
-//        map.put("data", null);
-//        map.put("msg", "保存成功！");
-//        map.put("success", "1");
-//        return Tools.caseObjectToJson(map);
-//    }
     /**
      * 保存权限
      *
@@ -3778,28 +3736,22 @@ public class AdminREST {
         SysUser toUser = em.find(SysUser.class, 2612L);//目标用户
         TypedQuery<GoodsOrder> qrderQuery = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.agentUser = :user AND a.deleted = FALSE ", GoodsOrder.class);
 
-        qrderQuery.setParameter(
-                "user", user);
-        for (GoodsOrder order
-                : qrderQuery.getResultList()) {
+        qrderQuery.setParameter("user", user);
+        for (GoodsOrder order : qrderQuery.getResultList()) {
             order.setAgentUser(toUser);//修改为新的代理
             em.merge(order);
         }
         TypedQuery<NewAd> newAdQueryad = em.createQuery("SELECT a FROM NewAd a WHERE a.user = :user AND a.deleted = FALSE ", NewAd.class);
 
-        newAdQueryad.setParameter(
-                "user", user);
-        for (NewAd ad
-                : newAdQueryad.getResultList()) {
+        newAdQueryad.setParameter("user", user);
+        for (NewAd ad : newAdQueryad.getResultList()) {
             ad.setUser(toUser);//修改广告的分成人
             em.merge(ad);
         }
         TypedQuery<WageLog> wageLogQueryad = em.createQuery("SELECT a FROM WageLog a WHERE a.user = :user AND a.deleted = FALSE ", WageLog.class);
 
-        wageLogQueryad.setParameter(
-                "user", user);
-        for (WageLog wageLog
-                : wageLogQueryad.getResultList()) {
+        wageLogQueryad.setParameter("user", user);
+        for (WageLog wageLog : wageLogQueryad.getResultList()) {
             wageLog.setUser(toUser);//修改工资
             em.merge(wageLog);
         }
@@ -3832,10 +3784,8 @@ public class AdminREST {
         SysUser user = adminService.getUserByLoginCode(auth);
         TypedQuery<Goods> goodsq = em.createQuery("SELECT a FROM Goods a WHERE a.deleted = FALSE AND a.category = :category", Goods.class
         );
-        goodsq.setParameter(
-                "category", CategoryEnum.MAKE_FRIENDS);
-        for (Goods goods
-                : goodsq.getResultList()) {
+        goodsq.setParameter("category", CategoryEnum.MAKE_FRIENDS);
+        for (Goods goods : goodsq.getResultList()) {
             TypedQuery<Long> countSql = em.createQuery("SELECT COUNT(a) FROM Goods a WHERE a.deleted = FALSE AND a.category = :category AND a.name = :name", Long.class);
             countSql.setParameter("category", CategoryEnum.MAKE_FRIENDS).setParameter("name", goods.getName());
             if (countSql.getSingleResult() > 1) {
@@ -3860,12 +3810,9 @@ public class AdminREST {
     @Path("change_daqu")
     public String changeDaqu(@CookieParam("auth") String auth) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
-        TypedQuery<GoodsOrder> goodsq = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.deleted = FALSE AND a.category = :category AND a.goods.type = :type AND a.divideUser IS NOT NULL", GoodsOrder.class
-        );
-        goodsq.setParameter(
-                "category", CategoryEnum.MAKE_FRIENDS).setParameter("type", GoodsTypeEnum.HOT);
-        for (GoodsOrder goods
-                : goodsq.getResultList()) {
+        TypedQuery<GoodsOrder> goodsq = em.createQuery("SELECT a FROM GoodsOrder a WHERE a.deleted = FALSE AND a.category = :category AND a.goods.type = :type AND a.divideUser IS NOT NULL", GoodsOrder.class);
+        goodsq.setParameter("category", CategoryEnum.MAKE_FRIENDS).setParameter("type", GoodsTypeEnum.HOT);
+        for (GoodsOrder goods : goodsq.getResultList()) {
             goods.setUserAmount(new BigDecimal(200));
             em.merge(goods);
             TypedQuery<UserWageLog> countSql = em.createQuery("SELECT a FROM UserWageLog a WHERE a.goodsOrder = :goodsOrder", UserWageLog.class);

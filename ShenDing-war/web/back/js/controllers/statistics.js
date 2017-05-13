@@ -146,5 +146,45 @@ app.controller('UserWageStaController', ['$scope', '$http', '$modal', '$location
             }
             window.open("/admin/ALL_WAGE_LIST?startDate=" + start + "&endDate=" + end);
         };
+        
+        $scope.wagePlaceList = function () {
+            var start = "";
+            var end = "";
+            if ($scope.startDate instanceof Date) {
+                start = $scope.startDate.getFullYear() + "-" + ($scope.startDate.getMonth() + 1) + "-" + $scope.startDate.getDate();
+            }
+            if ($scope.endDate instanceof Date) {
+                end = $scope.endDate.getFullYear() + "-" + ($scope.endDate.getMonth() + 1) + "-" + $scope.endDate.getDate();
+            }
+            if (start == "" || end == "") {
+                $.scojs_message("请输入完整的时间", $.scojs_message.TYPE_ERROR);
+                return;
+            }
+            window.open("/admin/ALL_WAGE_PLACE_LIST?startDate=" + start + "&endDate=" + end);
+        };
+
+    }]);
+
+app.controller('UserPlaceController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
+        $scope.list = null;
+        $scope.listLoading = false;
+        $scope.listLoadingData = false;
+        $scope.search = "";
+        $scope.getList = function () {
+            $http.get("/webservice/admin/goods_list_province").success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $scope.list = responseData.data;
+                }
+                $scope.listLoadingData = false;
+                $scope.listLoading = false;
+            });
+        };
+        $scope.getList();
+
 
     }]);

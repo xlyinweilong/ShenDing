@@ -1,0 +1,39 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">地区代理统计</h1>
+</div>
+<div class="wrapper-md" ng-controller="UserPlaceController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                地区代理统计
+            </div>
+            <div class="panel-body">
+                <div class="text-center" ng-show="listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:40%">省份</th>
+                            <th style="width:30%">售出的地区数量</th>
+                            <th style="width:30%">代理数量</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td>{{item.placeName}}</td>
+                            <td>{{item.orderCount}}</td>
+                            <td>{{item.uidCount}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

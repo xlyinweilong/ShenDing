@@ -10,6 +10,7 @@ import com.shending.entity.WageLog;
 import com.shending.service.AdminService;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
+import com.shending.support.bo.PlaceWages;
 import com.shending.support.enums.CategoryEnum;
 import com.shending.support.enums.OrderRecordTypeEnum;
 import com.shending.support.enums.OrderStatusEnum;
@@ -122,6 +123,7 @@ public class AdminServlet extends BaseServlet {
             case COSMETICS_WAGE_LIST:
             case ALL_WAGE_LIST:
             case COSMETICS_USER_WAGE_LIST:
+            case ALL_WAGE_PLACE_LIST:
                 setLoginLogoutBothAllowed(request);
                 break;
             default:
@@ -193,7 +195,7 @@ public class AdminServlet extends BaseServlet {
     public static enum PageEnum {
 
         INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
-        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST;
+        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST,ALL_WAGE_PLACE_LIST;
 
     }
 
@@ -217,6 +219,8 @@ public class AdminServlet extends BaseServlet {
                 return loadWageList(request, response);
             case ALL_WAGE_LIST:
                 return loadAllWageList(request, response);
+            case ALL_WAGE_PLACE_LIST:
+                return loadAllWagePlaceList(request, response);
             case ORDER_WAGE_LIST:
                 return loadOrderWageList(request, response);
             case WAGE_LOG_LIST:
@@ -1129,6 +1133,97 @@ public class AdminServlet extends BaseServlet {
     }
 
     /**
+     * 地区的总工资
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadAllWagePlaceList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "wage_all.csv";//default file name
+        List vecCsvData = new ArrayList();
+        String start = super.getRequestString(request, "startDate");
+        String end = super.getRequestString(request, "endDate");
+        Date startDate = null;
+        Date endDate = null;
+        if (Tools.isNotBlank(start)) {
+            try {
+                startDate = Tools.getBeginOfDay(Tools.parseDate(start, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                startDate = null;
+            }
+        }
+        if (Tools.isNotBlank(end)) {
+            try {
+                endDate = Tools.getEndOfDay(Tools.parseDate(end, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                endDate = null;
+            }
+        }
+        List<PlaceWages> resultList = adminService.findWageTotalListAllByPlace(startDate, endDate);
+        List<String[]> placeWagesStr = new ArrayList<>();
+        for (PlaceWages ps : resultList) {
+            String[] strs = new String[7];
+            strs[0] = ps.getGoodsName();
+            strs[1] = ps.getAdAmount();
+            strs[2] = ps.getRecommendAmount();
+            strs[3] = ps.getPorducetAmount();
+            strs[4] = ps.getCosmeticsAmount();
+            strs[5] = ps.getGrandSlamAmount();
+            strs[6] = ps.getTotalAmount();
+            placeWagesStr.add(strs);
+        }
+        String[] headLine = new String[7];
+        headLine[0] = "地区";
+        headLine[1] = "广告工资";
+        headLine[2] = "加盟提成工资";
+        headLine[3] = "产品工资";
+        headLine[4] = "化妆品工资";
+        headLine[5] = "大满贯工资";
+        headLine[6] = "总工资";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        vecCsvData.addAll(placeWagesStr);
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
      * 大区工资表
      *
      * @param request
@@ -1611,7 +1706,7 @@ public class AdminServlet extends BaseServlet {
         searchMap.put("type", WageLogTypeEnum.PRODUCT);
         searchMap.put("cosmeticsIsNotNull", true);
         List<WageLog> resultList = adminService.findWageLogList(searchMap, 0, 0, true, false);
-        String[] headLine = new String[7];
+        String[] headLine = new String[9];
         headLine[0] = "时间";
         headLine[1] = "产品";
         headLine[2] = "价格";
