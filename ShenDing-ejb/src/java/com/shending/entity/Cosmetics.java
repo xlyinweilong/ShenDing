@@ -1,5 +1,6 @@
 package com.shending.entity;
 
+import com.shending.support.enums.PaymentGatewayTypeEnum;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -86,6 +87,10 @@ public class Cosmetics implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     //提成的大区经理
     private SysUser regionalManager;
+    @Column(name = "pay_type")
+    @Enumerated(EnumType.STRING)
+    //支付方式
+    private PaymentGatewayTypeEnum payType = PaymentGatewayTypeEnum.BANK_TRANSFER;
     @Column(name = "regional_manager_amount")
     //大区经理提成金额
     private BigDecimal regionalManagerAmount = BigDecimal.ZERO;
@@ -123,6 +128,14 @@ public class Cosmetics implements Serializable {
 
     public BigDecimal getCommissionAmount() {
         return commissionAmount;
+    }
+
+    public PaymentGatewayTypeEnum getPayType() {
+        return payType;
+    }
+
+    public void setPayType(PaymentGatewayTypeEnum payType) {
+        this.payType = payType;
     }
 
     public void setCommissionAmount(BigDecimal commissionAmount) {

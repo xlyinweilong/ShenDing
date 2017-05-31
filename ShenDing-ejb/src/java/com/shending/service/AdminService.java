@@ -20,12 +20,15 @@ import com.shending.entity.UserWageLog;
 import com.shending.entity.Vote;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
+import com.shending.support.Trans2PinYin;
 import com.shending.support.bo.PlaceWages;
 import com.shending.support.bo.UserWages;
 import com.shending.support.enums.AdGoodsTypeEnum;
 import com.shending.support.enums.AdLevelEnum;
 import com.shending.support.enums.AdLimitTypeEnum;
 import com.shending.support.enums.CategoryEnum;
+import com.shending.support.enums.GoodsStatusEnum;
+import com.shending.support.enums.OrderRecordTypeEnum;
 import com.shending.support.enums.WageLogTypeEnum;
 import com.shending.support.enums.OrderStatusEnum;
 import com.shending.support.enums.PaymentGatewayTypeEnum;
@@ -413,18 +416,18 @@ public class AdminService {
             if (!user.getAccount().equals(account) && null != this.findByAccount(account)) {
                 throw new EjbMessageException("账户已经存在");
             }
-//            if (Tools.isNotBlank(idCard)) {
-//                if (!user.getIdCard().equals(idCard) && this.findSysUserByIdCardCount(idCard) > 0) {
-//                    throw new EjbMessageException("身份证号已经存在");
-//                }
-//            }
+            if (Tools.isNotBlank(idCard)) {
+                if (!user.getIdCard().equals(idCard) && this.findSysUserByIdCardCount(idCard) > 0) {
+                    throw new EjbMessageException("身份证号已经存在");
+                }
+            }
         } else {
             if (null != this.findByAccount(account)) {
                 throw new EjbMessageException("账户已经存在");
             }
-//            if (this.findSysUserByIdCardCount(idCard) > 0) {
-//                throw new EjbMessageException("身份证号已经存在");
-//            }
+            if (this.findSysUserByIdCardCount(idCard) > 0) {
+                throw new EjbMessageException("身份证号已经存在");
+            }
         }
 //        if (Tools.isNotBlank(bankType) && Tools.isContainNumber(bankType)) {
 //            throw new EjbMessageException("所属银行不能包含数字");
@@ -625,6 +628,179 @@ public class AdminService {
             SysRole sr = em.find(SysRole.class, id);
             em.remove(sr);
         }
+    }
+
+    public GoodsOrder createGoodsOrder(SysUser user, Long id, Long goodsId, String userAmount, String peopleCountFee, String category, String remark,
+            String price, String backAmount, List<Long> recommendIds, String divideAmount, List<String> recommendOrderIds, List<String> recommendRates, Long divideUserId,
+            String amount, String payDate, String gatewayType, String orderRecordType) throws EjbMessageException {
+        boolean isCreate = true;
+        GoodsOrder goodsOrder = new GoodsOrder();
+        goodsOrder.setCreateUser(user);
+
+        if (id != null) {
+            goodsOrder = em.find(GoodsOrder.class, id);
+            this.saveLog(user,
+                    "补充订单", "订单号：" + goodsOrder.getSerialId() + " 汇款金额：" + amount + " 人数费修改：" + peopleCountFee + " 回款时间：" + payDate + " 金额类型：" + orderRecordType);
+            isCreate = false;
+        }
+        Goods goods = em.find(Goods.class, goodsId);
+        if (id
+                == null && !goods.getStatus()
+                .equals(GoodsStatusEnum.SALE)) {
+            throw new EjbMessageException("商品的状态错误");
+        }
+
+        goodsOrder.setUserAmount(BigDecimal.ZERO);
+
+        if (Tools.isNotBlank(userAmount)) {
+            goodsOrder.setUserAmount(new BigDecimal(userAmount));
+        }
+
+        if (Tools.isNotBlank(peopleCountFee)) {
+            goodsOrder.setPeopleCountFee(new BigDecimal(peopleCountFee));
+        }
+
+        goodsOrder.setCategory(CategoryEnum.valueOf(category));
+        goodsOrder.setRemark(remark);
+
+        goodsOrder.setGoods(goods);
+
+        goodsOrder.setUser(goods.getUser());
+        goodsOrder.setGoodsMsg(goods.getProvinceStr() + "_" + goods.getName() + "_" + goods.getUser().getId() + "_" + goods.getUser().getName());
+        goodsOrder.setGoodsPinyin(Trans2PinYin.trans2PinYinFirst(goods.getName()));
+        goodsOrder.setPrice(new BigDecimal(price));
+        goodsOrder.setBackAmount(Tools.isBlank(backAmount) ? BigDecimal.ZERO : new BigDecimal(backAmount));
+        goodsOrder.setSerialId(this.getUniqueOrderSerialId());
+        goodsOrder.setDivideAmount(BigDecimal.ZERO);
+        if (recommendIds != null && recommendIds.size() > 0) {
+            goodsOrder.setDivideAmount(new BigDecimal(divideAmount));
+            if (recommendIds.size() == 1) {
+                SysUser recommendUser = em.find(SysUser.class, recommendIds.get(0));
+                goodsOrder.setRecommendIds(recommendUser.getId().toString());
+                goodsOrder.setRecommendNames(recommendUser.getName());
+                goodsOrder.setRecommendRates("100");
+                if (recommendOrderIds != null && recommendOrderIds.size() > 0) {
+                    goodsOrder.setRecommendOrderIds(Tools.isNotBlank(recommendOrderIds.get(0)) ? recommendOrderIds.get(0) : null);
+                }
+            } else {
+                String ids = "";
+                String names = "";
+                String rates = "";
+                String orderId = "";
+                for (int i = 0; i < recommendIds.size(); i++) {
+                    if (i == 0) {
+                        SysUser recommendUser = em.find(SysUser.class, recommendIds.get(i));
+                        ids = recommendUser.getId().toString();
+                        names = recommendUser.getName();
+                        rates = recommendRates.get(i);
+                        if (recommendOrderIds != null && recommendOrderIds.size() > 0) {
+                            orderId = Tools.isBlank(recommendOrderIds.get(i)) ? "null" : recommendOrderIds.get(i);
+                        }
+                    } else {
+                        SysUser recommendUser = em.find(SysUser.class, recommendIds.get(i));
+                        ids = ids + ";" + recommendUser.getId().toString();
+                        names = names + ";" + recommendUser.getName();
+                        rates = rates + ";" + recommendRates.get(i);
+                        if (recommendOrderIds != null && recommendOrderIds.size() > 0) {
+                            orderId = orderId + ";" + (Tools.isBlank(recommendOrderIds.get(i)) ? "null" : recommendOrderIds.get(i));
+                        }
+                    }
+                }
+                goodsOrder.setRecommendIds(ids);
+                goodsOrder.setRecommendNames(names);
+                goodsOrder.setRecommendRates(rates);
+                goodsOrder.setRecommendOrderIds(orderId);
+            }
+        }
+        if (null != divideUserId) {
+            goodsOrder.setDivideUser(em.find(SysUser.class, divideUserId));
+        }
+
+        goodsOrder.setStatus(OrderStatusEnum.PENDING_PAYMENT);
+
+        goods.setStatus(GoodsStatusEnum.LOCKED);
+
+        goods.setStatusStartDate(
+                new Date());
+        goods.setStatusEndDate(Tools.addMinute(new Date(), 30));
+        if (Tools.isNotBlank(amount)
+                && isCreate && Tools.isNotBlank(payDate) && Tools.isNotBlank(gatewayType) && Tools.isNotBlank(orderRecordType)) {
+            goodsOrder.setPaidPrice(new BigDecimal(amount));
+            goodsOrder.setLastPayDate(Tools.parseDate(payDate, "yyyy-MM-dd"));
+            goodsOrder.setGatewayType(PaymentGatewayTypeEnum.valueOf(gatewayType));
+            if (OrderRecordTypeEnum.valueOf(orderRecordType).equals(OrderRecordTypeEnum.FINAL_PAYMENT) || OrderRecordTypeEnum.valueOf(orderRecordType).equals(OrderRecordTypeEnum.ALL_PAYMENT)) {
+                goodsOrder.setStatus(OrderStatusEnum.WAIT_SIGN_CONTRACT);
+                goodsOrder.setLimitEnd(Tools.addYear(Tools.parseDate(payDate, "yyyy-MM-dd"), 1));
+                goodsOrder.setLimitStart(Tools.parseDate(payDate, "yyyy-MM-dd"));
+                goodsOrder.setEndDate(new Date());
+                goods.setStatus(GoodsStatusEnum.WAIT_SIGN_CONTRACT);
+                goods.setStatusStartDate(goodsOrder.getLimitStart());
+                goods.setStatusEndDate(goodsOrder.getLimitEnd());
+            } else {
+                goodsOrder.setStatus(OrderStatusEnum.EARNEST);
+                goods.setStatus(GoodsStatusEnum.RESERVE);
+                goods.setStatusStartDate(new Date());
+                goods.setStatusEndDate(Tools.addDay(new Date(), 7));
+            }
+        }
+        if (isCreate) {
+            em.persist(goodsOrder);
+            em.flush();
+            this.saveLog(user, "创建订单", "订单号：" + goodsOrder.getSerialId() + " 汇款金额：" + amount + " 人数费：" + peopleCountFee + " 回款时间：" + payDate + " 订单状态：" + goodsOrder.getStatusMean() + " 加盟金额：" + goodsOrder.getPrice() + (goodsOrder.getDivideUser() == null ? "" : (" 分成大区经理 ：" + goodsOrder.getDivideUser().getAccount())) + (goodsOrder.getDivideUser() == null ? "" : (" 分成大区经理分成金额 ：" + goodsOrder.getDivideAmount().toString())) + " 代理区域:" + goodsOrder.getGoodsMsg() + (goodsOrder.getRecommendIdList() == null ? "" : (" 业务员 ：" + goodsOrder.getRecommendNameList().toString() + " " + goodsOrder.getRecommendRateList().toString())));
+        } else {
+            em.merge(goodsOrder);
+        }
+
+        if (goodsOrder.getStatus()
+                .equals(OrderStatusEnum.WAIT_SIGN_CONTRACT)) {
+            //尾款了
+            if (goodsOrder.getUserAmount().compareTo(BigDecimal.ZERO) > 0 && goodsOrder.getDivideUser() != null) {
+                UserWageLog userWageLog = new UserWageLog();
+                userWageLog.setCategory(goodsOrder.getCategory());
+                userWageLog.setAmount(goodsOrder.getUserAmount());
+                userWageLog.setUser(goodsOrder.getDivideUser());
+                userWageLog.setPayDate(goodsOrder.getLastPayDate());
+                userWageLog.setGoodsOrder(goodsOrder);
+                em.persist(userWageLog);
+            }
+            if (goodsOrder.getRecommendIdList() != null && !goodsOrder.getRecommendIdList().isEmpty()) {
+                //计算是否产生手续费
+                goodsOrder.setFee(goodsOrder.getPrice().subtract(goodsOrder.getPaidPrice()));
+                for (int i = 0; i < goodsOrder.getRecommendIdList().size(); i++) {
+                    String idStr = goodsOrder.getRecommendIdList().get(i);
+                    String rate = goodsOrder.getRecommendRateList().get(i);
+                    SysUser sysUser = em.find(SysUser.class, Long.parseLong(idStr));
+                    CategoryEnum ce = CategoryEnum.valueOf(category);
+                    if (goodsOrder.getRecommendOrderIds() != null) {
+                        String rOrderId = goodsOrder.getRecommendOrderIdsList().get(i);
+                        if (rOrderId != null && !rOrderId.equals("null")) {
+                            try {
+                                GoodsOrder go = em.find(GoodsOrder.class, Long.parseLong(rOrderId));
+                                ce = go.getCategory();
+                            } catch (Exception e) {
+                                ce = CategoryEnum.valueOf(category);
+                            }
+                        }
+                    }
+                    this.createWageLog(goodsOrder, sysUser, goodsOrder.getDivideAmount().multiply(new BigDecimal(rate)).divide(new BigDecimal(100), RoundingMode.DOWN).setScale(2, RoundingMode.DOWN), goodsOrder.getFee().multiply(new BigDecimal(rate)).divide(new BigDecimal(100), RoundingMode.UP).setScale(2, RoundingMode.UP), WageLogTypeEnum.RECOMMEND, goodsOrder.getLastPayDate(), ce);
+                }
+                em.merge(goodsOrder);
+            }
+            //增加代理的金额
+        }
+        OrderRecord orderRecord = new OrderRecord();
+
+        orderRecord.setGatewayType(PaymentGatewayTypeEnum.valueOf(gatewayType));
+        orderRecord.setPayDate(Tools.parseDate(payDate, "yyyy-MM-dd"));
+        orderRecord.setType(OrderRecordTypeEnum.valueOf(orderRecordType));
+        orderRecord.setGoods(goodsOrder.getGoods());
+        orderRecord.setOrder(goodsOrder);
+
+        orderRecord.setPrice(new BigDecimal(amount));
+        em.persist(orderRecord);
+
+        em.merge(goods);
+        return goodsOrder;
     }
 
     /**
@@ -1964,7 +2140,7 @@ public class AdminService {
             pw.setRecommendAmount(os[0].toString());//加盟推荐
             pw.setGoodsId(goodsId);
         }
-        
+
         //查询化妆品
         Query queryCosmetics = em.createQuery("SELECT SUM(w.amount)-SUM(w.fee),w.cosmetics.goods.name,w.cosmetics.goods.id FROM WageLog w WHERE w.cosmetics IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.cosmetics.goods.id,w.cosmetics.goods.name");
         queryCosmetics.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
@@ -1998,12 +2174,12 @@ public class AdminService {
             pw.setGrandSlamAmount(os[0].toString());//大满贯
             pw.setGoodsId(goodsId);
         }
-        
+
         //去掉list3中的数组的3和4
         List<PlaceWages> returnList = new ArrayList();
         for (Long uid : placeMap.keySet()) {
-           PlaceWages pw  = placeMap.get(uid);
-           returnList.add(pw);
+            PlaceWages pw = placeMap.get(uid);
+            returnList.add(pw);
         }
         return returnList;
     }
@@ -2507,12 +2683,14 @@ public class AdminService {
      * @param remark
      * @param soldCount
      */
-    public void createOrUpdateProductLog(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate, ProductEnum product, String remark, int soldCount) {
+    public void createOrUpdateProductLog(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate, ProductEnum product, String remark, int soldCount,//支付方式
+                        PaymentGatewayTypeEnum gatewayType) {
         ProductLog productLog = new ProductLog();
         if (id != null) {
             productLog = em.find(ProductLog.class, id);
         }
         GoodsOrder order = em.find(GoodsOrder.class, orderId);
+        productLog.setPayType(gatewayType);
         productLog.setGoodsOrder(order);
         productLog.setGoods(order.getGoods());
         productLog.setUser(order.getAgentUser());
@@ -2583,12 +2761,13 @@ public class AdminService {
      * @param regionalManagerAmount
      */
     public void createOrUpdateCosmetics(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate,
-            int product, String remark, int soldCount, Long regionalManager, BigDecimal regionalManagerAmount) {
+            int product, String remark, int soldCount, Long regionalManager, BigDecimal regionalManagerAmount,PaymentGatewayTypeEnum payType) {
         Cosmetics cosmetics = new Cosmetics();
         if (id != null) {
             cosmetics = em.find(Cosmetics.class, id);
         }
         GoodsOrder order = em.find(GoodsOrder.class, orderId);
+        cosmetics.setPayType(payType);
         cosmetics.setGoodsOrder(order);
         cosmetics.setGoods(order.getGoods());
         cosmetics.setUser(order.getAgentUser());

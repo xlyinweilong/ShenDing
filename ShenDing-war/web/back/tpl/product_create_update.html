@@ -39,16 +39,18 @@
                         </div>
                     </div>
                 </form>
-                 <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
                 <div class="form-group">
                     <label>产品<i class="text-danger">*</i></label>
                     <select class="form-control" ng-model="product.product" ng-change="changeAmount()">
                         <option ng-selected="product.product == null || product.product == 'MA_KA'" value="MA_KA">玛咖加强型</option>
                         <option value="MA_KA_WEN_HE">玛咖温和型</option>
                         <option value="LAN_MEI_HUA_QING_SU">蓝莓花青素</option>
+                        <option value="SMALL_GIFTS">小礼包</option>
+                        <option value="BIG_GIFTS">大礼包</option>
                     </select>
                 </div>
-                 <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
                 <div class="form-group">
                     <label>数量<i class="text-danger">*</i></label>
                     <input type="text" class="form-control" placeholder="3" ng-model="product.soldCount" ng-change="changeAmount()">
@@ -67,6 +69,20 @@
                 <div class="form-group">
                     <label>备注</label>
                     <input type="text" class="form-control" placeholder="输入备注，最多100个字" ng-model="product.remark">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>支付方式</label>
+                    <select class="form-control" ng-model="product.payType" ng-keyup="myKeyup($event)">
+                        <option  ng-selected="product.payType == null || product.payType == 'BANK_TRANSFER'" value="BANK_TRANSFER">银行汇款</option>
+                        <option value="ALIPAY">支付宝</option>
+                        <option value="POST_CARD">刷卡</option>
+                        <option value="WECHAT_PAY">微信支付</option>
+                        <option value="ICBC">工行</option>
+                        <option value="ABC">农行</option>
+                        <option value="CCBC">建行</option>
+                        <option value="CASH">现金支付</option>
+                    </select>
                 </div>
                 <div class="line line-dashed b-b line-lg pull-in"></div>
                 <button type="button" class="btn btn-sm btn-primary" ng-click="submitForm()" ng-disabled="product.submitting || !(product.soldCount > 0) || !(product.incomeAmount > -1) || !(product.commissionAmount > -1) || product.soldCount == null || product.incomeAmount == null || product.commissionAmount == null || checkedOrder == null || product.product == null" ng-class="{ 'active' : product.submitting}">

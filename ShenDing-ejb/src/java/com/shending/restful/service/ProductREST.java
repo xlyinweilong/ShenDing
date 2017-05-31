@@ -148,11 +148,13 @@ public class ProductREST {
                             throw new EjbMessageException("第" + (i + 1) + "行提成错误");
                         }
                         //备注
-                        String remark = null;
-                        if (cells.length == 7) {
-                            remark = StringUtils.trimToNull(cells[6].getContents());
+                        String remark = StringUtils.trimToNull(cells[6].getContents());
+                        //支付方式
+                        PaymentGatewayTypeEnum gatewayType = PaymentGatewayTypeEnum.getEnum(StringUtils.trim(cells[7].getContents()));
+                        if (gatewayType == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行支付方式错误");
                         }
-                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, productEnum, remark, count);
+                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, productEnum, remark, count, gatewayType);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -308,11 +310,13 @@ public class ProductREST {
                             }
                         }
                         //备注
-                        String remark = null;
-                        if (cells.length == 9) {
-                            remark = StringUtils.trimToNull(cells[8].getContents());
+                        String remark = StringUtils.trimToNull(cells[8].getContents());
+                        //支付方式
+                        PaymentGatewayTypeEnum gatewayType = PaymentGatewayTypeEnum.getEnum(StringUtils.trim(cells[9].getContents()));
+                        if (gatewayType == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行支付方式错误");
                         }
-                        adminService.createOrUpdateCosmetics(null, order.getId(), amountBd, commissionBd, payDate, product, remark, count, regionalManager, regionalManagerAmount);
+                        adminService.createOrUpdateCosmetics(null, order.getId(), amountBd, commissionBd, payDate, product, remark, count, regionalManager, regionalManagerAmount,gatewayType);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -380,7 +384,7 @@ public class ProductREST {
     @POST
     @Path("create_or_update_product")
     public String createOrUpdateProduct(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("soldCount") int soldCount, @FormParam("incomeAmount") String incomeAmount, @FormParam("commissionAmount") String commissionAmount,
-            @FormParam("product") String product, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate) throws Exception {
+            @FormParam("product") String product, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate, @FormParam("payType") String payType) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
             throw new EjbMessageException("您没有权限");
@@ -395,7 +399,7 @@ public class ProductREST {
         if (new BigDecimal(incomeAmount).compareTo(BigDecimal.ZERO) < 0 || new BigDecimal(commissionAmount).compareTo(BigDecimal.ZERO) < 0) {
             throw new EjbMessageException("参数异常");
         }
-        adminService.createOrUpdateProductLog(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, ProductEnum.valueOf(product), remark, soldCount);
+        adminService.createOrUpdateProductLog(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, ProductEnum.valueOf(product), remark, soldCount, PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
         map.put("msg", "操作成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
@@ -563,7 +567,7 @@ public class ProductREST {
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
-    
+
     /**
      * 删除产品
      *
@@ -684,7 +688,7 @@ public class ProductREST {
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
-    
+
     /**
      * 我的产品列表
      *
@@ -1063,7 +1067,8 @@ public class ProductREST {
     @POST
     @Path("create_or_update_cosmetics")
     public String createOrUpdateCosmetics(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("soldCount") int soldCount, @FormParam("incomeAmount") String incomeAmount, @FormParam("commissionAmount") String commissionAmount,
-            @FormParam("product") int product, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate, @FormParam("regionalManager") Long regionalManager, @FormParam("regionalManagerAmount") String regionalManagerAmount) throws Exception {
+            @FormParam("product") int product, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate, @FormParam("regionalManager") Long regionalManager, @FormParam("regionalManagerAmount") String regionalManagerAmount,
+            @FormParam("payType") String payType) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
             throw new EjbMessageException("您没有权限");
@@ -1078,7 +1083,7 @@ public class ProductREST {
         if (new BigDecimal(incomeAmount).compareTo(BigDecimal.ZERO) < 0 || new BigDecimal(commissionAmount).compareTo(BigDecimal.ZERO) < 0) {
             throw new EjbMessageException("参数异常");
         }
-        adminService.createOrUpdateCosmetics(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, product, remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount));
+        adminService.createOrUpdateCosmetics(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, product, remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount),PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
         map.put("msg", "操作成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);

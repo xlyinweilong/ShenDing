@@ -26,6 +26,10 @@
                             <i class="fa fa-refresh"></i>
                             刷新
                         </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="wagePlaceList()">
+                            <i class="fa fa-cloud-download"></i>
+                            下载地区
+                        </button>
                     </div>
                     <form role="form" name="form" ng-submit="getList(1, false)()">
                         <div class="col-sm-5">
@@ -33,6 +37,21 @@
                                 <input class="input-sm form-control" ng-model="listSearch" type="text" placeholder="加盟号码或者区域信息">
                                 <span class="input-group-btn">
                                     <button class="btn btn-sm btn-default" ng-disabled="list == null || listLoading || listLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="row wrapper">
+                    <form role="form" name="form">
+                        <div class="col-sm-12">
+                            <div class="input-group">
+                                <input class="input-sm form-control" type="file">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-sm btn-default" ng-click="uploadFile()" ng-disabled="listLoading || activeMyFile || listLoadingData" ng-class="{'active' : activeMyFile}">
+                                        <span class="text">上传</span>
+                                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>上传中...</span>
+                                    </button>
                                 </span>
                             </div>
                         </div>

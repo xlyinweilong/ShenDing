@@ -23,5 +23,18 @@ public enum OrderRecordTypeEnum {
                 return "";
         }
     }
+    
+     public static OrderRecordTypeEnum getEnum(String mean) {
+        switch (mean) {
+            case "定金":
+                return EARNEST;
+            case "尾款":
+                return FINAL_PAYMENT;
+            case "全款":
+                return ALL_PAYMENT;
+            default:
+                return null;
+        }
+    }
 
 }

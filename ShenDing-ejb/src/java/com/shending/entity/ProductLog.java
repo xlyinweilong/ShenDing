@@ -1,5 +1,6 @@
 package com.shending.entity;
 
+import com.shending.support.enums.PaymentGatewayTypeEnum;
 import com.shending.support.enums.ProductEnum;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -79,6 +80,10 @@ public class ProductLog implements Serializable {
     @Column(name = "remark")
     //备注
     private String remark;
+    @Column(name = "pay_type")
+    @Enumerated(EnumType.STRING)
+    //支付方式
+    private PaymentGatewayTypeEnum payType = PaymentGatewayTypeEnum.BANK_TRANSFER;
     @Column(name = "deleted")
     private boolean deleted = false;
 
@@ -103,6 +108,14 @@ public class ProductLog implements Serializable {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    public PaymentGatewayTypeEnum getPayType() {
+        return payType;
+    }
+
+    public void setPayType(PaymentGatewayTypeEnum payType) {
+        this.payType = payType;
     }
 
     public BigDecimal getIncomeAmount() {

@@ -25,7 +25,7 @@ app.controller('ProductGrandSlamListController', ['$scope', '$http', '$modal', '
         $scope.dateOptions = {
             class: 'datepicker'
         };
-        
+
         /**
          * pagination
          */
@@ -132,7 +132,7 @@ app.controller('ProductGrandSlamListController', ['$scope', '$http', '$modal', '
             }
             window.open("/admin/PRODUCT_LOG_WAGE_LIST?startDate=" + start + "&endDate=" + end);
         };
-        
+
         $scope.deleteItems = function () {
             var checkedList = new Array();
             for (var i = 0; i < $scope.list.length; i++) {
@@ -270,7 +270,7 @@ app.controller('ProductListController', ['$scope', '$http', '$modal', '$location
         $scope.dateOptions = {
             class: 'datepicker'
         };
-        
+
         //上传文件
         $scope.myFile = null;
         $scope.activeMyFile = false;//正在上传
@@ -411,7 +411,7 @@ app.controller('ProductListController', ['$scope', '$http', '$modal', '$location
             }
             window.open("/admin/PRODUCT_LOG_WAGE_LIST?startDate=" + start + "&endDate=" + end);
         };
-        
+
         $scope.deleteItems = function () {
             var checkedList = new Array();
             for (var i = 0; i < $scope.list.length; i++) {
@@ -452,7 +452,7 @@ app.controller('ProductListController', ['$scope', '$http', '$modal', '$location
     }]);
 
 app.controller('CreateUpdateProductController', ['$scope', '$http', '$modal', '$location', "$state", "$stateParams", function ($scope, $http, $modal, $location, $state, $stateParams) {
-        $scope.product = {submitting: false, soldCount: 3, incomeAmount: 540, commissionAmount: 130, product: 'MA_KA'};
+        $scope.product = {submitting: false, soldCount: 3, incomeAmount: 540, commissionAmount: 130, product: 'MA_KA', payType: 'BANK_TRANSFER'};
         $scope.orderList = null;
         $scope.orderListLoadingData = null;
         $scope.orderListTotalItems = null;
@@ -572,6 +572,17 @@ app.controller('CreateUpdateProductController', ['$scope', '$http', '$modal', '$
             }
         }
 
+        $scope.myKeyup = function (e) {
+            var keycode = window.event ? e.keyCode : e.which;
+            var product = $scope.product;
+            if (keycode == 13) {
+                if (product.submitting || !(product.soldCount > 0) || !(product.incomeAmount > -1) || !(product.commissionAmount > -1) || product.soldCount == null || product.incomeAmount == null || product.commissionAmount == null || checkedOrder == null || product.product == null) {
+                    return;
+                }
+                $scope.submitForm();
+            }
+        };
+
         $scope.submitForm = function () {
             $scope.product.submitting = true;
             if ($scope.payDate instanceof Date) {
@@ -621,7 +632,7 @@ app.controller('CosmeticsListController', ['$scope', '$http', '$modal', '$locati
         $scope.dateOptions = {
             class: 'datepicker'
         };
-        
+
         //上传文件
         $scope.myFile = null;
         $scope.activeMyFile = false;//正在上传
@@ -657,7 +668,7 @@ app.controller('CosmeticsListController', ['$scope', '$http', '$modal', '$locati
 
 
         }
-        
+
         /**
          * pagination
          */
@@ -764,7 +775,7 @@ app.controller('CosmeticsListController', ['$scope', '$http', '$modal', '$locati
             }
             window.open("/admin/COSMETICS_WAGE_LIST?startDate=" + start + "&endDate=" + end);
         };
-        
+
         $scope.downLoadUserWage = function () {
             var start = "";
             var end = "";
@@ -822,7 +833,7 @@ app.controller('CosmeticsListController', ['$scope', '$http', '$modal', '$locati
     }]);
 
 app.controller('CreateUpdateCosmeticsController', ['$scope', '$http', '$modal', '$location', "$state", "$stateParams", function ($scope, $http, $modal, $location, $state, $stateParams) {
-        $scope.product = {submitting: false, soldCount: 1, incomeAmount: 0, commissionAmount: 0, product: '1'};
+        $scope.product = {submitting: false, soldCount: 1, incomeAmount: 0, commissionAmount: 0, product: '1',payType:'BANK_TRANSFER'};
         $scope.orderList = null;
         $scope.orderListLoadingData = null;
         $scope.orderListTotalItems = null;
@@ -867,7 +878,7 @@ app.controller('CreateUpdateCosmeticsController', ['$scope', '$http', '$modal', 
             $scope.checkedOrder = ele;
             $scope.searchOrderMsg = ele.goods.name + " (" + ele.goods.provinceStr + ") " + ele.goods.categoryMean + " (代理:" + ele.agentUser.name + ")";
         };
-        
+
         $scope.userList = null;
         $scope.userListLoadingData = null;
         $scope.userListTotalItems = null;
@@ -893,7 +904,7 @@ app.controller('CreateUpdateCosmeticsController', ['$scope', '$http', '$modal', 
             $scope.checkedUser = ele;
             $scope.searchUserMsg = ele.name;
         };
-        
+
         $scope.open = function ($event) {
             $event.preventDefault();
             $event.stopPropagation();
@@ -969,7 +980,18 @@ app.controller('CreateUpdateCosmeticsController', ['$scope', '$http', '$modal', 
                 }
             }
         }
-
+        
+        $scope.myKeyup = function (e) {
+            var keycode = window.event ? e.keyCode : e.which;
+            var product = $scope.product;
+            if (keycode == 13) {
+                if (product.submitting || !(product.soldCount > 0) || !(product.incomeAmount > -1) || !(product.commissionAmount > -1) || product.soldCount == null || product.incomeAmount == null || product.commissionAmount == null || checkedOrder == null || product.product == null) {
+                    return;
+                }
+                $scope.submitForm();
+            }
+        };
+        
         $scope.submitForm = function () {
             $scope.product.submitting = true;
             if ($scope.payDate instanceof Date) {

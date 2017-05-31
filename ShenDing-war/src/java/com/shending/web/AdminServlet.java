@@ -124,6 +124,7 @@ public class AdminServlet extends BaseServlet {
             case ALL_WAGE_LIST:
             case COSMETICS_USER_WAGE_LIST:
             case ALL_WAGE_PLACE_LIST:
+            case DOWN_GOODS_LIST:
                 setLoginLogoutBothAllowed(request);
                 break;
             default:
@@ -195,7 +196,7 @@ public class AdminServlet extends BaseServlet {
     public static enum PageEnum {
 
         INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
-        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST,ALL_WAGE_PLACE_LIST;
+        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST;
 
     }
 
@@ -245,6 +246,8 @@ public class AdminServlet extends BaseServlet {
                 return loadCosmeticsWageList(request, response);
             case COSMETICS_USER_WAGE_LIST:
                 return loadCosmeticsUserWageList(request, response);
+            case DOWN_GOODS_LIST:
+                return loadDownGoodsList(request, response);
             default:
                 throw new BadPageException();
         }
@@ -364,6 +367,10 @@ public class AdminServlet extends BaseServlet {
         Map map = Tools.getDMap();
         if (Tools.isBlank(account) || Tools.isBlank(passwd) || Tools.isBlank(name)) {
             map.put("msg", "参数异常");
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        if (Tools.isBlank(idCard)) {
+            map.put("msg", "请输入身份证");
             return FORWARD_TO_ANOTHER_URL;
         }
 //        if (Tools.isBlank(email)) {
@@ -1965,6 +1972,83 @@ public class AdminServlet extends BaseServlet {
         headLine[1] = "提成";
         headLine[2] = "售出数量";
         headLine[3] = "交易次数";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        vecCsvData.addAll(resultList);
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
+     * 下載商品列表
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadDownGoodsList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "load_down_goods_list.csv";//default file name
+        List vecCsvData = new ArrayList();
+        String start = super.getRequestString(request, "startDate");
+        String end = super.getRequestString(request, "endDate");
+        List<String[]> resultList = new ArrayList<>();
+        Map searchMap = new HashMap();
+        searchMap.put("category", CategoryEnum.SERVICE_PEOPLE);
+        searchMap.put("status", OrderStatusEnum.SUCCESS);
+        searchMap.put("orderBy", "GOODS_NAME_ASC");
+        ResultList<GoodsOrder> orderList = adminService.findOrderList(searchMap, 1, 1, Boolean.TRUE, Boolean.FALSE);
+        for (GoodsOrder goodsOrder : orderList) {
+            String[] rs = new String[6];
+            rs[0] = goodsOrder.getGoods().getName();
+            rs[1] = goodsOrder.getAgentUser().getName();
+            rs[2] = goodsOrder.getGoods().getPeopleCount() == null ? "" : goodsOrder.getGoods().getPeopleCount().toString();
+            rs[3] = goodsOrder.getGoods().getProvinceStr() == null ? "" : goodsOrder.getGoods().getProvinceStr();
+            rs[4] = goodsOrder.getGoods().getWeChatCode() == null ? "" : goodsOrder.getGoods().getWeChatCode();
+            rs[5] = goodsOrder.getPaidPrice() == null ? "" : goodsOrder.getPaidPrice().toString();
+            resultList.add(rs);
+        }
+        String[] headLine = new String[6];
+        headLine[0] = "地区";
+        headLine[1] = "代理";
+        headLine[2] = "人数";
+        headLine[3] = "省份";
+        headLine[4] = "微信";
+        headLine[5] = "价钱";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);

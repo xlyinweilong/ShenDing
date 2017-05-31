@@ -32,9 +32,9 @@
                         </span>
                     </p>
                 </div>-->
-<!--                <div class="list-group-item">
+                <div class="list-group-item">
                     <input type="text" placeholder="身份证" class="form-control no-border" ng-model="user.idCard">
-                </div>
+                </div><!--
                 <div class="list-group-item">
                     <input type="text" placeholder="收款银行，如支付宝，建行" class="form-control no-border" ng-model="user.bankType">
                 </div>
@@ -82,7 +82,7 @@
             <div class="text-danger wrapper text-center" ng-show="authError != null">
                 {{authError}}
             </div>
-            <button type="submit" class="btn btn-lg btn-primary btn-block" ng-click="signup()" ng-disabled='user.code == null || user.code.length != 4 || user.name == null || user.name == "" || user.passwd == null || user.passwd == "" || user.passwd.length < 6 || user.account == null || user.account == ""'>注册</button>
+            <button type="submit" class="btn btn-lg btn-primary btn-block" ng-click="signup()" ng-disabled='user.idCard == null || user.code == null || user.code.length != 4 || user.name == null || user.name == "" || user.passwd == null || user.passwd == "" || user.passwd.length < 6 || user.account == null || user.account == ""'>注册</button>
 <!--            <button type="submit" class="btn btn-lg btn-primary btn-block" ng-click="signup()" ng-disabled='user.code == null || user.code.length != 4 || user.bankCardCode == null || user.bankCardCode == "" || user.bankType == null || user.bankType == "" || user.idCard == null || user.idCard == "" || user.name == null || user.name == "" || user.passwd == null || user.passwd == "" || user.passwd.length < 6 || user.account == null || user.account == ""'>注册</button>-->
             <div class="line line-dashed"></div>
             <p class="text-center"><small>已经有帐号?</small></p>
