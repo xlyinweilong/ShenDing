@@ -22,11 +22,14 @@ public enum PaymentGatewayTypeEnum {
     ICBC,//工行
     ABC,//农行
     CCBC,//建行
+    MIN_SHENG,//民生銀行
     WECHAT_PAY,//微信支付
     BANK_TRANSFER;
 
     public String getMean() {
         switch (this) {
+            case MIN_SHENG:
+                return "民生銀行";
             case ALIPAY:
                 return "支付宝";
             case POST_CARD:
@@ -54,6 +57,8 @@ public enum PaymentGatewayTypeEnum {
 
     public static PaymentGatewayTypeEnum getEnum(String mean) {
         switch (StringUtils.trim(mean)) {
+            case "民生銀行":
+                return MIN_SHENG;
             case "支付宝":
                 return ALIPAY;
             case "刷卡":

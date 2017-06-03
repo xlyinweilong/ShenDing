@@ -417,7 +417,7 @@ public class AdminService {
                 throw new EjbMessageException("账户已经存在");
             }
             if (Tools.isNotBlank(idCard)) {
-                if (!user.getIdCard().equals(idCard) && this.findSysUserByIdCardCount(idCard) > 0) {
+                if (!idCard.equals(user.getIdCard()) && this.findSysUserByIdCardCount(idCard) > 0) {
                     throw new EjbMessageException("身份证号已经存在");
                 }
             }
