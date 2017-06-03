@@ -400,16 +400,23 @@ public class AdminREST {
                             throw new EjbMessageException("第" + (i + 1) + "行金额类型错误");
                         }
 
+                        //加盟部分成
+                        String franchiseDepartmentCommissionStr = StringUtils.trimToNull(cells[11].getContents());
+                        BigDecimal franchiseDepartmentCommission = BigDecimal.ZERO;
+                        if (StringUtils.isNotBlank(franchiseDepartmentCommissionStr)) {
+                            franchiseDepartmentCommission = new BigDecimal(franchiseDepartmentCommissionStr);
+                        }
+
                         //备注
-                        String remark = StringUtils.trimToNull(cells[11].getContents());
+                        String remark = StringUtils.trimToNull(cells[12].getContents());
 
                         //支付方式
-                        PaymentGatewayTypeEnum gatewayType = PaymentGatewayTypeEnum.getEnum(StringUtils.trim(cells[12].getContents()));
+                        PaymentGatewayTypeEnum gatewayType = PaymentGatewayTypeEnum.getEnum(StringUtils.trim(cells[13].getContents()));
                         if (gatewayType == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行支付方式错误");
                         }
 
-                        adminService.createGoodsOrder(user, null, goods.getId(), userAmount, peopleCountFee, CategoryEnum.SERVICE_PEOPLE.toString(), remark, price, backAmount, recommendIds, divideAmount, recommendOrderIds, recommendRates, divideUserId, amount, payDateStr, gatewayType.toString(), orderRecordType.toString());
+                        adminService.createGoodsOrder(user, null, goods.getId(), userAmount, peopleCountFee, CategoryEnum.SERVICE_PEOPLE.toString(), remark, price, backAmount, recommendIds, divideAmount, recommendOrderIds, recommendRates, divideUserId, amount, payDateStr, gatewayType.toString(), orderRecordType.toString(), franchiseDepartmentCommission);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1628,7 +1635,8 @@ public class AdminREST {
     @Path("create_update_order")
     public String createOrUpdateOrder(@CookieParam("auth") String auth, @FormParam("category") String category, @FormParam("id") Long id, @FormParam("goodsId") Long goodsId, @FormParam("recommendIds") List<Long> recommendIds, @FormParam("recommendOrderIds") List<String> recommendOrderIds, @FormParam("rates") List<String> recommendRates,
             @FormParam("payDate") String payDate, @FormParam("orderRecordType") String orderRecordType, @FormParam("gatewayType") String gatewayType, @FormParam("amount") String amount,
-            @FormParam("price") String price, @FormParam("divideAmount") String divideAmount, @FormParam("backAmount") String backAmount, @FormParam("uid") Long uid, @FormParam("remark") String remark, @FormParam("userAmount") String userAmount, @FormParam("divideUserId") Long divideUserId, @FormParam("peopleCountFee") String peopleCountFee) throws Exception {
+            @FormParam("price") String price, @FormParam("divideAmount") String divideAmount, @FormParam("backAmount") String backAmount, @FormParam("uid") Long uid, @FormParam("remark") String remark, @FormParam("userAmount") String userAmount, @FormParam("divideUserId") Long divideUserId, @FormParam("peopleCountFee") String peopleCountFee,
+            @FormParam("franchiseDepartmentCommission") String franchiseDepartmentCommission) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
             throw new EjbMessageException("您没有权限");
@@ -1637,7 +1645,34 @@ public class AdminREST {
             throw new EjbMessageException("您没有权限");
         }
         Map map = Tools.getDMap();
-        map.put("data", adminService.createGoodsOrder(user, id, goodsId, userAmount, peopleCountFee, category, remark, price, backAmount, recommendIds, divideAmount, recommendOrderIds, recommendRates, divideUserId, amount, payDate, gatewayType, orderRecordType));
+        map.put("data", adminService.createGoodsOrder(user, id, goodsId, userAmount, peopleCountFee, category, remark, price, backAmount, recommendIds, divideAmount, recommendOrderIds, recommendRates, divideUserId, amount, payDate, gatewayType, orderRecordType, new BigDecimal(franchiseDepartmentCommission)));
+        map.put("msg", "操作成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 修改订单推荐人的提成
+     *
+     * @param auth
+     * @param id
+     * @param divideAmount
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("modify_order_divide_amount")
+    public String modifyOrderDivideAmount(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("divideAmount") String divideAmount) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        if (user.getRoleId() != null && user.getRoleId() == 2l) {
+            throw new EjbMessageException("您没有权限");
+        }
+        adminService.modifyOrderDivideAmount(id, divideAmount);
+        Map map = Tools.getDMap();
+        map.put("data", null);
         map.put("msg", "操作成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);

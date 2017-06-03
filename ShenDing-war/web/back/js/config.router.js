@@ -241,6 +241,10 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/modify_place_user',
                     templateUrl: '/back/tpl/business_modify_place_user.html'
                 })
+                .state('app.business.modify_order_divide_amount', {
+                    url: '/modify_order_divide_amount',
+                    templateUrl: '/back/tpl/business_modify_order_divide_amount.html'
+                })
                 .state('app.business.modify_order_user', {
                     url: '/modify_order_user',
                     templateUrl: '/back/tpl/business_modify_order_user.html'

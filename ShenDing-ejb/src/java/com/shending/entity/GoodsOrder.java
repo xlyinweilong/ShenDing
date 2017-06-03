@@ -140,6 +140,9 @@ public class GoodsOrder implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     //创建者
     private SysUser createUser;
+    @Column(name = "franchise_department_commission")
+    //加盟部分成金额
+    private BigDecimal franchiseDepartmentCommission = BigDecimal.ZERO;
     @Column(name = "remark")
     //备注
     private String remark;
@@ -320,6 +323,14 @@ public class GoodsOrder implements Serializable {
 
     public BigDecimal getPrice() {
         return price;
+    }
+
+    public BigDecimal getFranchiseDepartmentCommission() {
+        return franchiseDepartmentCommission;
+    }
+
+    public void setFranchiseDepartmentCommission(BigDecimal franchiseDepartmentCommission) {
+        this.franchiseDepartmentCommission = franchiseDepartmentCommission;
     }
 
     public void setPrice(BigDecimal price) {

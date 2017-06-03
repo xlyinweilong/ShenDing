@@ -632,7 +632,7 @@ public class AdminService {
 
     public GoodsOrder createGoodsOrder(SysUser user, Long id, Long goodsId, String userAmount, String peopleCountFee, String category, String remark,
             String price, String backAmount, List<Long> recommendIds, String divideAmount, List<String> recommendOrderIds, List<String> recommendRates, Long divideUserId,
-            String amount, String payDate, String gatewayType, String orderRecordType) throws EjbMessageException {
+            String amount, String payDate, String gatewayType, String orderRecordType, BigDecimal franchiseDepartmentCommission) throws EjbMessageException {
         boolean isCreate = true;
         GoodsOrder goodsOrder = new GoodsOrder();
         goodsOrder.setCreateUser(user);
@@ -664,7 +664,7 @@ public class AdminService {
         goodsOrder.setRemark(remark);
 
         goodsOrder.setGoods(goods);
-
+        goodsOrder.setFranchiseDepartmentCommission(franchiseDepartmentCommission);
         goodsOrder.setUser(goods.getUser());
         goodsOrder.setGoodsMsg(goods.getProvinceStr() + "_" + goods.getName() + "_" + goods.getUser().getId() + "_" + goods.getUser().getName());
         goodsOrder.setGoodsPinyin(Trans2PinYin.trans2PinYinFirst(goods.getName()));
@@ -751,8 +751,7 @@ public class AdminService {
             em.merge(goodsOrder);
         }
 
-        if (goodsOrder.getStatus()
-                .equals(OrderStatusEnum.WAIT_SIGN_CONTRACT)) {
+        if (goodsOrder.getStatus().equals(OrderStatusEnum.WAIT_SIGN_CONTRACT)) {
             //尾款了
             if (goodsOrder.getUserAmount().compareTo(BigDecimal.ZERO) > 0 && goodsOrder.getDivideUser() != null) {
                 UserWageLog userWageLog = new UserWageLog();
@@ -801,6 +800,63 @@ public class AdminService {
 
         em.merge(goods);
         return goodsOrder;
+    }
+
+    /**
+     * 修改推荐人的金额
+     *
+     * @param id
+     * @param divideAmount
+     */
+    public void modifyOrderDivideAmount(Long id, String divideAmount) throws EjbMessageException {
+        GoodsOrder goodsOrder = em.find(GoodsOrder.class, id);
+        if (goodsOrder.getDeleted()) {
+            throw new EjbMessageException("订单已经不存在");
+        }
+        if (StringUtils.isBlank(goodsOrder.getRecommendIds())) {
+            throw new EjbMessageException("订单没有分成的人");
+        }
+        goodsOrder.setDivideAmount(new BigDecimal(divideAmount));
+        if (goodsOrder.getStatus().equals(OrderStatusEnum.EARNEST)) {
+            //定金不需要做什么
+        } else if (goodsOrder.getStatus().equals(OrderStatusEnum.WAIT_SIGN_CONTRACT) || goodsOrder.getStatus().equals(OrderStatusEnum.SUCCESS)) {
+            this.deleteWageLogByOrder(goodsOrder);
+            //尾款了
+            if (goodsOrder.getUserAmount().compareTo(BigDecimal.ZERO) > 0 && goodsOrder.getDivideUser() != null) {
+                UserWageLog userWageLog = new UserWageLog();
+                userWageLog.setCategory(goodsOrder.getCategory());
+                userWageLog.setAmount(goodsOrder.getUserAmount());
+                userWageLog.setUser(goodsOrder.getDivideUser());
+                userWageLog.setPayDate(goodsOrder.getLastPayDate());
+                userWageLog.setGoodsOrder(goodsOrder);
+                em.persist(userWageLog);
+            }
+            if (goodsOrder.getRecommendIdList() != null && !goodsOrder.getRecommendIdList().isEmpty()) {
+                //计算是否产生手续费
+                goodsOrder.setFee(goodsOrder.getPrice().subtract(goodsOrder.getPaidPrice()));
+                for (int i = 0; i < goodsOrder.getRecommendIdList().size(); i++) {
+                    String idStr = goodsOrder.getRecommendIdList().get(i);
+                    String rate = goodsOrder.getRecommendRateList().get(i);
+                    SysUser sysUser = em.find(SysUser.class, Long.parseLong(idStr));
+                    CategoryEnum ce = goodsOrder.getCategory();
+                    if (goodsOrder.getRecommendOrderIds() != null) {
+                        String rOrderId = goodsOrder.getRecommendOrderIdsList().get(i);
+                        if (rOrderId != null && !rOrderId.equals("null")) {
+                            try {
+                                GoodsOrder go = em.find(GoodsOrder.class, Long.parseLong(rOrderId));
+                                ce = go.getCategory();
+                            } catch (Exception e) {
+                                ce = goodsOrder.getCategory();
+                            }
+                        }
+                    }
+                    this.createWageLog(goodsOrder, sysUser, goodsOrder.getDivideAmount().multiply(new BigDecimal(rate)).divide(new BigDecimal(100), RoundingMode.DOWN).setScale(2, RoundingMode.DOWN), goodsOrder.getFee().multiply(new BigDecimal(rate)).divide(new BigDecimal(100), RoundingMode.UP).setScale(2, RoundingMode.UP), WageLogTypeEnum.RECOMMEND, goodsOrder.getLastPayDate(), ce);
+                }
+            }
+        } else {
+            throw new EjbMessageException("订单状态必须是完成、等待合同或者定金");
+        }
+        em.merge(goodsOrder);
     }
 
     /**
@@ -2331,6 +2387,55 @@ public class AdminService {
     }
 
     /**
+     * 获取产品的代理工资
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    public List<String[]> findUserWageProductList(Date startDate, Date endDate) {
+        List<String[]> list = new ArrayList<>();
+        Query query = em.createQuery("SELECT a.regionalManager.name,SUM(a.regionalManagerAmount),COUNT(a.id),SUM(a.soldCount) FROM ProductLog a WHERE a.regionalManager IS NOT NULL AND a.deleted =  FALSE AND a.payDate > :startDate AND a.payDate < :endDate GROUP BY a.regionalManager");
+        query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : query.getResultList()) {
+            Object[] os = (Object[]) o;
+            String[] str = new String[4];
+            str[0] = os[0].toString();
+            str[1] = os[1].toString();
+            str[2] = os[2] == null ? "" : os[2].toString();
+            str[3] = os[3] == null ? "" : os[3].toString();
+            list.add(str);
+        }
+        return list;
+    }
+
+    /**
+     * 加盟部提成下载
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    public List<String[]> findFranchiseDepartmentCommissionList(Date startDate, Date endDate) {
+        List<String[]> list = new ArrayList<>();
+        Query query = em.createQuery("SELECT g.goods.name,g.serialId,g.paidPrice,g.franchiseDepartmentCommission FROM GoodsOrder g WHERE g.status in :statuss AND g.franchiseDepartmentCommission > 0 AND g.deleted =  FALSE AND g.lastPayDate > :startDate AND g.lastPayDate < :endDate");
+        List<OrderStatusEnum> statusList = new ArrayList<>();
+        statusList.add(OrderStatusEnum.SUCCESS);
+        statusList.add(OrderStatusEnum.WAIT_SIGN_CONTRACT);
+        query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("statuss", statusList);
+        for (Object o : query.getResultList()) {
+            Object[] os = (Object[]) o;
+            String[] str = new String[4];
+            str[0] = os[0].toString();
+            str[1] = os[1].toString();
+            str[2] = os[2] == null ? "" : os[2].toString();
+            str[3] = os[3] == null ? "" : os[3].toString();
+            list.add(str);
+        }
+        return list;
+    }
+
+    /**
      * 获取商品
      *
      * @param serialId
@@ -2684,7 +2789,7 @@ public class AdminService {
      * @param soldCount
      */
     public void createOrUpdateProductLog(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate, ProductEnum product, String remark, int soldCount,//支付方式
-                        PaymentGatewayTypeEnum gatewayType) {
+            Long regionalManager, BigDecimal regionalManagerAmount, PaymentGatewayTypeEnum gatewayType) {
         ProductLog productLog = new ProductLog();
         if (id != null) {
             productLog = em.find(ProductLog.class, id);
@@ -2700,6 +2805,8 @@ public class AdminService {
         productLog.setProduct(product);
         productLog.setRemark(remark);
         productLog.setSoldCount(soldCount);
+        productLog.setRegionalManager(em.find(SysUser.class, regionalManager));
+        productLog.setRegionalManagerAmount(regionalManagerAmount);
         Long wageLogId = null;
         if (id == null) {
             em.persist(productLog);
@@ -2761,7 +2868,7 @@ public class AdminService {
      * @param regionalManagerAmount
      */
     public void createOrUpdateCosmetics(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate,
-            int product, String remark, int soldCount, Long regionalManager, BigDecimal regionalManagerAmount,PaymentGatewayTypeEnum payType) {
+            int product, String remark, int soldCount, Long regionalManager, BigDecimal regionalManagerAmount, PaymentGatewayTypeEnum payType) {
         Cosmetics cosmetics = new Cosmetics();
         if (id != null) {
             cosmetics = em.find(Cosmetics.class, id);

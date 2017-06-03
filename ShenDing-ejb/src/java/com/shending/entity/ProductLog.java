@@ -84,6 +84,13 @@ public class ProductLog implements Serializable {
     @Enumerated(EnumType.STRING)
     //支付方式
     private PaymentGatewayTypeEnum payType = PaymentGatewayTypeEnum.BANK_TRANSFER;
+    @Column(name = "regional_manager_amount")
+    //大区经理提成金额
+    private BigDecimal regionalManagerAmount = BigDecimal.ZERO;
+    @JoinColumn(name = "regional_manager", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    //提成的大区经理
+    private SysUser regionalManager;
     @Column(name = "deleted")
     private boolean deleted = false;
 
@@ -108,6 +115,22 @@ public class ProductLog implements Serializable {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    public BigDecimal getRegionalManagerAmount() {
+        return regionalManagerAmount;
+    }
+
+    public void setRegionalManagerAmount(BigDecimal regionalManagerAmount) {
+        this.regionalManagerAmount = regionalManagerAmount;
+    }
+
+    public SysUser getRegionalManager() {
+        return regionalManager;
+    }
+
+    public void setRegionalManager(SysUser regionalManager) {
+        this.regionalManager = regionalManager;
     }
 
     public PaymentGatewayTypeEnum getPayType() {

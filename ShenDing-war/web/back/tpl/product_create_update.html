@@ -68,6 +68,32 @@
                     <label>提成<i class="text-danger">*</i></label>
                     <input type="text" class="form-control" placeholder="金额" ng-model="product.commissionAmount">
                 </div>
+                 <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchUserList()">
+                    <div class="form-group" style="max-width: 350px">
+                        <label>分成大区经理<span class="label label-success" ng-show="checkedUser != null">已选择:{{checkedUser.name}}</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchUserMsg" placeholder="输入用户名，如：杨娜">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="userList != null && userListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="userList != null && userListTotalItems < 1 && !userListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="userList != null && userListTotalItems > 0 && !userListLoadingData">
+                            <a ng-repeat="ele in userList" class="list-group-item" ng-click="checkUser(ele)">{{ele.name}}</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>大区经理提成</label>
+                    <input type="text" class="form-control" placeholder="金额" ng-model="product.regionalManagerAmount">
+                </div>
                 <div class="line line-dashed b-b line-lg pull-in"></div>
                 <div class="form-group">
                     <label>备注</label>

@@ -147,14 +147,38 @@ public class ProductREST {
                         } catch (Exception e) {
                             throw new EjbMessageException("第" + (i + 1) + "行提成错误");
                         }
+                         //分成大区经理
+                        Long regionalManager = null;
+                        String regionalManagerName = StringUtils.trimToNull(cells[6].getContents());
+                        searchMap.clear();
+                        searchMap.put("name", regionalManagerName);
+                        searchMap.put("notStatus", SysUserStatus.PEDING);
+                        searchMap.put("adminType", SysUserTypeEnum.ADMIN);
+                        searchMap.put("roleIdIsNotNull", true);
+                        ResultList<SysUser> userList = adminService.findUserList(searchMap, 1, 10, null, Boolean.TRUE);
+                        if (userList.size() != 1) {
+                            throw new EjbMessageException("第" + (i + 1) + "行分成大区经理无法唯一定位，请手动录入该条");
+                        }
+                        regionalManager = userList.get(0).getId();
+
+                        //大区经理提成
+                        BigDecimal regionalManagerAmount = BigDecimal.ZERO;
+                        String regionalManagerAmountStr = StringUtils.trimToNull(cells[7].getContents());
+                        if (regionalManagerAmountStr != null) {
+                            try {
+                                regionalManagerAmount = new BigDecimal(regionalManagerAmountStr);
+                            } catch (Exception e) {
+                                throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                            }
+                        }
                         //备注
-                        String remark = StringUtils.trimToNull(cells[6].getContents());
+                        String remark = StringUtils.trimToNull(cells[8].getContents());
                         //支付方式
-                        PaymentGatewayTypeEnum gatewayType = PaymentGatewayTypeEnum.getEnum(StringUtils.trim(cells[7].getContents()));
+                        PaymentGatewayTypeEnum gatewayType = PaymentGatewayTypeEnum.getEnum(StringUtils.trim(cells[9].getContents()));
                         if (gatewayType == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行支付方式错误");
                         }
-                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, productEnum, remark, count, gatewayType);
+                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, productEnum, remark, count,regionalManager, regionalManagerAmount, gatewayType);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -384,7 +408,7 @@ public class ProductREST {
     @POST
     @Path("create_or_update_product")
     public String createOrUpdateProduct(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("soldCount") int soldCount, @FormParam("incomeAmount") String incomeAmount, @FormParam("commissionAmount") String commissionAmount,
-            @FormParam("product") String product, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate, @FormParam("payType") String payType) throws Exception {
+            @FormParam("product") String product, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate, @FormParam("regionalManager") Long regionalManager, @FormParam("regionalManagerAmount") String regionalManagerAmount, @FormParam("payType") String payType) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
             throw new EjbMessageException("您没有权限");
@@ -399,7 +423,7 @@ public class ProductREST {
         if (new BigDecimal(incomeAmount).compareTo(BigDecimal.ZERO) < 0 || new BigDecimal(commissionAmount).compareTo(BigDecimal.ZERO) < 0) {
             throw new EjbMessageException("参数异常");
         }
-        adminService.createOrUpdateProductLog(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, ProductEnum.valueOf(product), remark, soldCount, PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
+        adminService.createOrUpdateProductLog(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, ProductEnum.valueOf(product), remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount),PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
         map.put("msg", "操作成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);

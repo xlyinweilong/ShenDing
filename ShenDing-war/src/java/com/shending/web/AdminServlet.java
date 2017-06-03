@@ -123,6 +123,8 @@ public class AdminServlet extends BaseServlet {
             case COSMETICS_WAGE_LIST:
             case ALL_WAGE_LIST:
             case COSMETICS_USER_WAGE_LIST:
+            case PRODUCT_USER_WAGE_LIST:
+            case FRANCHISE_DEPARTMENT_COMMISSION:
             case ALL_WAGE_PLACE_LIST:
             case DOWN_GOODS_LIST:
                 setLoginLogoutBothAllowed(request);
@@ -196,7 +198,7 @@ public class AdminServlet extends BaseServlet {
     public static enum PageEnum {
 
         INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
-        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST;
+        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION;
 
     }
 
@@ -246,6 +248,10 @@ public class AdminServlet extends BaseServlet {
                 return loadCosmeticsWageList(request, response);
             case COSMETICS_USER_WAGE_LIST:
                 return loadCosmeticsUserWageList(request, response);
+            case PRODUCT_USER_WAGE_LIST:
+                return loadProductUserWageList(request, response);
+            case FRANCHISE_DEPARTMENT_COMMISSION:
+                return loadFranchiseDepartmentCommissionList(request, response);
             case DOWN_GOODS_LIST:
                 return loadDownGoodsList(request, response);
             default:
@@ -1970,8 +1976,160 @@ public class AdminServlet extends BaseServlet {
         String[] headLine = new String[4];
         headLine[0] = "用户";
         headLine[1] = "提成";
-        headLine[2] = "售出数量";
-        headLine[3] = "交易次数";
+        headLine[2] = "交易次数";
+        headLine[3] = "售出数量";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        vecCsvData.addAll(resultList);
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
+     * 下载大区经产品分成
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadProductUserWageList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "product_user_wage.csv";//default file name
+        List vecCsvData = new ArrayList();
+        String start = super.getRequestString(request, "startDate");
+        String end = super.getRequestString(request, "endDate");
+        Date startDate = null;
+        Date endDate = null;
+        if (Tools.isNotBlank(start)) {
+            try {
+                startDate = Tools.getBeginOfDay(Tools.parseDate(start, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                startDate = null;
+            }
+        }
+        if (Tools.isNotBlank(end)) {
+            try {
+                endDate = Tools.getEndOfDay(Tools.parseDate(end, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                endDate = null;
+            }
+        }
+        List<String[]> resultList = adminService.findUserWageProductList(startDate, endDate);
+        String[] headLine = new String[4];
+        headLine[0] = "用户";
+        headLine[1] = "提成";
+        headLine[2] = "交易次数";
+        headLine[3] = "售出数量";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        vecCsvData.addAll(resultList);
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
+     * 下载加盟部提成
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadFranchiseDepartmentCommissionList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "franchise_department_commission.csv";//default file name
+        List vecCsvData = new ArrayList();
+        String start = super.getRequestString(request, "startDate");
+        String end = super.getRequestString(request, "endDate");
+        Date startDate = null;
+        Date endDate = null;
+        if (Tools.isNotBlank(start)) {
+            try {
+                startDate = Tools.getBeginOfDay(Tools.parseDate(start, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                startDate = null;
+            }
+        }
+        if (Tools.isNotBlank(end)) {
+            try {
+                endDate = Tools.getEndOfDay(Tools.parseDate(end, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                endDate = null;
+            }
+        }
+        List<String[]> resultList = adminService.findFranchiseDepartmentCommissionList(startDate, endDate);
+        String[] headLine = new String[4];
+        headLine[0] = "订单区域";
+        headLine[1] = "订单号";
+        headLine[2] = "订单金额";
+        headLine[3] = "加盟部提成";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);

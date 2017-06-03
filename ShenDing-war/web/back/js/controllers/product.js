@@ -411,6 +411,23 @@ app.controller('ProductListController', ['$scope', '$http', '$modal', '$location
             }
             window.open("/admin/PRODUCT_LOG_WAGE_LIST?startDate=" + start + "&endDate=" + end);
         };
+        
+        $scope.downLoadUserWage = function () {
+            var start = "";
+            var end = "";
+            if ($scope.startDate instanceof Date) {
+                start = $scope.startDate.getFullYear() + "-" + ($scope.startDate.getMonth() + 1) + "-" + $scope.startDate.getDate();
+            } else {
+            }
+            if ($scope.endDate instanceof Date) {
+                end = $scope.endDate.getFullYear() + "-" + ($scope.endDate.getMonth() + 1) + "-" + $scope.endDate.getDate();
+            }
+            if (start == "" || end == "") {
+                $.scojs_message("请输入完整的时间段", $.scojs_message.TYPE_ERROR);
+                return;
+            }
+            window.open("/admin/PRODUCT_USER_WAGE_LIST?startDate=" + start + "&endDate=" + end);
+        };
 
         $scope.deleteItems = function () {
             var checkedList = new Array();
@@ -473,6 +490,7 @@ app.controller('CreateUpdateProductController', ['$scope', '$http', '$modal', '$
                     $scope.payDate = $scope.product.payDate;
                     $scope.tempDate = new Date($scope.product.payDate);
                     $scope.checkedOrder = $scope.product.goodsOrder;
+                    $scope.checkedUser = $scope.product.regionalManager;
                 }
             });
         }
@@ -496,6 +514,33 @@ app.controller('CreateUpdateProductController', ['$scope', '$http', '$modal', '$
             $scope.checkedOrder = ele;
             $scope.searchOrderMsg = ele.goods.name + " (" + ele.goods.provinceStr + ") " + ele.goods.categoryMean + " (代理:" + ele.agentUser.name + ")";
         };
+        
+        $scope.userList = null;
+        $scope.userListLoadingData = null;
+        $scope.userListTotalItems = null;
+        $scope.checkedUser = null;
+        $scope.searchUserMsg = null;
+        $scope.searchUserList = function () {
+            $scope.userListLoadingData = true;
+            $http.get("/webservice/admin/user_list?search=" + $scope.searchUserMsg).success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $scope.userList = responseData.data;
+                    $scope.userListTotalItems = responseData.totalCount;
+                }
+                $scope.userListLoadingData = false;
+            });
+        };
+        $scope.checkUser = function (ele, index) {
+            $scope.userList = null;
+            $scope.checkedUser = ele;
+            $scope.searchUserMsg = ele.name;
+        };
+        
         $scope.open = function ($event) {
             $event.preventDefault();
             $event.stopPropagation();
@@ -592,6 +637,9 @@ app.controller('CreateUpdateProductController', ['$scope', '$http', '$modal', '$
             }
             if ($scope.checkedOrder != null) {
                 $scope.product.goodsOrderId = $scope.checkedOrder.id;
+            }
+            if ($scope.checkedUser != null) {
+                $scope.product.regionalManager = $scope.checkedUser.id;
             }
             $http.post("/webservice/product/create_or_update_product", $scope.product).success(function (responseData) {
                 $scope.product.submitting = false;

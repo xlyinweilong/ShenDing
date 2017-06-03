@@ -30,6 +30,10 @@
                             <i class="fa fa-cloud-download"></i>
                             下载工资表
                         </button>
+                        <button class="btn m-b-xs btn-sm btn-warning btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="downLoadUserWage()">
+                            <i class="fa fa-cloud-download"></i>
+                            下载大区工资表
+                        </button>
                     </div>
                     <form role="form" name="form" ng-submit="getList(1, false)()">
                         <div class="col-sm-5">

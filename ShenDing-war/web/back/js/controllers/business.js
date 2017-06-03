@@ -398,11 +398,11 @@ app.controller('OrderController', ['$scope', '$http', '$modal', '$location', "$s
                 });
             }
         };
-        
+
         $scope.wagePlaceList = function () {
             window.open("/admin/DOWN_GOODS_LIST");
         };
-        
+
         //上传文件
         $scope.myFile = null;
         $scope.activeMyFile = false;//正在上传
@@ -437,7 +437,7 @@ app.controller('OrderController', ['$scope', '$http', '$modal', '$location', "$s
 
 
         }
-        
+
         $scope.backOrder = function () {
             var checkedList = new Array();
             for (var i = 0; i < $scope.list.length; i++) {
@@ -699,7 +699,7 @@ app.controller('ContractListController', ['$scope', '$http', '$modal', '$locatio
     }]);
 
 app.controller('CreateOrderController', ['$scope', '$http', '$modal', '$location', "$state", "$stateParams", function ($scope, $http, $modal, $location, $state, $stateParams) {
-        $scope.order = {submitting: false, amountType: 'EARNEST', payType: 'BANK_TRANSFER', setType: "add"};
+        $scope.order = {submitting: false, amountType: 'EARNEST', payType: 'BANK_TRANSFER', setType: "add", franchiseDepartmentCommission: 0};
         $scope.saleGoodsList = null;
         $scope.saleGoodsListLoadingData = false;
         $scope.saleGoodsListTotalItems = 0;
@@ -933,7 +933,7 @@ app.controller('CreateOrderController', ['$scope', '$http', '$modal', '$location
                 if ($scope.checkedDivideUser == null) {
                     $scope.checkedDivideUser = {id: null};
                 }
-                $http.post("/webservice/admin/create_update_order", {category: "SERVICE_PEOPLE", peopleCountFee: $scope.order.peopleCountFee, divideUserId: $scope.checkedDivideUser.id, userAmount: $scope.order.userAmount, remark: $scope.order.remark, id: $scope.order.id, divideAmount: $scope.order.divideAmount, backAmount: $scope.order.backAmount, price: $scope.order.price, amount: $scope.order.amount, orderRecordType: $scope.order.amountType, gatewayType: $scope.order.payType, payDate: payDateTime, goodsId: $scope.checkedAgent.id, recommendIds: recommendIds, recommendOrderIds: recommendOrderIds, rates: $scope.rate}).success(function (responseData) {
+                $http.post("/webservice/admin/create_update_order", {franchiseDepartmentCommission:$scope.order.franchiseDepartmentCommission,category: "SERVICE_PEOPLE", peopleCountFee: $scope.order.peopleCountFee, divideUserId: $scope.checkedDivideUser.id, userAmount: $scope.order.userAmount, remark: $scope.order.remark, id: $scope.order.id, divideAmount: $scope.order.divideAmount, backAmount: $scope.order.backAmount, price: $scope.order.price, amount: $scope.order.amount, orderRecordType: $scope.order.amountType, gatewayType: $scope.order.payType, payDate: payDateTime, goodsId: $scope.checkedAgent.id, recommendIds: recommendIds, recommendOrderIds: recommendOrderIds, rates: $scope.rate}).success(function (responseData) {
                     if (responseData.success !== "1") {
                         $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
                         if (responseData.success == "-1") {
@@ -1794,6 +1794,19 @@ app.controller('OrderWageController', ['$scope', '$http', '$modal', '$location',
             }
             window.open("/admin/order_record_list?startDate=" + start + "&category=SERVICE_PEOPLE&endDate=" + end);
         };
+        
+        
+        $scope.franchiseDepartmentCommissionList = function () {
+            var start = "";
+            var end = "";
+            if ($scope.startDate instanceof Date) {
+                start = $scope.startDate.getFullYear() + "-" + ($scope.startDate.getMonth() + 1) + "-" + $scope.startDate.getDate();
+            }
+            if ($scope.endDate instanceof Date) {
+                end = $scope.endDate.getFullYear() + "-" + ($scope.endDate.getMonth() + 1) + "-" + $scope.endDate.getDate();
+            }
+            window.open("/admin/franchise_department_commission?startDate=" + start + "&category=SERVICE_PEOPLE&endDate=" + end);
+        };
 
         $scope.wageList = function () {
             var start = "";
@@ -1967,6 +1980,39 @@ app.controller('ModifyOrderUserController', ['$scope', '$http', '$modal', '$loca
         $scope.submitForm = function () {
             $scope.submitting = true;
             $http.post("/webservice/admin/modify_order_user", {id: $scope.order.id, uid: $scope.checkedEle.id, userAmount: $scope.order.userAmount}).success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_OK);
+                }
+                $scope.submitting = false;
+            });
+        };
+    }]);
+
+
+app.controller('ModifyOrderDivideAmountController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
+        $scope.submitting = false;
+        $scope.order = {id:null};
+
+        $scope.searchOrder = function () {
+            $http.get("/webservice/admin/find_order?serialId=" + $scope.order.serialId).success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $scope.order = responseData.data;
+                }
+            });
+        }
+        $scope.submitForm = function () {
+            $scope.submitting = true;
+            $http.post("/webservice/admin/modify_order_divide_amount", {id: $scope.order.id, divideAmount: $scope.order.divideAmount}).success(function (responseData) {
                 if (responseData.success !== "1") {
                     $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
                     if (responseData.success == "-1") {
