@@ -115,6 +115,7 @@ app.controller('UserController', ['$scope', '$http', '$modal', '$location', func
                 $scope.province = $scope.userList[index].province;
                 $scope.area = $scope.userList[index].area;
                 $scope.user.email = $scope.userList[index].email;
+                $scope.user.isFindSelfYearAmount = $scope.userList[index].isFindSelfYearAmount;;
                 $scope.user.passwd = "";
                 $location.url("#block");
                 $scope.areaList = $scope.getArea($scope.city);
@@ -187,6 +188,7 @@ app.controller('UserController', ['$scope', '$http', '$modal', '$location', func
             $scope.user.bankType = null;
             $scope.user.sex = 1;
             $scope.user.role = -1;
+            $scope.user.isFindSelfYearAmount = false;
             $location.url("#block");
         };
 
@@ -373,7 +375,7 @@ app.controller('UserController', ['$scope', '$http', '$modal', '$location', func
             if ($scope.user.birthday instanceof Date) {
                 birthday = $scope.user.birthday.getFullYear() + "-" + ($scope.user.birthday.getMonth() + 1) + "-" + $scope.user.birthday.getDate();
             }
-            $http.post("/webservice/admin/create_update_user", {bankType: $scope.user.bankType, bankCardCode: $scope.user.bankCardCode, city: $scope.city, area: $scope.area, province: $scope.province, name: $scope.user.name, email: $scope.user.email, passwd: $scope.user.passwd, account: $scope.user.account, birthday: birthday, code: $scope.user.code, idCard: $scope.user.idCard, mobile: $scope.user.mobile, weChatCode: $scope.user.weChatCode, qq: $scope.user.qq, address: $scope.user.address, sex: $scope.user.sex, id: $scope.user.id, roleId: $scope.user.role}).success(function (responseData) {
+            $http.post("/webservice/admin/create_update_user", {isFindSelfYearAmount:$scope.user.isFindSelfYearAmount,bankType: $scope.user.bankType, bankCardCode: $scope.user.bankCardCode, city: $scope.city, area: $scope.area, province: $scope.province, name: $scope.user.name, email: $scope.user.email, passwd: $scope.user.passwd, account: $scope.user.account, birthday: birthday, code: $scope.user.code, idCard: $scope.user.idCard, mobile: $scope.user.mobile, weChatCode: $scope.user.weChatCode, qq: $scope.user.qq, address: $scope.user.address, sex: $scope.user.sex, id: $scope.user.id, roleId: $scope.user.role}).success(function (responseData) {
                 if (responseData.success !== "1") {
                     $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
                 } else {

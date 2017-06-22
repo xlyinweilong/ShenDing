@@ -29,7 +29,7 @@ public enum PaymentGatewayTypeEnum {
     public String getMean() {
         switch (this) {
             case MIN_SHENG:
-                return "民生銀行";
+                return "民生银行";
             case ALIPAY:
                 return "支付宝";
             case POST_CARD:
@@ -57,7 +57,7 @@ public enum PaymentGatewayTypeEnum {
 
     public static PaymentGatewayTypeEnum getEnum(String mean) {
         switch (StringUtils.trim(mean)) {
-            case "民生銀行":
+            case "民生银行":
                 return MIN_SHENG;
             case "支付宝":
                 return ALIPAY;

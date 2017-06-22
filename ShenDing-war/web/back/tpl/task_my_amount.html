@@ -1,0 +1,45 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">年工资</h1>
+</div>
+<div class="wrapper-md" ng-controller="TaskMyAmountController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                年工资
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-5 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:15%">年份</th>
+                            <th style="width:25%">收益</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td>{{item.year}}</td>
+                            <td>{{item.total}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

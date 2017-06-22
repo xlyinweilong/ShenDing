@@ -50,7 +50,7 @@ public class Cosmetics implements Serializable {
     @Column(name = "product")
     //产品
     /**
-     * 1.清颜原液 2.清滢柔肤洁面乳 3.舒缓清润精华液 4.馥活提亮精华液 5.多效蚕丝面膜 6.冻干粉修护套 7.冻干粉嫩肤套 8.冻干粉保湿套
+     * 1.清颜原液 2.清滢柔肤洁面乳 3.舒缓清润精华液 4.馥活提亮精华液 5.多效蚕丝面膜 6.冻干粉修护套 7.冻干粉嫩肤套 8.冻干粉保湿套 9.推荐奖励
      */
     private Integer product = 1;
     @Column(name = "pay_date")
@@ -228,6 +228,10 @@ public class Cosmetics implements Serializable {
                 return "冻干粉嫩肤套";
             case 8:
                 return "冻干粉保湿套";
+            case 9:
+                return "推荐奖励";
+            case 10:
+                return "无";
         }
         return "";
     }

@@ -1,5 +1,5 @@
 <div class="bg-light lter b-b wrapper-md">
-    <h1 class="m-n font-thin h3">我推荐的加盟</h1>
+    <h1 class="m-n font-thin h3">我推荐的加盟（本年）</h1>
 </div>
 <div class="wrapper-md" ng-controller="TaskMyNewOrderController">
     <div class="row">
@@ -14,6 +14,10 @@
                         <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
                             <i class="fa fa-refresh"></i>
                             刷新
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-if="isFindSelfYearAmount" ng-click="goAmount();">
+                            <i class="fa fa-refresh"></i>
+                            查看年数据
                         </button>
                     </div>
                     <div class="col-sm-7  m-b-xs">

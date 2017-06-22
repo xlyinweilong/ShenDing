@@ -407,7 +407,7 @@ public class AdminService {
      * @param address
      * @return
      */
-    public SysUser createOrUpdateSysUser(Long id, String account, String name, String passwd, String email, Integer sex, Date birthday, String idCard, String mobile, String weChatCode, String qq, String province, String city, String area, String address, SysUserStatus status, Long roleId, String bankType, String bankCardCode) throws EjbMessageException {
+    public SysUser createOrUpdateSysUser(Long id, boolean isFindSelfYearAmount, String account, String name, String passwd, String email, Integer sex, Date birthday, String idCard, String mobile, String weChatCode, String qq, String province, String city, String area, String address, SysUserStatus status, Long roleId, String bankType, String bankCardCode) throws EjbMessageException {
         boolean isCreare = true;
         SysUser user = new SysUser();
         if (id != null) {
@@ -436,6 +436,7 @@ public class AdminService {
         if (Tools.isNotBlank(passwd)) {
             user.setPasswd(Tools.md5(passwd));
         }
+        user.setIsFindSelfYearAmount(isFindSelfYearAmount);
         user.setAccount(account);
 //        user.setSex(sex);
         user.setBirthday(birthday);
@@ -2805,8 +2806,10 @@ public class AdminService {
         productLog.setProduct(product);
         productLog.setRemark(remark);
         productLog.setSoldCount(soldCount);
-        productLog.setRegionalManager(em.find(SysUser.class, regionalManager));
-        productLog.setRegionalManagerAmount(regionalManagerAmount);
+        if (regionalManager != null) {
+            productLog.setRegionalManager(em.find(SysUser.class, regionalManager));
+            productLog.setRegionalManagerAmount(regionalManagerAmount);
+        }
         Long wageLogId = null;
         if (id == null) {
             em.persist(productLog);
@@ -2884,8 +2887,10 @@ public class AdminService {
         cosmetics.setProduct(product);
         cosmetics.setRemark(remark);
         cosmetics.setSoldCount(soldCount);
-        cosmetics.setRegionalManager(em.find(SysUser.class, regionalManager));
-        cosmetics.setRegionalManagerAmount(regionalManagerAmount);
+        if (regionalManager != null) {
+            cosmetics.setRegionalManager(em.find(SysUser.class, regionalManager));
+            cosmetics.setRegionalManagerAmount(regionalManagerAmount);
+        }
         Long wageLogId = null;
         if (id == null) {
             em.persist(cosmetics);

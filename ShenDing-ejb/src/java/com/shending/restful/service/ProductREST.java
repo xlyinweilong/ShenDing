@@ -147,28 +147,31 @@ public class ProductREST {
                         } catch (Exception e) {
                             throw new EjbMessageException("第" + (i + 1) + "行提成错误");
                         }
-                         //分成大区经理
+                        //分成大区经理
                         Long regionalManager = null;
                         String regionalManagerName = StringUtils.trimToNull(cells[6].getContents());
-                        searchMap.clear();
-                        searchMap.put("name", regionalManagerName);
-                        searchMap.put("notStatus", SysUserStatus.PEDING);
-                        searchMap.put("adminType", SysUserTypeEnum.ADMIN);
-                        searchMap.put("roleIdIsNotNull", true);
-                        ResultList<SysUser> userList = adminService.findUserList(searchMap, 1, 10, null, Boolean.TRUE);
-                        if (userList.size() != 1) {
-                            throw new EjbMessageException("第" + (i + 1) + "行分成大区经理无法唯一定位，请手动录入该条");
-                        }
-                        regionalManager = userList.get(0).getId();
+                        BigDecimal regionalManagerAmount = null;
+                        if (regionalManagerName != null) {
+                            searchMap.clear();
+                            searchMap.put("name", regionalManagerName);
+                            searchMap.put("notStatus", SysUserStatus.PEDING);
+                            searchMap.put("adminType", SysUserTypeEnum.ADMIN);
+                            searchMap.put("roleIdIsNotNull", true);
+                            ResultList<SysUser> userList = adminService.findUserList(searchMap, 1, 10, null, Boolean.TRUE);
+                            if (userList.size() != 1) {
+                                throw new EjbMessageException("第" + (i + 1) + "行分成大区经理无法唯一定位，请手动录入该条");
+                            }
+                            regionalManager = userList.get(0).getId();
 
-                        //大区经理提成
-                        BigDecimal regionalManagerAmount = BigDecimal.ZERO;
-                        String regionalManagerAmountStr = StringUtils.trimToNull(cells[7].getContents());
-                        if (regionalManagerAmountStr != null) {
-                            try {
-                                regionalManagerAmount = new BigDecimal(regionalManagerAmountStr);
-                            } catch (Exception e) {
-                                throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                            //大区经理提成
+                            regionalManagerAmount = BigDecimal.ZERO;
+                            String regionalManagerAmountStr = StringUtils.trimToNull(cells[7].getContents());
+                            if (regionalManagerAmountStr != null) {
+                                try {
+                                    regionalManagerAmount = new BigDecimal(regionalManagerAmountStr);
+                                } catch (Exception e) {
+                                    throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                                }
                             }
                         }
                         //备注
@@ -178,7 +181,7 @@ public class ProductREST {
                         if (gatewayType == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行支付方式错误");
                         }
-                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, productEnum, remark, count,regionalManager, regionalManagerAmount, gatewayType);
+                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, productEnum, remark, count, regionalManager, regionalManagerAmount, gatewayType);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -276,6 +279,10 @@ public class ProductREST {
                             product = 7;
                         } else if ("冻干粉保湿套".equals(productName)) {
                             product = 8;
+                        } else if ("推荐奖励".equals(productName)) {
+                            product = 9;
+                        } else if ("无".equals(productName)) {
+                            product = 10;
                         }
                         if (product == -1) {
                             throw new EjbMessageException("第" + (i + 1) + "行产品错误");
@@ -312,27 +319,30 @@ public class ProductREST {
                         //分成大区经理
                         Long regionalManager = null;
                         String regionalManagerName = StringUtils.trimToNull(cells[6].getContents());
-                        searchMap.clear();
-                        searchMap.put("name", regionalManagerName);
-                        searchMap.put("notStatus", SysUserStatus.PEDING);
-                        searchMap.put("adminType", SysUserTypeEnum.ADMIN);
-                        searchMap.put("roleIdIsNotNull", true);
-                        ResultList<SysUser> userList = adminService.findUserList(searchMap, 1, 10, null, Boolean.TRUE);
-                        if (userList.size() != 1) {
-                            throw new EjbMessageException("第" + (i + 1) + "行分成大区经理无法唯一定位，请手动录入该条");
-                        }
-                        regionalManager = userList.get(0).getId();
-
-                        //大区经理提成
-                        BigDecimal regionalManagerAmount = BigDecimal.ZERO;
-                        String regionalManagerAmountStr = StringUtils.trimToNull(cells[7].getContents());
-                        if (regionalManagerAmountStr != null) {
-                            try {
-                                regionalManagerAmount = new BigDecimal(regionalManagerAmountStr);
-                            } catch (Exception e) {
-                                throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                        BigDecimal regionalManagerAmount = null;
+                        if (regionalManagerName != null) {
+                            searchMap.clear();
+                            searchMap.put("name", regionalManagerName);
+                            searchMap.put("notStatus", SysUserStatus.PEDING);
+                            searchMap.put("adminType", SysUserTypeEnum.ADMIN);
+                            searchMap.put("roleIdIsNotNull", true);
+                            ResultList<SysUser> userList = adminService.findUserList(searchMap, 1, 10, null, Boolean.TRUE);
+                            if (userList.size() != 1) {
+                                throw new EjbMessageException("第" + (i + 1) + "行分成大区经理无法唯一定位，请手动录入该条");
+                            }
+                            regionalManager = userList.get(0).getId();
+                            //大区经理提成
+                            regionalManagerAmount = BigDecimal.ZERO;
+                            String regionalManagerAmountStr = StringUtils.trimToNull(cells[7].getContents());
+                            if (regionalManagerAmountStr != null) {
+                                try {
+                                    regionalManagerAmount = new BigDecimal(regionalManagerAmountStr);
+                                } catch (Exception e) {
+                                    throw new EjbMessageException("第" + (i + 1) + "行提成错误");
+                                }
                             }
                         }
+
                         //备注
                         String remark = StringUtils.trimToNull(cells[8].getContents());
                         //支付方式
@@ -340,7 +350,7 @@ public class ProductREST {
                         if (gatewayType == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行支付方式错误");
                         }
-                        adminService.createOrUpdateCosmetics(null, order.getId(), amountBd, commissionBd, payDate, product, remark, count, regionalManager, regionalManagerAmount,gatewayType);
+                        adminService.createOrUpdateCosmetics(null, order.getId(), amountBd, commissionBd, payDate, product, remark, count, regionalManager, regionalManagerAmount, gatewayType);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -423,7 +433,10 @@ public class ProductREST {
         if (new BigDecimal(incomeAmount).compareTo(BigDecimal.ZERO) < 0 || new BigDecimal(commissionAmount).compareTo(BigDecimal.ZERO) < 0) {
             throw new EjbMessageException("参数异常");
         }
-        adminService.createOrUpdateProductLog(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, ProductEnum.valueOf(product), remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount),PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
+        if (regionalManager == null) {
+            regionalManagerAmount = "0";
+        }
+        adminService.createOrUpdateProductLog(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, ProductEnum.valueOf(product), remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount), PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
         map.put("msg", "操作成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
@@ -688,8 +701,13 @@ public class ProductREST {
         searchMap.put("type", WageLogTypeEnum.PRODUCT);
         searchMap.put("user", user);
         String sql = "SELECT SUM(w.amount) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.type = :type";
+        Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
-            searchMap.put("startDate", Tools.parseDate(start, "yyyy-MM-dd"));
+            startDate = Tools.parseDate(start, "yyyy-MM-dd");
+            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+            searchMap.put("startDate", startDate);
             sql += " AND w.payDate > :start";
         }
         if (Tools.isNotBlank(end)) {
@@ -733,8 +751,13 @@ public class ProductREST {
         searchMap.put("type", WageLogTypeEnum.GRAND_SLAM);
         searchMap.put("user", user);
         String sql = "SELECT SUM(w.amount) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.type = :type";
+        Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
-            searchMap.put("startDate", Tools.parseDate(start, "yyyy-MM-dd"));
+            startDate = Tools.parseDate(start, "yyyy-MM-dd");
+            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+            searchMap.put("startDate", startDate);
             sql += " AND w.payDate > :start";
         }
         if (Tools.isNotBlank(end)) {
@@ -1107,7 +1130,10 @@ public class ProductREST {
         if (new BigDecimal(incomeAmount).compareTo(BigDecimal.ZERO) < 0 || new BigDecimal(commissionAmount).compareTo(BigDecimal.ZERO) < 0) {
             throw new EjbMessageException("参数异常");
         }
-        adminService.createOrUpdateCosmetics(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, product, remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount),PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
+        if (regionalManager == null) {
+            regionalManagerAmount = "0";
+        }
+        adminService.createOrUpdateCosmetics(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, product, remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount), PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
         map.put("msg", "操作成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);

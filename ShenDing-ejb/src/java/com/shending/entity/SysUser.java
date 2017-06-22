@@ -140,6 +140,17 @@ public class SysUser implements Serializable {
     private Date lastWageDate;
     @Transient
     private boolean inLastWageDate = false;
+    @Column(name = "is_find_self_year_amount")
+    //是否查看年金额
+    private boolean isFindSelfYearAmount = false;
+
+    public boolean isIsFindSelfYearAmount() {
+        return isFindSelfYearAmount;
+    }
+
+    public void setIsFindSelfYearAmount(boolean isFindSelfYearAmount) {
+        this.isFindSelfYearAmount = isFindSelfYearAmount;
+    }
 
     public Integer getSex() {
         return sex;

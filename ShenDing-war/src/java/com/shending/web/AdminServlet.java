@@ -405,7 +405,7 @@ public class AdminServlet extends BaseServlet {
         }
         SysUser user = null;
         try {
-            user = adminService.createOrUpdateSysUser(null, account, name, passwd, email, sex, birthdayDate, idCard, mobile, weChatCode, qq, province, city, area, address, SysUserStatus.NORMAL, null, bankType, bankCardCode);
+            user = adminService.createOrUpdateSysUser(null, false, account, name, passwd, email, sex, birthdayDate, idCard, mobile, weChatCode, qq, province, city, area, address, SysUserStatus.NORMAL, null, bankType, bankCardCode);
         } catch (EjbMessageException ex) {
             map.put("msg", ex.getMessage());
             super.setSessionValue(request, "rand", Tools.generateRandom8Chars());//清除原验证码
@@ -793,7 +793,7 @@ public class AdminServlet extends BaseServlet {
             strLine[7] = record.getTypeMean();
 //            strLine[7] = record.getGoods().getStatusMean();
 
-            if (record.getType().equals(OrderRecordTypeEnum.FINAL_PAYMENT)) {
+            if (record.getType().equals(OrderRecordTypeEnum.FINAL_PAYMENT) || record.getType().equals(OrderRecordTypeEnum.ALL_PAYMENT)) {
                 List<WageLog> logList = adminService.getWageLogByGoodsOrder(record.getOrder());
                 if (logList == null) {
                     strLine[8] = "0";

@@ -225,7 +225,11 @@ app.controller('TaskMyNewOrderController', ['$scope', '$http', '$modal', '$locat
                 $.scojs_message(responseData.data, $.scojs_message.TYPE_OK);
             }
         });
+        $scope.goAmount = function(){
+            $state.go('app.task.my_amount');
+        }
         
+        $scope.isFindSelfYearAmount = false;
         $scope.pageChanged = function () {
             $scope.getList($scope.currentPage, false);
         };
@@ -252,6 +256,7 @@ app.controller('TaskMyNewOrderController', ['$scope', '$http', '$modal', '$locat
                         $state.go('access.signin');
                     }
                 } else {
+                    $scope.isFindSelfYearAmount = responseData.isFindSelfYearAmount;
                     $scope.list = responseData.data;
                     $scope.totalItems = responseData.totalCount;
                     $scope.totalAmount = responseData.totalAmount;
@@ -656,4 +661,46 @@ app.controller('LogController', ['$scope', '$http', '$modal', '$location', "$sta
             });
         };
         $scope.getList($scope.currentPage, false);
+    }]);
+
+
+app.controller('TaskMyAmountController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
+        $scope.list = null;
+        $scope.listLoading = false;
+        $scope.listLoadingData = false;
+        $scope.search = "";
+        /**
+         * pagination
+         */
+        $scope.totalItems = 0;
+        $scope.currentPage = 1;
+        $scope.maxSize = 5;
+        
+        $scope.isFindSelfYearAmount = false;
+        $scope.pageChanged = function () {
+            $scope.getList($scope.currentPage, false);
+        };
+        $scope.getList = function (page, isInit) {
+            $scope.currentPage = page;
+            if (!isInit) {
+                $scope.listLoadingData = true;
+            } else {
+                $scope.listLoading = true;
+                $scope.search = "";
+            }
+            $http.get("/webservice/admin/my_amount_list?pageIndex=" + $scope.currentPage).success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $scope.list = responseData.data;
+                    $scope.totalItems = responseData.data.length;
+                }
+                $scope.listLoadingData = false;
+                $scope.listLoading = false;
+            });
+        };
+        $scope.getList(1, true);
     }]);

@@ -1051,7 +1051,8 @@ public class AdminREST {
     @Path("create_update_user")
     public String createOrUpdateUser(@CookieParam("auth") String auth, @FormParam("name") String name, @FormParam("email") String email, @FormParam("id") Long id, @FormParam("account") String account, @FormParam("passwd") String passwd,
             @FormParam("birthday") String birthday, @FormParam("idCard") String idCard, @FormParam("mobile") String mobile, @FormParam("weChatCode") String weChatCode, @FormParam("qq") String qq,
-            @FormParam("province") String province, @FormParam("city") String city, @FormParam("area") String area, @FormParam("address") String address, @FormParam("sex") int sex, @FormParam("roleId") Long roleId, @FormParam("bankType") String bankType, @FormParam("bankCardCode") String bankCardCode) throws Exception {
+            @FormParam("province") String province, @FormParam("city") String city, @FormParam("area") String area, @FormParam("address") String address, @FormParam("sex") int sex, @FormParam("roleId") Long roleId,
+            @FormParam("bankType") String bankType, @FormParam("bankCardCode") String bankCardCode, @FormParam("isFindSelfYearAmount") boolean isFindSelfYearAmount) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
             throw new EjbMessageException("您没有权限");
@@ -1068,7 +1069,7 @@ public class AdminREST {
             map.put("msg", "参数异常！");
             return Tools.caseObjectToJson(map);
         }
-        SysUser targetUser = adminService.createOrUpdateSysUser(id, account, name, passwd, email, sex, birthdayDate, idCard, mobile, weChatCode, qq, province, city, area, address, SysUserStatus.NORMAL, roleId, bankType, bankCardCode);
+        SysUser targetUser = adminService.createOrUpdateSysUser(id, isFindSelfYearAmount, account, name, passwd, email, sex, birthdayDate, idCard, mobile, weChatCode, qq, province, city, area, address, SysUserStatus.NORMAL, roleId, bankType, bankCardCode);
         map.put("data", targetUser);
         map.put("msg", "操作成功！");
         map.put("success", "1");
@@ -3056,8 +3057,13 @@ public class AdminREST {
             searchMap.put("search", search);
         }
         String sql = "SELECT SUM(w.amount) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.type = :type";
+        Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
-            searchMap.put("startDate", Tools.parseDate(start, "yyyy-MM-dd"));
+            startDate = Tools.parseDate(start, "yyyy-MM-dd");
+            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+            searchMap.put("startDate", startDate);
             sql += " AND w.payDate > :start";
         }
         if (Tools.isNotBlank(end)) {
@@ -3074,9 +3080,55 @@ public class AdminREST {
             queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
         }
         ResultList<WageLog> list = adminService.findWageLogList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("isFindSelfYearAmount", user.isIsFindSelfYearAmount());
         map.put("totalCount", list.getTotalCount());
         map.put("totalAmount", queryTotal.getResultList().isEmpty() ? null : queryTotal.getSingleResult());
         map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    @GET
+    @Path("my_amount_list")
+    public String myAmountList(@CookieParam("auth") String auth, @DefaultValue("1")
+            @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10")
+            @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        //年份 2015 2016 2017 2018 2019
+        Integer[] years = {2015, 2016, 2017, 2018, 2019};
+        List<WageLogTypeEnum> types = new ArrayList<>();
+        types.add(WageLogTypeEnum.RECOMMEND);
+        types.add(WageLogTypeEnum.PRODUCT);
+        types.add(WageLogTypeEnum.GRAND_SLAM);
+        searchMap.put("user", user);
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Integer year : years) {
+            String sql = "SELECT SUM(w.amount) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.type in :types AND w.payDate > :start AND w.payDate < :end GROUP BY w.user";
+            Date start = Tools.parseDate(year + "-01-01", "yyyy-MM-dd");
+            Date end = Tools.parseDate((year + 1) + "-01-01", "yyyy-MM-dd");
+            Query queryTotal = em.createQuery(sql);
+            queryTotal.setParameter("user", user).setParameter("types", types).setParameter("start", start).setParameter("end", end);
+            BigDecimal total = BigDecimal.ZERO;
+            if (!queryTotal.getResultList().isEmpty()) {
+                total = (BigDecimal) queryTotal.getSingleResult();
+            }
+            String sql2 = "SELECT SUM(w.userAmount + w.userBalanceAmount) FROM NewAd w WHERE w.user = :user AND w.deleted = FALSE AND w.payDate > :start AND w.payDate < :end GROUP BY w.user";
+            Query queryTota2 = em.createQuery(sql2);
+            queryTota2.setParameter("user", user).setParameter("start", start).setParameter("end", end);
+            BigDecimal total2 = BigDecimal.ZERO;
+            if (!queryTota2.getResultList().isEmpty()) {
+                total2 = (BigDecimal) queryTota2.getSingleResult();
+            }
+            if ((total.add(total2)).compareTo(BigDecimal.ZERO) > 0) {
+                Map returnMap = new HashMap();
+                returnMap.put("year", year);
+                returnMap.put("total", total.add(total2));
+                list.add(returnMap);
+            }
+        }
+        map.put("data", list);
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
@@ -3107,8 +3159,13 @@ public class AdminREST {
             searchMap.put("search", search);
         }
         String sql = "SELECT SUM(w.userAmount + w.userBalanceAmount) FROM NewAd w WHERE w.user = :user AND w.deleted = FALSE";
+        Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
-            searchMap.put("startDate", Tools.parseDate(start, "yyyy-MM-dd"));
+            startDate = Tools.parseDate(start, "yyyy-MM-dd");
+            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+            searchMap.put("startDate", startDate);
             sql += " AND w.payDate > :start";
         }
         if (Tools.isNotBlank(end)) {

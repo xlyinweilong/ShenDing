@@ -215,6 +215,14 @@
                         <input type="text" placeholder="如：清华路433号" class="form-control" ng-model="user.address">
                     </div>
                     <div class="line line-dashed b-b line-lg pull-in"></div>
+                    <div class="form-group">
+                        <label>是否可以查看整年金额<i class="text-danger">*</i></label>
+                        <div class="btn-group" ng-init="user.isFindSelfYearAmount">
+                            <label class="btn btn-sm btn-success"    ng-model="user.isFindSelfYearAmount" btn-radio="true"><i class="fa fa-check text-active"></i> 是</label>
+                            <label class="btn btn-sm btn-warning" ng-model="user.isFindSelfYearAmount" btn-radio="false"><i class="fa fa-check text-active"></i> 否</label>
+                        </div>
+                    </div>
+                    <div class="line line-dashed b-b line-lg pull-in"></div>
                     <button type="submit" class="btn btn-sm" ng-disabled="user.name == null || user.account == null || block.submitting || ((user.passwd == null || user.passwd == '') && block.type == 'add')" ng-class="{'btn-primary' : block.type == 'add', 'btn-info' : block.type == 'edit','active' : block.submitting}">
                         <span class="text">保存</span>
                         <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>

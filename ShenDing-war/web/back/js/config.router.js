@@ -417,6 +417,10 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/my_order',
                     templateUrl: '/back/tpl/task_my_order.html'
                 })
+                .state('app.task.my_amount', {
+                    url: '/my_amount',
+                    templateUrl: '/back/tpl/task_my_amount.html'
+                })
                 .state('app.task.my_product', {
                     url: '/my_product',
                     templateUrl: '/back/tpl/task_my_product.html'

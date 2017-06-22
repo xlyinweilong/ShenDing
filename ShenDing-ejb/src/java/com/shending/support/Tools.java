@@ -751,6 +751,18 @@ public class Tools {
         Date d = cal.getTime();
         return dates;
     }
+    
+    public static Date getBeginOfYear(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.DAY_OF_YEAR, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date d = cal.getTime();
+        return getBeginOfDay(d);
+    }
 
     public static Date getBeginOfMonth(Date date) {
         Calendar cal = Calendar.getInstance();
