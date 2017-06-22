@@ -3063,9 +3063,9 @@ public class AdminREST {
             if (startDate.before(Tools.getBeginOfYear(new Date()))) {
                 throw new EjbMessageException("只能查询今年的数据");
             }
-            searchMap.put("startDate", startDate);
-            sql += " AND w.payDate > :start";
         }
+        searchMap.put("startDate", startDate);
+        sql += " AND w.payDate > :start";
         if (Tools.isNotBlank(end)) {
             searchMap.put("endDate", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
             sql += " AND w.payDate < :end";
@@ -3073,9 +3073,7 @@ public class AdminREST {
         sql += " GROUP BY w.user";
         Query queryTotal = em.createQuery(sql);
         queryTotal.setParameter("user", user).setParameter("type", WageLogTypeEnum.RECOMMEND);
-        if (Tools.isNotBlank(start)) {
-            queryTotal.setParameter("start", Tools.addDay(Tools.parseDate(start, "yyyy-MM-dd"), -1));
-        }
+        queryTotal.setParameter("start", Tools.addDay(startDate, -1));
         if (Tools.isNotBlank(end)) {
             queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
         }
@@ -3165,9 +3163,9 @@ public class AdminREST {
             if (startDate.before(Tools.getBeginOfYear(new Date()))) {
                 throw new EjbMessageException("只能查询今年的数据");
             }
-            searchMap.put("startDate", startDate);
-            sql += " AND w.payDate > :start";
         }
+        searchMap.put("startDate", startDate);
+        sql += " AND w.payDate > :start";
         if (Tools.isNotBlank(end)) {
             searchMap.put("endDate", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
             sql += " AND w.payDate < :end";
@@ -3175,9 +3173,7 @@ public class AdminREST {
         sql += " GROUP BY w.user";
         Query queryTotal = em.createQuery(sql);
         queryTotal.setParameter("user", user);
-        if (Tools.isNotBlank(start)) {
-            queryTotal.setParameter("start", Tools.addDay(Tools.parseDate(start, "yyyy-MM-dd"), -1));
-        }
+        queryTotal.setParameter("start", Tools.addDay(startDate, -1));
         if (Tools.isNotBlank(end)) {
             queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
         }
