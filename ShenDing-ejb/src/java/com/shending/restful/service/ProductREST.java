@@ -633,7 +633,7 @@ public class ProductREST {
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
-    
+
     /**
      * 创建/更新大满贯
      *
@@ -666,6 +666,108 @@ public class ProductREST {
         adminService.createOrUpdateMinShengBank(id, goodsOrderId, new BigDecimal(amount), payDateTime, remark);
         map.put("msg", "操作成功！");
         map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 导入民生銀行
+     *
+     * @param servletRequest
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("upload_file_min_sheng")
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    public String uploadFileMinShengBank(@CookieParam("auth") String auth, @Context HttpServletRequest servletRequest) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        FileUploadObj fileUploadObj = null;
+        Map map = Tools.getDMap();
+        try {
+            fileUploadObj = Tools.uploadFile(servletRequest, 100, null, null, null);
+        } catch (FileUploadException e) {
+            map.put("msg", e.getMessage());
+            return Tools.caseObjectToJson(map);
+        }
+        for (FileUploadItem item : fileUploadObj.getFileList()) {
+            if ("file1".equals(item.getFieldName())) {
+                File file = new File(item.getUploadFullPath());
+                jxl.Workbook readwb = null;
+                try {
+                    //构建Workbook对象, 只读Workbook对象   
+                    //直接从本地文件创建Workbook   
+                    InputStream instream = new FileInputStream(item.getUploadFullPath());
+                    readwb = Workbook.getWorkbook(instream);
+                    //Sheet的下标是从0开始   
+                    //获取第一张Sheet表   
+                    Sheet readsheet = readwb.getSheet(0);
+                    //获取Sheet表中所包含的总行数   
+                    int rsRows = readsheet.getRows();
+                    //入账时间
+                    for (int i = 1; i < rsRows; i++) {
+                        Cell[] cells = readsheet.getRow(i);
+                        String payDateStr = StringUtils.trim(cells[0].getContents());
+                        Date payDate = null;
+                        try {
+                            payDate = Tools.parseDate(payDateStr, "yyyy-MM-dd");
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行入账时间格式错误");
+                        }
+                        if (payDate == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行入账时间格式错误");
+                        }
+                        //获得代理
+                        String placeName = StringUtils.trim(cells[1].getContents());
+                        Map searchMap = new HashMap();
+                        searchMap.put("category", CategoryEnum.SERVICE_PEOPLE);
+                        searchMap.put("placeName", placeName);
+                        searchMap.put("status", OrderStatusEnum.SUCCESS);
+                        ResultList<GoodsOrder> orderList = adminService.findOrderList(searchMap, 1, 10, Boolean.TRUE, Boolean.FALSE);
+                        if (orderList.size() != 1) {
+                            throw new EjbMessageException("第" + (i + 1) + "获得代理无法唯一定位，请手动录入该条");
+                        }
+                        Long goodsOrderId = orderList.get(0).getId();
+                        //金额
+                        String amount = StringUtils.trimToNull(cells[2].getContents());
+                        BigDecimal amountBd = null;
+                        if (amount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行金额错误");
+                        }
+                        try {
+                            amountBd = new BigDecimal(amount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行金额错误");
+                        }
+                        //备注
+                        String remark = null;
+                        if (cells.length > 3) {
+                            remark = StringUtils.trimToNull(cells[3].getContents());
+                        }
+
+                        try {
+                            adminService.createOrUpdateMinShengBank(null, goodsOrderId, amountBd, payDate, remark);
+                        } catch (Exception e) {
+                            map.put("success", "0");
+                            map.put("msg", "第" + (i + 1) + "行，" + e.getMessage());
+                            return Tools.caseObjectToJson(map);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    map.put("success", "0");
+                    map.put("msg", e.getMessage());
+                    return Tools.caseObjectToJson(map);
+                } finally {
+                    readwb.close();
+                }
+                FileUtils.deleteQuietly(file);
+                map.put("msg", "上传成功");
+                map.put("success", "1");
+                map.put("data", "");
+                return Tools.caseObjectToJson(map);
+            }
+        }
+        map.put("msg", "未找到合法数据");
         return Tools.caseObjectToJson(map);
     }
 
@@ -898,7 +1000,7 @@ public class ProductREST {
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
-    
+
     /**
      * 我的民生銀行列表
      *
