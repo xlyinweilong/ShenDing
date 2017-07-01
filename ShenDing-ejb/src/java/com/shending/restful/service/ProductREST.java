@@ -633,6 +633,128 @@ public class ProductREST {
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
+    
+    /**
+     * 创建/更新大满贯
+     *
+     * @param auth
+     * @param id
+     * @param amount
+     * @param goodsOrderId
+     * @param remark
+     * @param payDate
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("create_or_update_min_sheng_bank")
+    public String createOrUpdateMinShengBank(@CookieParam("auth") String auth, @FormParam("id") Long id, @FormParam("amount") String amount, @FormParam("goodsOrderId") Long goodsOrderId, @FormParam("remark") String remark, @FormParam("payDate") String payDate) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        Date payDateTime = null;
+        try {
+            payDateTime = Tools.parseDate(payDate, "yyyy-MM-dd");
+        } catch (Exception e) {
+            payDateTime = Tools.getBeginOfDay(new Date());
+        }
+        if (new BigDecimal(amount).compareTo(BigDecimal.ZERO) < 0) {
+            throw new EjbMessageException("参数异常");
+        }
+        adminService.createOrUpdateMinShengBank(id, goodsOrderId, new BigDecimal(amount), payDateTime, remark);
+        map.put("msg", "操作成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 获取大满贯列表
+     *
+     * @param auth
+     * @param search
+     * @param start
+     * @param end
+     * @param pageIndex
+     * @param maxPerPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("min_sheng_bank_list")
+    public String getMinShengBankList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        String category = null;
+        if (Tools.isNotBlank(search)) {
+            search = search.split(" ")[0];
+            searchMap.put("search", search);
+        }
+        if (Tools.isNotBlank(search)) {
+            searchMap.put("search", search);
+        }
+        if (Tools.isNotBlank(start)) {
+            searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+        }
+        if (Tools.isNotBlank(end)) {
+            searchMap.put("endDate", Tools.getEndOfDay(Tools.parseDate(end, "yyy-MM-dd")));
+        }
+        ResultList<ProductMinShengBank> list = adminService.findProductMinShengBankList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("totalCount", list.getTotalCount());
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 获取民生银行信息
+     *
+     * @param auth
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("min_sheng_bank_info")
+    public String getProducMinShengBankInfo(@CookieParam("auth") String auth, @QueryParam("id") Long id) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        ProductMinShengBank productMinShengBank = em.find(ProductMinShengBank.class, id);
+        map.put("data", productMinShengBank);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 删除民生銀行
+     *
+     * @param auth
+     * @param ids
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("delete_min_sheng_bank")
+    public String delMinShengBank(@CookieParam("auth") String auth, @FormParam("ids") List<Long> ids) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        for (Long id : ids) {
+            ProductMinShengBank productMinShengBank = em.find(ProductMinShengBank.class, id);
+            productMinShengBank.setDeleted(true);
+            em.merge(productMinShengBank);
+            WageLog wageLog = adminService.findWageLogByProductMinShengBank(productMinShengBank);
+            wageLog.setDeleted(Boolean.TRUE);
+            em.merge(wageLog);
+        }
+        map.put("msg", "删除成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
 
     /**
      * 产品查找订单
@@ -765,6 +887,54 @@ public class ProductREST {
         sql += " GROUP BY w.user";
         Query queryTotal = em.createQuery(sql);
         queryTotal.setParameter("user", user).setParameter("type", WageLogTypeEnum.GRAND_SLAM);
+        queryTotal.setParameter("start", Tools.addDay(startDate, -1));
+        if (Tools.isNotBlank(end)) {
+            queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
+        }
+        ResultList<WageLog> list = adminService.findWageLogList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("totalCount", list.getTotalCount());
+        map.put("totalAmount", queryTotal.getResultList().isEmpty() ? null : queryTotal.getSingleResult());
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+    
+    /**
+     * 我的民生銀行列表
+     *
+     * @param auth
+     * @param start
+     * @param end
+     * @param pageIndex
+     * @param maxPerPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("my_min_sheng_bank_list")
+    public String myMinShengBankList(@CookieParam("auth") String auth, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        searchMap.put("type", WageLogTypeEnum.MIN_SHENG_BANK);
+        searchMap.put("user", user);
+        String sql = "SELECT SUM(w.amount) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.type = :type";
+        Date startDate = Tools.getBeginOfYear(new Date());
+        if (Tools.isNotBlank(start)) {
+            startDate = Tools.parseDate(start, "yyyy-MM-dd");
+            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+        }
+        searchMap.put("startDate", startDate);
+        sql += " AND w.payDate > :start";
+        if (Tools.isNotBlank(end)) {
+            searchMap.put("endDate", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
+            sql += " AND w.payDate < :end";
+        }
+        sql += " GROUP BY w.user";
+        Query queryTotal = em.createQuery(sql);
+        queryTotal.setParameter("user", user).setParameter("type", WageLogTypeEnum.MIN_SHENG_BANK);
         queryTotal.setParameter("start", Tools.addDay(startDate, -1));
         if (Tools.isNotBlank(end)) {
             queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));

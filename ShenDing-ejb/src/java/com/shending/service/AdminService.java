@@ -12,6 +12,7 @@ import com.shending.entity.NewAd;
 import com.shending.entity.OrderRecord;
 import com.shending.entity.ProductGrandSlam;
 import com.shending.entity.ProductLog;
+import com.shending.entity.ProductMinShengBank;
 import com.shending.entity.SysMenu;
 import com.shending.entity.SysRole;
 import com.shending.entity.SysRoleMenu;
@@ -2585,6 +2586,33 @@ public class AdminService {
         }
         return wageLog;
     }
+    
+     /**
+     * 根民生银行创建/更新用户收益
+     *
+     * @param id
+     * @param productMinShengBank
+     * @return
+     */
+    public WageLog createOrUpdateWageLog(Long id, ProductMinShengBank productMinShengBank) {
+        WageLog wageLog = new WageLog();
+        if (id != null) {
+            wageLog = em.find(WageLog.class, id);
+        }
+        wageLog.setCategory(productMinShengBank.getGoodsOrder().getCategory());
+        wageLog.setUser(productMinShengBank.getUser());
+        wageLog.setAmount(productMinShengBank.getAmount());
+        wageLog.setType(WageLogTypeEnum.MIN_SHENG_BANK);
+        wageLog.setFee(BigDecimal.ZERO);
+        wageLog.setPayDate(productMinShengBank.getPayDate());
+        wageLog.setProductMinShengBank(productMinShengBank);
+        if (id == null) {
+            em.persist(wageLog);
+        } else {
+            em.merge(wageLog);
+        }
+        return wageLog;
+    }
 
     /**
      * 根据化妆品生成用户收益
@@ -2855,6 +2883,41 @@ public class AdminService {
         }
         this.createOrUpdateWageLog(wageLogId, productGrandSlam);
     }
+    
+     /**
+     * 创建或更新民生銀行
+     *
+     * @param id
+     * @param orderId
+     * @param amount
+     * @param payDate
+     * @param remark
+     */
+    public void createOrUpdateMinShengBank(Long id, Long orderId, BigDecimal amount, Date payDate, String remark) {
+        ProductMinShengBank productMinShengBank = new ProductMinShengBank();
+        if (id != null) {
+            productMinShengBank = em.find(ProductMinShengBank.class, id);
+        }
+        GoodsOrder order = em.find(GoodsOrder.class, orderId);
+        productMinShengBank.setGoodsOrderId(order.getId());
+        productMinShengBank.setGoodsOrder(order);
+        productMinShengBank.setUser(order.getAgentUser());
+        productMinShengBank.setGoods(order.getGoods());
+        productMinShengBank.setGoodsId(order.getGoods().getId());
+        productMinShengBank.setUserId(order.getAgentUser().getId());
+        productMinShengBank.setAmount(amount);
+        productMinShengBank.setPayDate(payDate);
+        productMinShengBank.setRemark(remark);
+        Long wageLogId = null;
+        if (id == null) {
+            em.persist(productMinShengBank);
+//            em.flush();
+        } else {
+            em.merge(productMinShengBank);
+            wageLogId = this.findWageLogByProductMinShengBank(productMinShengBank).getId();
+        }
+        this.createOrUpdateWageLog(wageLogId, productMinShengBank);
+    }
 
     /**
      * 创建或更新化妆品
@@ -3038,6 +3101,73 @@ public class AdminService {
         }
         return resultList;
     }
+    
+    /**
+     * 获取民生银行
+     *
+     * @param map
+     * @param pageIndex
+     * @param maxPerPage
+     * @param list
+     * @param page
+     * @return
+     */
+    public ResultList<ProductMinShengBank> findProductMinShengBankList(Map<String, Object> map, int pageIndex, int maxPerPage, Boolean list, Boolean page) {
+        ResultList<ProductMinShengBank> resultList = new ResultList<>();
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<ProductMinShengBank> query = builder.createQuery(ProductMinShengBank.class);
+        Root root = query.from(ProductMinShengBank.class);
+        List<Predicate> criteria = new ArrayList<>();
+        criteria.add(builder.equal(root.get("deleted"), false));
+        if (map.containsKey("startDate")) {
+            criteria.add(builder.greaterThanOrEqualTo(root.get("payDate"), (Date) map.get("startDate")));
+        }
+        if (map.containsKey("endDate")) {
+            criteria.add(builder.lessThan(root.get("payDate"), (Date) map.get("endDate")));
+        }
+        if (map.containsKey("search")) {
+            criteria.add(builder.or(builder.like(root.get("goods").get("name"), "%" + (String) map.get("search") + "%"), builder.like(root.get("goods").get("namePinyin"), "%" + (String) map.get("search") + "%")));
+        }
+        try {
+            if (list == null || !list) {
+                CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+                countQuery.select(builder.count(root));
+                if (criteria.isEmpty()) {
+                    throw new RuntimeException("no criteria");
+                } else if (criteria.size() == 1) {
+                    countQuery.where(criteria.get(0));
+                } else {
+                    countQuery.where(builder.and(criteria.toArray(new Predicate[0])));
+                }
+                Long totalCount = em.createQuery(countQuery).getSingleResult();
+                resultList.setTotalCount(totalCount.intValue());
+            }
+            if (list == null || list) {
+                query = query.select(root);
+                if (criteria.isEmpty()) {
+                    throw new RuntimeException("no criteria");
+                } else if (criteria.size() == 1) {
+                    query.where(criteria.get(0));
+                } else {
+                    query.where(builder.and(criteria.toArray(new Predicate[0])));
+                }
+                query.orderBy(builder.desc(root.get("payDate")));
+                TypedQuery<ProductMinShengBank> typeQuery = em.createQuery(query);
+                if (page != null && page) {
+                    int startIndex = (pageIndex - 1) * maxPerPage;
+                    typeQuery.setFirstResult(startIndex);
+                    typeQuery.setMaxResults(maxPerPage);
+                    resultList.setPageIndex(pageIndex);
+                    resultList.setStartIndex(startIndex);
+                    resultList.setMaxPerPage(maxPerPage);
+                }
+                List<ProductMinShengBank> dataList = typeQuery.getResultList();
+                resultList.addAll(dataList);
+            }
+        } catch (NoResultException ex) {
+        }
+        return resultList;
+    }
 
     /**
      * 获取化妆品列表
@@ -3137,6 +3267,24 @@ public class AdminService {
         WageLog log = null;
         TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.productGrandSlam = :productGrandSlam", WageLog.class);
         query.setParameter("productGrandSlam", productGrandSlam);
+        try {
+            log = query.getSingleResult();
+        } catch (NoResultException e) {
+            log = null;
+        }
+        return log;
+    }
+    
+    /**
+     * 根据民生銀行获取工资
+     *
+     * @param productLog
+     * @return
+     */
+    public WageLog findWageLogByProductMinShengBank(ProductMinShengBank productMinShengBank) {
+        WageLog log = null;
+        TypedQuery<WageLog> query = em.createQuery("SELECT w FROM WageLog w WHERE w.productMinShengBank = :productMinShengBank", WageLog.class);
+        query.setParameter("productMinShengBank", productMinShengBank);
         try {
             log = query.getSingleResult();
         } catch (NoResultException e) {

@@ -377,6 +377,14 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/grand_slam_list',
                     templateUrl: '/back/tpl/product_grand_slam_list.html'
                 })
+                .state('app.product.min_sheng_bank_list', {
+                    url: '/min_sheng_bank_list',
+                    templateUrl: '/back/tpl/product_min_sheng_bank_list.html'
+                })
+                .state('app.product.min_sheng_bank_create_or_update', {
+                    url: '/min_sheng_bank_create_or_update/:id',
+                    templateUrl: '/back/tpl/product_min_sheng_bank_create_update.html'
+                })
                 .state('app.product.grand_slam_create_or_update', {
                     url: '/grand_slam_create_or_update/:id',
                     templateUrl: '/back/tpl/product_grand_slam_create_update.html'
@@ -428,6 +436,10 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                 .state('app.task.my_grand_slam', {
                     url: '/my_grand_slam',
                     templateUrl: '/back/tpl/task_my_grand_slam.html'
+                })
+                 .state('app.task.my_min_sheng_bank', {
+                    url: '/my_min_sheng_bank',
+                    templateUrl: '/back/tpl/task_my_min_sheng_bank.html'
                 })
                 .state('app.task.my_new_order', {
                     url: '/my_new_order',

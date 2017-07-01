@@ -12,6 +12,7 @@ public enum WageLogTypeEnum {
     PRODUCT,//产品销售
     RECOMMEND,//推荐代理
     GRAND_SLAM,//大满贯
+    MIN_SHENG_BANK,//民生銀行
     SEND_AND_ACCEPT,//发送，接受
     SEND, //发送者
     ACCEPT; //接广告的人，业务员
@@ -30,6 +31,8 @@ public enum WageLogTypeEnum {
                 return "产品销售";
             case GRAND_SLAM:
                 return "大满贯";
+            case MIN_SHENG_BANK:
+                return "民生銀行";
             default:
                 return "";
         }
@@ -49,6 +52,8 @@ public enum WageLogTypeEnum {
                 return PRODUCT;
             case "大满贯":
                 return GRAND_SLAM;
+            case "民生銀行":
+                return MIN_SHENG_BANK;
             default:
                 return null;
         }

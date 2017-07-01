@@ -81,6 +81,10 @@ public class WageLog implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     //大满贯
     private ProductGrandSlam productGrandSlam;
+    @JoinColumn(name = "min_sheng_bank_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    //民生銀行
+    private ProductMinShengBank productMinShengBank;
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 255)
     private WageLogTypeEnum type = WageLogTypeEnum.SEND;
@@ -90,6 +94,14 @@ public class WageLog implements Serializable {
     private CategoryEnum category = CategoryEnum.SERVICE_PEOPLE;
     @Transient
     private String goodsNames;
+
+    public ProductMinShengBank getProductMinShengBank() {
+        return productMinShengBank;
+    }
+
+    public void setProductMinShengBank(ProductMinShengBank productMinShengBank) {
+        this.productMinShengBank = productMinShengBank;
+    }
 
     public ProductLog getProductLog() {
         return productLog;
