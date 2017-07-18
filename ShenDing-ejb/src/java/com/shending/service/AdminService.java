@@ -2112,6 +2112,30 @@ public class AdminService {
             }
             userWages.setGrandSlamAmount(os[7].toString());//加盟提成工资
         }
+         //查询民生银行
+        Query queryMinShengBank = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.productMinShengBank IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
+        queryMinShengBank.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryMinShengBank.getResultList()) {
+            Object[] os = (Object[]) o;
+            Long uid = (Long) os[8];
+            UserWages userWages = null;
+            if (userMap.containsKey(uid)) {
+                userWages = userMap.get(uid);
+            } else {
+                userWages = new UserWages();
+                userWages.setName(os[0].toString());//用户姓名
+                userWages.setBalance(os[1].toString());//用户余额
+                userWages.setDeposit(os[2].toString());//用户押金
+                userWages.setBankType(os[5] == null ? "" : os[5].toString());//银行类型
+                String code = os[6] == null ? "" : os[6].toString();
+                if (code.length() > 10) {
+                    code = code.substring(0, 4) + "-" + code.substring(4, code.length());//修改后的银行卡号
+                }
+                userWages.setBankCardCode(code);//银行卡号
+                userMap.put(uid, userWages);
+            }
+            userWages.setMinShengBankAmount(os[7].toString());//民生工资
+        }
         for (Long uid : userMap.keySet()) {
             UserWages userWages = userMap.get(uid);
             userWages.setUserOrderNames(this.getUserOrderNames(uid));
@@ -2123,7 +2147,7 @@ public class AdminService {
         List returnList = new ArrayList();
         for (Long uid : userMap.keySet()) {
             UserWages userWages = userMap.get(uid);
-            String[] newStr = new String[13];
+            String[] newStr = new String[14];
             newStr[0] = userWages.getName();//用户
             newStr[1] = userWages.getBalance();//便民余额
             newStr[2] = userWages.getDeposit();//便民押金
@@ -2134,9 +2158,10 @@ public class AdminService {
             newStr[7] = userWages.getPorducetAmount();//产品工资
             newStr[8] = userWages.getCosmeticsAmount();//化妆品工资
             newStr[9] = userWages.getGrandSlamAmount();//大满贯工资
-            newStr[10] = userWages.getTotalAmount();//总工资
-            newStr[11] = userWages.getUserOrderNames();//代理的平台
-            newStr[12] = userWages.getBack();//含有回收
+            newStr[10] = userWages.getMinShengBankAmount();//民生银行工资
+            newStr[11] = userWages.getTotalAmount();//总工资
+            newStr[12] = userWages.getUserOrderNames();//代理的平台
+            newStr[13] = userWages.getBack();//含有回收
             returnList.add(newStr);
         }
         return returnList;

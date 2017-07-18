@@ -71,6 +71,11 @@ public class UserWages {
      * 大满贯提成
      */
     private String grandSlamAmount = "0";
+    
+     /**
+     * 民生银行提成
+     */
+    private String minShengBankAmount = "0";
 
     /**
      * 代理的地区
@@ -97,7 +102,7 @@ public class UserWages {
      * @return
      */
     public String getTotalAmount() {
-        return Double.parseDouble(this.getAdAmount()) + Double.parseDouble(porducetAmount) + Double.parseDouble(recommendAmount) + Double.parseDouble(cosmeticsAmount) + Double.parseDouble(grandSlamAmount) + "";
+        return Double.parseDouble(this.getAdAmount()) + Double.parseDouble(porducetAmount) + Double.parseDouble(recommendAmount) + Double.parseDouble(cosmeticsAmount) + Double.parseDouble(grandSlamAmount) +Double.parseDouble(minShengBankAmount)+ "";
     }
 
     public String getUserOrderNames() {
@@ -122,6 +127,14 @@ public class UserWages {
 
     public void setGrandSlamAmount(String grandSlamAmount) {
         this.grandSlamAmount = grandSlamAmount;
+    }
+
+    public String getMinShengBankAmount() {
+        return minShengBankAmount;
+    }
+
+    public void setMinShengBankAmount(String minShengBankAmount) {
+        this.minShengBankAmount = minShengBankAmount;
     }
 
     public String getCosmeticsAmount() {
