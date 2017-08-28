@@ -1198,6 +1198,10 @@ public class AdminService {
         if (map.containsKey("notZero")) {
             criteria.add(builder.or(builder.greaterThan(root.get("userAmount"), BigDecimal.ZERO), builder.greaterThan(root.get("userBalanceAmount"), BigDecimal.ZERO)));
         }
+        if (map.containsKey("isIsFindSelfYearAmount") && !(Boolean)map.get("isIsFindSelfYearAmount")) {
+            criteria.add(builder.greaterThanOrEqualTo(root.get("payDate"), Tools.getBeginOfYear(new Date())));
+            criteria.add(builder.lessThan(root.get("payDate"), Tools.addYear(Tools.getBeginOfYear(new Date()), 1)));
+        }
         if (map.containsKey("startDate")) {
             criteria.add(builder.greaterThanOrEqualTo(root.get("payDate"), (Date) map.get("startDate")));
         }

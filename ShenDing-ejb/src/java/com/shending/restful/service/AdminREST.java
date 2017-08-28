@@ -2287,6 +2287,11 @@ public class AdminREST {
         if (Tools.isNotBlank(search)) {
             searchMap.put("search", search);
         }
+        if(SysUserTypeEnum.SUPER.equals(user.getAdminType()) || user.isIsFindSelfYearAmount()){
+            searchMap.put("isIsFindSelfYearAmount", true);
+        }else{
+            searchMap.put("isIsFindSelfYearAmount", false);
+        }
         searchMap.put("category", CategoryEnum.valueOf(category));
         ResultList<NewAd> list = adminService.findAdList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
         map.put("totalCount", list.getTotalCount());
