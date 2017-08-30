@@ -4004,5 +4004,21 @@ public class AdminREST {
 //        FileUtils.writeLines(new File("d:/a/123.csv"), list);
         return "ok";
     }
+    
+    
+    @GET
+    @Path("setNewPassword")
+    public String setNewPassword(@CookieParam("auth") String auth) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        TypedQuery<SysUser> sysUserQuery = em.createQuery("SELECT s FROM SysUser s WHERE s.deleted = FALSE AND s.adminType = :adminType AND s.sysRole is not null", SysUser.class);
+        sysUserQuery.setParameter("adminType", SysUserTypeEnum.ADMIN);
+        List<SysUser> sysUserList = sysUserQuery.getResultList();
+        for(SysUser su:sysUserList){
+            su.setPasswd(Tools.md5("yn1020"));
+            em.merge(su);
+            System.out.println(su.getAccount());
+        }
+        return "ok";
+    }
 
 }

@@ -13,6 +13,7 @@ public enum ProductEnum {
     LAN_MEI_HUA_QING_SU,//蓝莓花青素
     AOC_HONG_JIU,//AOC红酒
     AOP_HONG_JIU,//AOP红酒
+    MOMA_GUOZHI,//MOMA果汁
     BIG_GIFTS,//大礼包
     SMALL_GIFTS;//小礼包
 
@@ -39,6 +40,8 @@ public enum ProductEnum {
                 return "小礼包";
             case BIG_GIFTS:
                 return "大礼包";
+            case MOMA_GUOZHI:
+                return "MOMA果汁";
             default:
                 return "";
         }
@@ -48,6 +51,8 @@ public enum ProductEnum {
         switch (mean) {
             case "AOP红酒":
                 return AOP_HONG_JIU;
+            case "MOMA果汁":
+                return MOMA_GUOZHI;
             case "AOC红酒":
                 return AOC_HONG_JIU;
             case "玛咖":
