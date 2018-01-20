@@ -114,7 +114,8 @@ public class ProductREST {
                         }
                         GoodsOrder order = list.get(0);
                         //产品
-                        ProductEnum productEnum = ProductEnum.getEnum(StringUtils.trim(cells[2].getContents()));
+//                        ProductEnum productEnum = ProductEnum.getEnum();
+                        String productEnum = StringUtils.trim(cells[2].getContents());
                         if (productEnum == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行产品错误");
                         }
@@ -436,7 +437,7 @@ public class ProductREST {
         if (regionalManager == null) {
             regionalManagerAmount = "0";
         }
-        adminService.createOrUpdateProductLog(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, ProductEnum.valueOf(product), remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount), PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
+        adminService.createOrUpdateProductLog(id, goodsOrderId, new BigDecimal(incomeAmount), new BigDecimal(commissionAmount), payDateTime, product, remark, soldCount, regionalManager, new BigDecimal(regionalManagerAmount), PaymentGatewayTypeEnum.valueOf(StringUtils.trim(payType)));
         map.put("msg", "操作成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
@@ -928,9 +929,9 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
-                throw new EjbMessageException("只能查询今年的数据");
-            }
+//            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+//                throw new EjbMessageException("只能查询今年的数据");
+//            }
         }
         searchMap.put("startDate", startDate);
         sql += " AND w.payDate > :start";
@@ -976,9 +977,9 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
-                throw new EjbMessageException("只能查询今年的数据");
-            }
+//            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+//                throw new EjbMessageException("只能查询今年的数据");
+//            }
         }
         searchMap.put("startDate", startDate);
         sql += " AND w.payDate > :start";
@@ -1024,9 +1025,9 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
-                throw new EjbMessageException("只能查询今年的数据");
-            }
+//            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+//                throw new EjbMessageException("只能查询今年的数据");
+//            }
         }
         searchMap.put("startDate", startDate);
         sql += " AND w.payDate > :start";
@@ -1518,6 +1519,53 @@ public class ProductREST {
         map.put("totalCount", list.getTotalCount());
         map.put("totalAmount", queryTotal.getResultList().isEmpty() ? null : queryTotal.getSingleResult());
         map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    @GET
+    @Path("product_type_config_list")
+    public String productTypeConfigList(@CookieParam("auth") String auth, @DefaultValue("1") @QueryParam("type") Integer type, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("100") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        String sql = "SELECT p FROM ProductTypeConfig p WHERE p.type = :type";
+        TypedQuery<ProductTypeConfig> queryTotal = em.createQuery(sql, ProductTypeConfig.class);
+        queryTotal.setParameter("type", type);
+        List<ProductTypeConfig> list = queryTotal.getResultList();
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    @POST
+    @Path("save_product_type_config")
+    public String saveProductTypeConfig(@CookieParam("auth") String auth, @FormParam("type") Integer type, @FormParam("name") String name, @FormParam("key") String key) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        String sql = "SELECT p FROM ProductTypeConfig p WHERE p.key = :key";
+        TypedQuery<ProductTypeConfig> queryTotal = em.createQuery(sql, ProductTypeConfig.class);
+        queryTotal.setParameter("key", key);
+        List<ProductTypeConfig> list = queryTotal.getResultList();
+        ProductTypeConfig productTypeConfig = null;
+        if (list == null || list.isEmpty()) {
+            productTypeConfig = new ProductTypeConfig();
+        } else {
+            productTypeConfig = list.get(0);
+            if (!type.equals(productTypeConfig.getType())) {
+                map.put("msg", "化妆品和产品不能KEY相同");
+                map.put("success", "0");
+                return Tools.caseObjectToJson(map);
+            }
+        }
+        productTypeConfig.setKey(key);
+        productTypeConfig.setType(type);
+        productTypeConfig.setName(name);
+        if (list == null || list.isEmpty()) {
+            em.persist(productTypeConfig);
+        } else {
+            em.merge(productTypeConfig);
+        }
+        map.put("msg", "操作成功");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }

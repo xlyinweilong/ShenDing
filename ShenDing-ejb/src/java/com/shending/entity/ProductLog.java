@@ -48,10 +48,13 @@ public class ProductLog implements Serializable {
     @Column(name = "create_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date createDate = new Date();
-    @Enumerated(EnumType.STRING)
+//    @Enumerated(EnumType.STRING)
     @Column(name = "product")
     //产品
-    private ProductEnum product = ProductEnum.MA_KA;
+    private String product;
+    @JoinColumn(name = "product", referencedColumnName = "c_key", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    private ProductTypeConfig productConfig;
     @Column(name = "pay_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date payDate;
@@ -189,17 +192,27 @@ public class ProductLog implements Serializable {
         this.createDate = createDate;
     }
 
-    public ProductEnum getProduct() {
+    public String getProduct() {
         return product;
     }
 
     public String getProductStr() {
-        return product.getMean();
+        return productConfig == null ? "" : productConfig.getName();
     }
 
-    public void setProduct(ProductEnum product) {
+    public void setProduct(String product) {
         this.product = product;
     }
+
+    public ProductTypeConfig getProductConfig() {
+        return productConfig;
+    }
+
+    public void setProductConfig(ProductTypeConfig productConfig) {
+        this.productConfig = productConfig;
+    }
+    
+    
 
     public Date getPayDate() {
         return payDate;

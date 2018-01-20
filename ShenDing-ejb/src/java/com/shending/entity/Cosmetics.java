@@ -50,9 +50,13 @@ public class Cosmetics implements Serializable {
     @Column(name = "product")
     //产品
     /**
-     * 1.清颜原液 2.清滢柔肤洁面乳 3.舒缓清润精华液 4.馥活提亮精华液 5.多效蚕丝面膜 6.冻干粉修护套 7.冻干粉嫩肤套 8.冻干粉保湿套 9.推荐奖励
+     * 1.清颜原液 2.清滢柔肤洁面乳 3.舒缓清润精华液 4.馥活提亮精华液 5.多效蚕丝面膜 6.冻干粉修护套 7.冻干粉嫩肤套 8.冻干粉保湿套
+     * 9.推荐奖励
      */
     private Integer product = 1;
+    @JoinColumn(name = "product", referencedColumnName = "c_key", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    private ProductTypeConfig productConfig;
     @Column(name = "pay_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date payDate;
@@ -206,34 +210,43 @@ public class Cosmetics implements Serializable {
         this.user = user;
     }
 
+    public ProductTypeConfig getProductConfig() {
+        return productConfig;
+    }
+
+    public void setProductConfig(ProductTypeConfig productConfig) {
+        this.productConfig = productConfig;
+    }
+
     public Integer getProduct() {
         return product;
     }
 
     public String getProductStr() {
-        switch (product) {
-            case 1:
-                return "清颜原液";
-            case 2:
-                return "清滢柔肤洁面乳";
-            case 3:
-                return "舒缓清润精华液";
-            case 4:
-                return "馥活提亮精华液";
-            case 5:
-                return "多效蚕丝面膜";
-            case 6:
-                return "冻干粉修护套";
-            case 7:
-                return "冻干粉嫩肤套";
-            case 8:
-                return "冻干粉保湿套";
-            case 9:
-                return "推荐奖励";
-            case 10:
-                return "无";
-        }
-        return "";
+        return productConfig == null ? "" : productConfig.getName();
+//        switch (product) {
+//            case 1:
+//                return "清颜原液";
+//            case 2:
+//                return "清滢柔肤洁面乳";
+//            case 3:
+//                return "舒缓清润精华液";
+//            case 4:
+//                return "馥活提亮精华液";
+//            case 5:
+//                return "多效蚕丝面膜";
+//            case 6:
+//                return "冻干粉修护套";
+//            case 7:
+//                return "冻干粉嫩肤套";
+//            case 8:
+//                return "冻干粉保湿套";
+//            case 9:
+//                return "推荐奖励";
+//            case 10:
+//                return "无";
+//        }
+//        return "";
     }
 
     public void setProduct(Integer product) {

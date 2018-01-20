@@ -125,6 +125,14 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/excitation',
                     templateUrl: '/back/tpl/config_excitation.html'
                 })
+                .state('app.config.cosmetics', {
+                    url: '/cosmetics',
+                    templateUrl: '/back/tpl/config_cosmetics.html'
+                })
+                .state('app.config.product', {
+                    url: '/product',
+                    templateUrl: '/back/tpl/config_product.html'
+                })
                 .state('app.goods', {
                     url: '/goods',
                     template: '<div ui-view></div>',

@@ -2846,7 +2846,7 @@ public class AdminService {
      * @param remark
      * @param soldCount
      */
-    public void createOrUpdateProductLog(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate, ProductEnum product, String remark, int soldCount,//支付方式
+    public void createOrUpdateProductLog(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate, String product, String remark, int soldCount,//支付方式
             Long regionalManager, BigDecimal regionalManagerAmount, PaymentGatewayTypeEnum gatewayType) {
         ProductLog productLog = new ProductLog();
         if (id != null) {

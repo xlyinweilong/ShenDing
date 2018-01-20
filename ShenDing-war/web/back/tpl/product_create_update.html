@@ -43,7 +43,8 @@
                 <div class="form-group">
                     <label>产品<i class="text-danger">*</i></label>
                     <select class="form-control" ng-model="product.product" ng-change="changeAmount()">
-                        <option ng-selected="product.product == null || product.product == 'MA_KA'" value="MA_KA">玛咖加强型</option>
+                         <option ng-repeat="type in productTypeList" ng-selected="product.product == type.key" ng-value="type.key">{{type.name}}</option>
+<!--                        <option ng-selected="product.product == null || product.product == 'MA_KA'" value="MA_KA">玛咖加强型</option>
                         <option value="MA_KA_WEN_HE">玛咖温和型</option>
                          <option value="MA_KA_PU_TONG">玛咖</option>
                          <option value="AOP_HONG_JIU">AOP红酒</option>
@@ -51,7 +52,7 @@
                         <option value="LAN_MEI_HUA_QING_SU">蓝莓花青素</option>
                         <option value="SMALL_GIFTS">小礼包</option>
                         <option value="BIG_GIFTS">大礼包</option>
-                        <option value="MOMA_GUOZHI">MOMA果汁</option>
+                        <option value="MOMA_GUOZHI">MOMA果汁</option>-->
                     </select>
                 </div>
                 <div class="line line-dashed b-b line-lg pull-in"></div>

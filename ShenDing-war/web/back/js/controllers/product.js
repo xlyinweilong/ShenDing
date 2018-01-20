@@ -661,7 +661,7 @@ app.controller('ProductListController', ['$scope', '$http', '$modal', '$location
             }
             window.open("/admin/PRODUCT_LOG_WAGE_LIST?startDate=" + start + "&endDate=" + end);
         };
-        
+
         $scope.downLoadUserWage = function () {
             var start = "";
             var end = "";
@@ -744,6 +744,18 @@ app.controller('CreateUpdateProductController', ['$scope', '$http', '$modal', '$
                 }
             });
         }
+        $scope.productTypeList = [];
+        $http.get("/webservice/product/product_type_config_list?type=1").success(function (responseData) {
+            if (responseData.success !== "1") {
+                $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                if (responseData.success == "-1") {
+                    $state.go('access.signin');
+                }
+            } else {
+                $scope.productTypeList = responseData.data;
+               
+            }
+        });
         $scope.searchOrderList = function () {
             $scope.orderListLoadingData = true;
             $http.get("/webservice/product/order_list?status=SUCCESS&search=" + $scope.searchOrderMsg).success(function (responseData) {
@@ -764,7 +776,7 @@ app.controller('CreateUpdateProductController', ['$scope', '$http', '$modal', '$
             $scope.checkedOrder = ele;
             $scope.searchOrderMsg = ele.goods.name + " (" + ele.goods.provinceStr + ") " + ele.goods.categoryMean + " (代理:" + ele.agentUser.name + ")";
         };
-        
+
         $scope.userList = null;
         $scope.userListLoadingData = null;
         $scope.userListTotalItems = null;
@@ -790,7 +802,7 @@ app.controller('CreateUpdateProductController', ['$scope', '$http', '$modal', '$
             $scope.checkedUser = ele;
             $scope.searchUserMsg = ele.name;
         };
-        
+
         $scope.open = function ($event) {
             $event.preventDefault();
             $event.stopPropagation();
@@ -1131,7 +1143,7 @@ app.controller('CosmeticsListController', ['$scope', '$http', '$modal', '$locati
     }]);
 
 app.controller('CreateUpdateCosmeticsController', ['$scope', '$http', '$modal', '$location', "$state", "$stateParams", function ($scope, $http, $modal, $location, $state, $stateParams) {
-        $scope.product = {submitting: false, soldCount: 1, incomeAmount: 0, commissionAmount: 0, product: '1',payType:'BANK_TRANSFER'};
+        $scope.product = {submitting: false, soldCount: 1, incomeAmount: 0, commissionAmount: 0, product: '1', payType: 'BANK_TRANSFER'};
         $scope.orderList = null;
         $scope.orderListLoadingData = null;
         $scope.orderListTotalItems = null;
@@ -1156,6 +1168,18 @@ app.controller('CreateUpdateCosmeticsController', ['$scope', '$http', '$modal', 
                 }
             });
         }
+        $scope.productTypeList = [];
+        $http.get("/webservice/product/product_type_config_list?type=2").success(function (responseData) {
+            if (responseData.success !== "1") {
+                $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                if (responseData.success == "-1") {
+                    $state.go('access.signin');
+                }
+            } else {
+                $scope.productTypeList = responseData.data;
+               
+            }
+        });
         $scope.searchOrderList = function () {
             $scope.orderListLoadingData = true;
             $http.get("/webservice/product/order_list?status=SUCCESS&search=" + $scope.searchOrderMsg).success(function (responseData) {
@@ -1278,7 +1302,7 @@ app.controller('CreateUpdateCosmeticsController', ['$scope', '$http', '$modal', 
                 }
             }
         }
-        
+
         $scope.myKeyup = function (e) {
             var keycode = window.event ? e.keyCode : e.which;
             var product = $scope.product;
@@ -1289,7 +1313,7 @@ app.controller('CreateUpdateCosmeticsController', ['$scope', '$http', '$modal', 
                 $scope.submitForm();
             }
         };
-        
+
         $scope.submitForm = function () {
             $scope.product.submitting = true;
             if ($scope.payDate instanceof Date) {

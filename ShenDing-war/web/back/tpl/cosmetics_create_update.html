@@ -43,7 +43,8 @@
                 <div class="form-group">
                     <label>产品<i class="text-danger">*</i></label>
                     <select class="form-control" ng-model="product.product" ng-change="changeAmount()">
-                        <option ng-selected="product.product == null || product.product == '1'" value="1">清颜原液</option>
+                         <option ng-repeat="type in productTypeList" ng-selected="product.product == type.key" ng-value="type.key">{{type.name}}</option>
+<!--                        <option ng-selected="product.product == null || product.product == '1'" value="1">清颜原液</option>
                         <option value="2">清滢柔肤洁面乳</option>
                         <option value="3">舒缓清润精华液</option>
                         <option value="4">馥活提亮精华液</option>
@@ -52,7 +53,7 @@
                         <option value="7">冻干粉嫩肤套</option>
                         <option value="8">冻干粉保湿套</option>
                         <option value="9">推荐奖励</option>
-                        <option value="10">无</option>
+                        <option value="10">无</option>-->
                     </select>
                 </div>
                  <div class="line line-dashed b-b line-lg pull-in"></div>
