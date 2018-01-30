@@ -116,7 +116,17 @@ public class ProductREST {
                         //产品
 //                        ProductEnum productEnum = ProductEnum.getEnum();
                         String productEnum = StringUtils.trim(cells[2].getContents());
-                        if (productEnum == null) {
+                        String product = null;
+                        try {
+                            TypedQuery<ProductTypeConfig> queryTotal = em.createQuery("SELECT p FROM ProductTypeConfig p WHERE p.type = :type and p.name = :name", ProductTypeConfig.class);
+                            queryTotal.setParameter("type", 1).setParameter("name", productEnum);
+                            ProductTypeConfig configList = queryTotal.getSingleResult();
+                            product = configList.getKey();
+                        } catch (Exception e) {
+                            product = null;
+                        }
+
+                        if (product == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行产品错误");
                         }
                         //数量
@@ -182,7 +192,7 @@ public class ProductREST {
                         if (gatewayType == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行支付方式错误");
                         }
-                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, productEnum, remark, count, regionalManager, regionalManagerAmount, gatewayType);
+                        adminService.createOrUpdateProductLog(null, order.getId(), amountBd, commissionBd, payDate, product, remark, count, regionalManager, regionalManagerAmount, gatewayType);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -263,29 +273,39 @@ public class ProductREST {
                         GoodsOrder order = list.get(0);
                         //产品
                         String productName = StringUtils.trim(cells[2].getContents());
-                        int product = -1;
-                        if ("清颜原液".equals(productName)) {
-                            product = 1;
-                        } else if ("清滢柔肤洁面乳".equals(productName)) {
-                            product = 2;
-                        } else if ("舒缓清润精华液".equals(productName)) {
-                            product = 3;
-                        } else if ("馥活提亮精华液".equals(productName)) {
-                            product = 4;
-                        } else if ("多效蚕丝面膜".equals(productName)) {
-                            product = 5;
-                        } else if ("冻干粉修护套".equals(productName)) {
-                            product = 6;
-                        } else if ("冻干粉嫩肤套".equals(productName)) {
-                            product = 7;
-                        } else if ("冻干粉保湿套".equals(productName)) {
-                            product = 8;
-                        } else if ("推荐奖励".equals(productName)) {
-                            product = 9;
-                        } else if ("无".equals(productName)) {
-                            product = 10;
+                        Integer product = null;
+                        try {
+                            TypedQuery<ProductTypeConfig> queryTotal = em.createQuery("SELECT p FROM ProductTypeConfig p WHERE p.type = :type and p.name = :name", ProductTypeConfig.class);
+                            queryTotal.setParameter("type", 2).setParameter("name", productName);
+                            ProductTypeConfig configList = queryTotal.getSingleResult();
+                            product = Integer.parseInt(configList.getKey());
+                        } catch (Exception e) {
+                            product = null;
                         }
-                        if (product == -1) {
+
+//                        if ("清颜原液".equals(productName)) {
+//                            product = 1;
+//                        } else if ("清滢柔肤洁面乳".equals(productName)) {
+//                            product = 2;
+//
+//                        } else if ("舒缓清润精华液".equals(productName)) {
+//                            product = 3;
+//                        } else if ("馥活提亮精华液".equals(productName)) {
+//                            product = 4;
+//                        } else if ("多效蚕丝面膜".equals(productName)) {
+//                            product = 5;
+//                        } else if ("冻干粉修护套".equals(productName)) {
+//                            product = 6;
+//                        } else if ("冻干粉嫩肤套".equals(productName)) {
+//                            product = 7;
+//                        } else if ("冻干粉保湿套".equals(productName)) {
+//                            product = 8;
+//                        } else if ("推荐奖励".equals(productName)) {
+//                            product = 9;
+//                        } else if ("无".equals(productName)) {
+//                            product = 10;
+//                        }
+                        if (product == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行产品错误");
                         }
                         //数量

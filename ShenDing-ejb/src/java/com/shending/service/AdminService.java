@@ -2963,7 +2963,7 @@ public class AdminService {
      * @param regionalManagerAmount
      */
     public void createOrUpdateCosmetics(Long id, Long orderId, BigDecimal incomeAmount, BigDecimal commissionAmount, Date payDate,
-            int product, String remark, int soldCount, Long regionalManager, BigDecimal regionalManagerAmount, PaymentGatewayTypeEnum payType) {
+            Integer product, String remark, int soldCount, Long regionalManager, BigDecimal regionalManagerAmount, PaymentGatewayTypeEnum payType) {
         Cosmetics cosmetics = new Cosmetics();
         if (id != null) {
             cosmetics = em.find(Cosmetics.class, id);
