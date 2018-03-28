@@ -1169,6 +1169,12 @@ public class AdminService {
         return resultList;
     }
 
+    public List<SysUser> findSysUserList() {
+        TypedQuery<SysUser> nameQuery = em.createQuery("SELECT su FROM SysUser su WHERE su.deleted = FALSE AND su.adminType = :adminType and su.balance = 0 and su.deposit > 0" , SysUser.class);
+        nameQuery.setParameter("adminType", SysUserTypeEnum.ADMIN);
+        return nameQuery.getResultList();
+    }
+
     /**
      * 广告列表
      *
@@ -1198,7 +1204,7 @@ public class AdminService {
         if (map.containsKey("notZero")) {
             criteria.add(builder.or(builder.greaterThan(root.get("userAmount"), BigDecimal.ZERO), builder.greaterThan(root.get("userBalanceAmount"), BigDecimal.ZERO)));
         }
-        if (map.containsKey("isIsFindSelfYearAmount") && !(Boolean)map.get("isIsFindSelfYearAmount")) {
+        if (map.containsKey("isIsFindSelfYearAmount") && !(Boolean) map.get("isIsFindSelfYearAmount")) {
             criteria.add(builder.greaterThanOrEqualTo(root.get("payDate"), Tools.getBeginOfYear(new Date())));
             criteria.add(builder.lessThan(root.get("payDate"), Tools.addYear(Tools.getBeginOfYear(new Date()), 1)));
         }
@@ -2116,7 +2122,7 @@ public class AdminService {
             }
             userWages.setGrandSlamAmount(os[7].toString());//加盟提成工资
         }
-         //查询民生银行
+        //查询民生银行
         Query queryMinShengBank = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.productMinShengBank IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
         queryMinShengBank.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
         for (Object o : queryMinShengBank.getResultList()) {
@@ -2615,8 +2621,8 @@ public class AdminService {
         }
         return wageLog;
     }
-    
-     /**
+
+    /**
      * 根民生银行创建/更新用户收益
      *
      * @param id
@@ -2912,8 +2918,8 @@ public class AdminService {
         }
         this.createOrUpdateWageLog(wageLogId, productGrandSlam);
     }
-    
-     /**
+
+    /**
      * 创建或更新民生銀行
      *
      * @param id
@@ -3130,7 +3136,7 @@ public class AdminService {
         }
         return resultList;
     }
-    
+
     /**
      * 获取民生银行
      *
@@ -3303,7 +3309,7 @@ public class AdminService {
         }
         return log;
     }
-    
+
     /**
      * 根据民生銀行获取工资
      *

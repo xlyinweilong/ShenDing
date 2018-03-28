@@ -55,6 +55,11 @@ app.controller('UserController', ['$scope', '$http', '$modal', '$location', func
         $scope.pageChanged = function () {
             $scope.getUserList($scope.currentPage, false);
         };
+        
+        
+        $scope.downloadList = function () {
+            window.open("/admin/USER_LIST");
+        };
 
         $scope.getUserList = function (page, isInit) {
             $scope.currentPage = page;

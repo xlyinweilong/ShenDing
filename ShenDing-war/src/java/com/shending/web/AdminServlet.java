@@ -127,6 +127,7 @@ public class AdminServlet extends BaseServlet {
             case FRANCHISE_DEPARTMENT_COMMISSION:
             case ALL_WAGE_PLACE_LIST:
             case DOWN_GOODS_LIST:
+            case USER_LIST:
                 setLoginLogoutBothAllowed(request);
                 break;
             default:
@@ -198,7 +199,7 @@ public class AdminServlet extends BaseServlet {
     public static enum PageEnum {
 
         INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
-        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION;
+        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, USER_LIST,ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION;
 
     }
 
@@ -254,6 +255,8 @@ public class AdminServlet extends BaseServlet {
                 return loadFranchiseDepartmentCommissionList(request, response);
             case DOWN_GOODS_LIST:
                 return loadDownGoodsList(request, response);
+            case USER_LIST:
+                return loadUserList(request, response);
             default:
                 throw new BadPageException();
         }
@@ -2208,6 +2211,76 @@ public class AdminServlet extends BaseServlet {
         headLine[3] = "省份";
         headLine[4] = "微信";
         headLine[5] = "价钱";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        vecCsvData.addAll(resultList);
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+    
+    
+    /**
+     * 下载返还完的用户
+     * 
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException 
+     */
+    private boolean loadUserList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "load_user_list.csv";//default file name
+        List vecCsvData = new ArrayList();
+        List<String[]> resultList = new ArrayList<>();
+        List<SysUser> list = adminService.findSysUserList();
+        for (SysUser sysUser : list) {
+            String[] rs = new String[5];
+            rs[0] = sysUser.getAccount();
+            rs[1] = sysUser.getName();
+            rs[2] = sysUser.getIdCardOutput();
+            rs[3] = sysUser.getMobileOutput();
+            rs[4] = sysUser.getDeposit() + "";
+            resultList.add(rs);
+        }
+        String[] headLine = new String[5];
+        headLine[0] = "账号";
+        headLine[1] = "姓名";
+        headLine[2] = "身份证";
+        headLine[3] = "手机号";
+        headLine[4] = "返还金额";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);
