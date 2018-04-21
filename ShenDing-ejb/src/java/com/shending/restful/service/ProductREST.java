@@ -949,9 +949,9 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-//            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
-//                throw new EjbMessageException("只能查询今年的数据");
-//            }
+            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
         }
         searchMap.put("startDate", startDate);
         sql += " AND w.payDate > :start";
@@ -997,9 +997,9 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-//            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
-//                throw new EjbMessageException("只能查询今年的数据");
-//            }
+            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
         }
         searchMap.put("startDate", startDate);
         sql += " AND w.payDate > :start";
@@ -1045,9 +1045,9 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-//            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
-//                throw new EjbMessageException("只能查询今年的数据");
-//            }
+            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
         }
         searchMap.put("startDate", startDate);
         sql += " AND w.payDate > :start";
