@@ -990,6 +990,9 @@ public class AdminService {
         if (map.containsKey("notStatus")) {
             criteria.add(builder.notEqual(root.get("status"), map.get("notStatus")));
         }
+        if (map.containsKey("startDate")) {
+            criteria.add(builder.greaterThan(root.get("createDate"), (Date) map.get("startDate")));
+        }
         if (map.containsKey("status")) {
             criteria.add(builder.equal(root.get("status"), map.get("status")));
         }
@@ -1104,6 +1107,9 @@ public class AdminService {
         if (map.containsKey("user")) {
             criteria.add(builder.equal(root.get("user"), map.get("user")));
         }
+        if (map.containsKey("startDate")) {
+            criteria.add(builder.greaterThan(root.get("createDate"), (Date)map.get("startDate")));
+        }
         if (map.containsKey("agentUser")) {
             criteria.add(builder.equal(root.get("agentUser"), map.get("agentUser")));
         }
@@ -1111,7 +1117,7 @@ public class AdminService {
             criteria.add(builder.lessThan(root.get("lastPayDate"), (Date) map.get("lastPayDate7")));
         }
         if (map.containsKey("limitEnd")) {
-            criteria.add(builder.greaterThan(root.get("limitEnd"), Tools.addMonth(new Date(), -1)));
+            criteria.add(builder.greaterThan(root.get("limitEnd"),Tools.addMonth(new Date(), -1)));
             criteria.add(builder.lessThan(root.get("limitEnd"), new Date()));
         }
         try {

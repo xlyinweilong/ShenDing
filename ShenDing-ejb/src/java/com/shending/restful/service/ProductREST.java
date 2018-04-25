@@ -596,6 +596,10 @@ public class ProductREST {
         }
         if (Tools.isNotBlank(start)) {
             searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+        } else {
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType())) {
+                searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
+            }
         }
         if (Tools.isNotBlank(end)) {
             searchMap.put("endDate", Tools.getEndOfDay(Tools.parseDate(end, "yyy-MM-dd")));
@@ -820,6 +824,10 @@ public class ProductREST {
         }
         if (Tools.isNotBlank(start)) {
             searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+        } else {
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType())) {
+                searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
+            }
         }
         if (Tools.isNotBlank(end)) {
             searchMap.put("endDate", Tools.getEndOfDay(Tools.parseDate(end, "yyy-MM-dd")));

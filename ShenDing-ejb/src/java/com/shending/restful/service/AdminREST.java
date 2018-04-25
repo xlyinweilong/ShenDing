@@ -1349,6 +1349,9 @@ public class AdminREST {
         if (StringUtils.isNotBlank(orderBy) && !"null".equals(orderBy)) {
             searchMap.put("orderBy", orderBy);
         }
+        if(!SysUserTypeEnum.SUPER.equals(user.getAdminType())){
+//            searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
+        }
         ResultList<Goods> list = adminService.findGoodsList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
         map.put("totalCount", list.getTotalCount());
         map.put("data", (List) list);
@@ -1559,6 +1562,9 @@ public class AdminREST {
         }
         if (StringUtils.isNotBlank(orderBy) && !"null".equals(orderBy)) {
             searchMap.put("orderBy", orderBy);
+        }
+        if(!SysUserTypeEnum.SUPER.equals(user.getAdminType())){
+            searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
         }
         ResultList<com.shending.entity.GoodsOrder> list = adminService.findOrderList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
         map.put("totalCount", list.getTotalCount());
@@ -2293,6 +2299,9 @@ public class AdminREST {
             searchMap.put("isIsFindSelfYearAmount", false);
         }
         searchMap.put("category", CategoryEnum.valueOf(category));
+        if(!SysUserTypeEnum.SUPER.equals(user.getAdminType())){
+             searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
+        }
         ResultList<NewAd> list = adminService.findAdList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
         map.put("totalCount", list.getTotalCount());
         map.put("data", (List) list);
