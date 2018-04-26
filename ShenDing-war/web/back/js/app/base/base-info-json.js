@@ -5,7 +5,7 @@ var userInfo = null;//user info
 app.controller('NavCtrl', ['$scope', '$http', '$modal', '$state', function ($scope, $http, $modal, $state) {
         $http.get('/webservice/admin/nav').success(function (data) {
             $scope.navs = data.data;
-            if (userInfo != null && userInfo.roleId == -1 && (userInfo.idCard == null || userInfo.bankCardCode == null)) {
+            if (userInfo.adminType == 'ADMIN' && userInfo != null && userInfo.roleId == -1 && (userInfo.idCard == null || userInfo.bankCardCode == null)) {
                 var modalInstance = $modal.open({
                     templateUrl: '/back/tpl/go_my_info.html',
                     controller: 'ConfirmCtrl', resolve: {

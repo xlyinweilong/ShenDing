@@ -199,7 +199,7 @@ public class SysUser implements Serializable {
     }
 
     public Long getRoleId() {
-        if (adminType != SysUserTypeEnum.MANAGE) {
+        if (adminType == SysUserTypeEnum.MANAGE) {
             return 0l;
         }
         if (sysRole == null) {

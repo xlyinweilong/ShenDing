@@ -60,6 +60,34 @@ app.controller('ExcitationController', ['$scope', '$http', '$modal', '$location'
         }
     }]);
 
+app.controller('ConfigOthersController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
+        $scope.config = {submitting: false,findOnlyYear:{value:"1"}};
+        $http.get("/webservice/config/config?key=FIND_ONLY_YEAR").success(function (responseData) {
+            if (responseData.success !== "1") {
+                $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                if (responseData.success == "-1") {
+                    $state.go('access.signin');
+                }
+            } else {
+                $scope.config.findOnlyYear.value = responseData.data;
+            }
+        });
+
+        $scope.submitForm = function () {
+            $scope.config.submitting = true;
+            $http.post("/webservice/config/save_config", {value: $scope.config.findOnlyYear.value,key: "FIND_ONLY_YEAR"}).success(function (responseData) {
+                $scope.config.submitting = false;
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_OK);
+                }
+            });
+        }
+    }]);
 
 app.controller('ConfigProductController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
         $scope.list = null;

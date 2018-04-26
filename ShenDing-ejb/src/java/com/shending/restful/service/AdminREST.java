@@ -20,6 +20,7 @@ import com.shending.entity.Vote;
 import com.shending.entity.WageLog;
 import com.shending.restful.interception.AccountInterceptor;
 import com.shending.service.AdminService;
+import com.shending.service.ConfigService;
 import com.shending.support.FileUploadItem;
 import com.shending.support.FileUploadObj;
 import com.shending.support.ResultList;
@@ -105,6 +106,8 @@ public class AdminREST {
 
     @EJB
     private AdminService adminService;
+    @EJB
+    private ConfigService configService;
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
 
@@ -1563,7 +1566,7 @@ public class AdminREST {
         if (StringUtils.isNotBlank(orderBy) && !"null".equals(orderBy)) {
             searchMap.put("orderBy", orderBy);
         }
-        if(!SysUserTypeEnum.SUPER.equals(user.getAdminType())){
+        if(!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount()){
             searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
         }
         ResultList<com.shending.entity.GoodsOrder> list = adminService.findOrderList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
@@ -2299,7 +2302,7 @@ public class AdminREST {
             searchMap.put("isIsFindSelfYearAmount", false);
         }
         searchMap.put("category", CategoryEnum.valueOf(category));
-        if(!SysUserTypeEnum.SUPER.equals(user.getAdminType())){
+        if(!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount()){
              searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
         }
         ResultList<NewAd> list = adminService.findAdList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
@@ -3074,7 +3077,7 @@ public class AdminREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+            if (!configService.findConfigByKey("FIND_ONLY_YEAR").getValue().equals("-1") && startDate.before(Tools.getBeginOfYear(new Date()))) {
                 throw new EjbMessageException("只能查询今年的数据");
             }
         }
@@ -3174,7 +3177,7 @@ public class AdminREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+            if (!configService.findConfigByKey("FIND_ONLY_YEAR").getValue().equals("-1") && startDate.before(Tools.getBeginOfYear(new Date()))) {
                 throw new EjbMessageException("只能查询今年的数据");
             }
         }

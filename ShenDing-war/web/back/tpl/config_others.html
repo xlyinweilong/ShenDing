@@ -1,0 +1,28 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">其他配置</h1>
+</div>
+<div class="wrapper-md" ng-controller="ConfigOthersController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                其他配置
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>只看今年数据<i class="text-danger">*</i></label>
+                    <select class="form-control" ng-model="config.findOnlyYear.value">
+                        <!--<option ng-selected="config.findOnlyYear.value == 0" value="0" ng-value="0" >自定义</option>-->
+                        <option ng-selected="config.findOnlyYear.value == 1" value="1" ng-value="1" >代理只能看今年</option>
+                        <option ng-selected="config.findOnlyYear.value == -1" value="-1" ng-value="-1" >代理能看所有</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm btn-info" ng-click="submitForm()" ng-disabled="config.submitting " ng-class="{'active' : config.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

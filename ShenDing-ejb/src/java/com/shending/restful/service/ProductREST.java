@@ -3,6 +3,7 @@ package com.shending.restful.service;
 import com.shending.entity.*;
 import com.shending.restful.interception.AccountInterceptor;
 import com.shending.service.AdminService;
+import com.shending.service.ConfigService;
 import com.shending.support.*;
 import com.shending.support.enums.*;
 import com.shending.support.exception.EjbMessageException;
@@ -52,6 +53,8 @@ public class ProductREST {
 
     @EJB
     private AdminService adminService;
+    @EJB
+    private ConfigService configService;
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
 
@@ -503,6 +506,13 @@ public class ProductREST {
         }
         if (Tools.isNotBlank(start)) {
             searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount() && ((Date) searchMap.get("startDate")).before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+        } else {
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount()) {
+                searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
+            }
         }
         if (Tools.isNotBlank(end)) {
             searchMap.put("endDate", Tools.getEndOfDay(Tools.parseDate(end, "yyy-MM-dd")));
@@ -596,8 +606,11 @@ public class ProductREST {
         }
         if (Tools.isNotBlank(start)) {
             searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount() && ((Date) searchMap.get("startDate")).before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
         } else {
-            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType())) {
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount()) {
                 searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
             }
         }
@@ -824,8 +837,11 @@ public class ProductREST {
         }
         if (Tools.isNotBlank(start)) {
             searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount() && ((Date) searchMap.get("startDate")).before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
         } else {
-            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType())) {
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount()) {
                 searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
             }
         }
@@ -957,7 +973,7 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+            if (!configService.findConfigByKey("FIND_ONLY_YEAR").getValue().equals("-1") && startDate.before(Tools.getBeginOfYear(new Date()))) {
                 throw new EjbMessageException("只能查询今年的数据");
             }
         }
@@ -1005,7 +1021,7 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+            if (!configService.findConfigByKey("FIND_ONLY_YEAR").getValue().equals("-1") && startDate.before(Tools.getBeginOfYear(new Date()))) {
                 throw new EjbMessageException("只能查询今年的数据");
             }
         }
@@ -1053,7 +1069,7 @@ public class ProductREST {
         Date startDate = Tools.getBeginOfYear(new Date());
         if (Tools.isNotBlank(start)) {
             startDate = Tools.parseDate(start, "yyyy-MM-dd");
-            if (startDate.before(Tools.getBeginOfYear(new Date()))) {
+            if (!configService.findConfigByKey("FIND_ONLY_YEAR").getValue().equals("-1") && startDate.before(Tools.getBeginOfYear(new Date()))) {
                 throw new EjbMessageException("只能查询今年的数据");
             }
         }
@@ -1476,6 +1492,13 @@ public class ProductREST {
         }
         if (Tools.isNotBlank(start)) {
             searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount() && ((Date) searchMap.get("startDate")).before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+        } else {
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount()) {
+                searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
+            }
         }
         if (Tools.isNotBlank(end)) {
             searchMap.put("endDate", Tools.getEndOfDay(Tools.parseDate(end, "yyy-MM-dd")));

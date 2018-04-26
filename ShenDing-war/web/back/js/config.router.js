@@ -121,6 +121,10 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/commission',
                     templateUrl: '/back/tpl/config_commission.html'
                 })
+                .state('app.config.others', {
+                    url: '/others',
+                    templateUrl: '/back/tpl/config_others.html'
+                })
                 .state('app.config.excitation', {
                     url: '/excitation',
                     templateUrl: '/back/tpl/config_excitation.html'

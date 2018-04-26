@@ -130,4 +130,42 @@ public class ConfigREST {
         map.put("msg", "修改成功");
         return Tools.caseObjectToJson(map);
     }
+    
+    
+    /**
+     * 配置
+     *
+     * @param auth
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("config")
+    public String getConfig(@CookieParam("auth") String auth,@QueryParam("key") String key) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        map.put("data", configService.findConfigByKey(key).getValue());
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 修改配置
+     *
+     * @param auth
+     * @param value
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("save_config")
+    public String saveConfig(@CookieParam("auth") String auth, @FormParam("key") String key, @FormParam("value") String value) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map dataMap = new HashMap();
+        configService.saveConfig(key, value);
+        map.put("success", "1");
+        map.put("msg", "修改成功");
+        return Tools.caseObjectToJson(map);
+    }
 }
