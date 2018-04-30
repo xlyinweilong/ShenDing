@@ -76,6 +76,11 @@ public class UserWages {
      * 民生银行提成
      */
     private String minShengBankAmount = "0";
+    
+     /**
+     * 会员提成
+     */
+    private String vipAmount = "0";
 
     /**
      * 代理的地区
@@ -102,7 +107,15 @@ public class UserWages {
      * @return
      */
     public String getTotalAmount() {
-        return Double.parseDouble(this.getAdAmount()) + Double.parseDouble(porducetAmount) + Double.parseDouble(recommendAmount) + Double.parseDouble(cosmeticsAmount) + Double.parseDouble(grandSlamAmount) +Double.parseDouble(minShengBankAmount)+ "";
+        return Double.parseDouble(this.getAdAmount()) + Double.parseDouble(porducetAmount) + Double.parseDouble(recommendAmount) + Double.parseDouble(cosmeticsAmount) + Double.parseDouble(grandSlamAmount) +Double.parseDouble(minShengBankAmount)+Double.parseDouble(vipAmount)+ "";
+    }
+
+    public String getVipAmount() {
+        return vipAmount;
+    }
+
+    public void setVipAmount(String vipAmount) {
+        this.vipAmount = vipAmount;
     }
 
     public String getUserOrderNames() {

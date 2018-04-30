@@ -18,6 +18,7 @@ import com.shending.entity.SysRole;
 import com.shending.entity.SysRoleMenu;
 import com.shending.entity.SysUser;
 import com.shending.entity.UserWageLog;
+import com.shending.entity.Vip;
 import com.shending.entity.Vote;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
@@ -1108,7 +1109,7 @@ public class AdminService {
             criteria.add(builder.equal(root.get("user"), map.get("user")));
         }
         if (map.containsKey("startDate")) {
-            criteria.add(builder.greaterThan(root.get("createDate"), (Date)map.get("startDate")));
+            criteria.add(builder.greaterThan(root.get("createDate"), (Date) map.get("startDate")));
         }
         if (map.containsKey("agentUser")) {
             criteria.add(builder.equal(root.get("agentUser"), map.get("agentUser")));
@@ -1117,7 +1118,7 @@ public class AdminService {
             criteria.add(builder.lessThan(root.get("lastPayDate"), (Date) map.get("lastPayDate7")));
         }
         if (map.containsKey("limitEnd")) {
-            criteria.add(builder.greaterThan(root.get("limitEnd"),Tools.addMonth(new Date(), -1)));
+            criteria.add(builder.greaterThan(root.get("limitEnd"), Tools.addMonth(new Date(), -1)));
             criteria.add(builder.lessThan(root.get("limitEnd"), new Date()));
         }
         try {
@@ -1176,7 +1177,7 @@ public class AdminService {
     }
 
     public List<SysUser> findSysUserList() {
-        TypedQuery<SysUser> nameQuery = em.createQuery("SELECT su FROM SysUser su WHERE su.deleted = FALSE AND su.adminType = :adminType and su.balance = 0 and su.deposit > 0" , SysUser.class);
+        TypedQuery<SysUser> nameQuery = em.createQuery("SELECT su FROM SysUser su WHERE su.deleted = FALSE AND su.adminType = :adminType and su.balance = 0 and su.deposit > 0", SysUser.class);
         nameQuery.setParameter("adminType", SysUserTypeEnum.ADMIN);
         return nameQuery.getResultList();
     }
@@ -2152,6 +2153,30 @@ public class AdminService {
             }
             userWages.setMinShengBankAmount(os[7].toString());//民生工资
         }
+        //查询会员
+        Query queryVip = em.createQuery("SELECT w.user.name,w.user.balance,w.user.deposit,w.user.balanceMf,w.user.depositMf,w.user.bankType,w.user.bankCardCode,SUM(w.amount)-SUM(w.fee),w.user.id FROM WageLog w WHERE w.vip IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.user.id");
+        queryVip.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryVip.getResultList()) {
+            Object[] os = (Object[]) o;
+            Long uid = (Long) os[8];
+            UserWages userWages = null;
+            if (userMap.containsKey(uid)) {
+                userWages = userMap.get(uid);
+            } else {
+                userWages = new UserWages();
+                userWages.setName(os[0].toString());//用户姓名
+                userWages.setBalance(os[1].toString());//用户余额
+                userWages.setDeposit(os[2].toString());//用户押金
+                userWages.setBankType(os[5] == null ? "" : os[5].toString());//银行类型
+                String code = os[6] == null ? "" : os[6].toString();
+                if (code.length() > 10) {
+                    code = code.substring(0, 4) + "-" + code.substring(4, code.length());//修改后的银行卡号
+                }
+                userWages.setBankCardCode(code);//银行卡号
+                userMap.put(uid, userWages);
+            }
+            userWages.setVipAmount(os[7].toString());//民生工资
+        }
         for (Long uid : userMap.keySet()) {
             UserWages userWages = userMap.get(uid);
             userWages.setUserOrderNames(this.getUserOrderNames(uid));
@@ -2163,7 +2188,7 @@ public class AdminService {
         List returnList = new ArrayList();
         for (Long uid : userMap.keySet()) {
             UserWages userWages = userMap.get(uid);
-            String[] newStr = new String[14];
+            String[] newStr = new String[15];
             newStr[0] = userWages.getName();//用户
             newStr[1] = userWages.getBalance();//便民余额
             newStr[2] = userWages.getDeposit();//便民押金
@@ -2175,9 +2200,10 @@ public class AdminService {
             newStr[8] = userWages.getCosmeticsAmount();//化妆品工资
             newStr[9] = userWages.getGrandSlamAmount();//大满贯工资
             newStr[10] = userWages.getMinShengBankAmount();//民生银行工资
-            newStr[11] = userWages.getTotalAmount();//总工资
-            newStr[12] = userWages.getUserOrderNames();//代理的平台
-            newStr[13] = userWages.getBack();//含有回收
+            newStr[11] = userWages.getVipAmount();//会员工资
+            newStr[12] = userWages.getTotalAmount();//总工资
+            newStr[13] = userWages.getUserOrderNames();//代理的平台
+            newStr[14] = userWages.getBack();//含有回收
             returnList.add(newStr);
         }
         return returnList;
@@ -2271,6 +2297,23 @@ public class AdminService {
             }
             pw.setGoodsName(os[1].toString());//商品名称
             pw.setGrandSlamAmount(os[0].toString());//大满贯
+            pw.setGoodsId(goodsId);
+        }
+
+        //查询会员
+        Query queryVip = em.createQuery("SELECT SUM(w.amount)-SUM(w.fee),w.vip.goodsId FROM WageLog w WHERE w.vip IS NOT NULL AND w.goodsOrder IS NULL AND w.deleted = FALSE AND w.payDate > :startDate AND w.payDate < :endDate GROUP BY w.vip.goodsId");
+        queryVip.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0));
+        for (Object o : queryVip.getResultList()) {
+            Object[] os = (Object[]) o;
+            PlaceWages pw = new PlaceWages();
+            Long goodsId = (Long) os[1];//商品ID
+            if (placeMap.containsKey(goodsId)) {
+                pw = placeMap.get(goodsId);
+            } else {
+                placeMap.put(goodsId, pw);
+            }
+            pw.setGoodsName(em.find(Goods.class, goodsId).getName());//商品名称
+            pw.setVipAmount(os[0].toString());//会员
             pw.setGoodsId(goodsId);
         }
 
@@ -3203,6 +3246,73 @@ public class AdminService {
                     resultList.setMaxPerPage(maxPerPage);
                 }
                 List<ProductMinShengBank> dataList = typeQuery.getResultList();
+                resultList.addAll(dataList);
+            }
+        } catch (NoResultException ex) {
+        }
+        return resultList;
+    }
+
+    /**
+     * 获取会员银行
+     *
+     * @param map
+     * @param pageIndex
+     * @param maxPerPage
+     * @param list
+     * @param page
+     * @return
+     */
+    public ResultList<Vip> findProductVipList(Map<String, Object> map, int pageIndex, int maxPerPage, Boolean list, Boolean page) {
+        ResultList<Vip> resultList = new ResultList<>();
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<Vip> query = builder.createQuery(Vip.class);
+        Root root = query.from(Vip.class);
+        List<Predicate> criteria = new ArrayList<>();
+        criteria.add(builder.equal(root.get("deleted"), false));
+        if (map.containsKey("startDate")) {
+            criteria.add(builder.greaterThanOrEqualTo(root.get("payDate"), (Date) map.get("startDate")));
+        }
+        if (map.containsKey("endDate")) {
+            criteria.add(builder.lessThan(root.get("payDate"), (Date) map.get("endDate")));
+        }
+        if (map.containsKey("search")) {
+            criteria.add(builder.or(builder.like(root.get("vipPhone"), "%" + (String) map.get("search") + "%"), builder.like(root.get("vipWechat"), "%" + (String) map.get("search") + "%"), builder.like(root.get("vipName"), "%" + (String) map.get("search") + "%"), builder.like(root.get("provinceStr"), "%" + (String) map.get("search") + "%")));
+        }
+        try {
+            if (list == null || !list) {
+                CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+                countQuery.select(builder.count(root));
+                if (criteria.isEmpty()) {
+                    throw new RuntimeException("no criteria");
+                } else if (criteria.size() == 1) {
+                    countQuery.where(criteria.get(0));
+                } else {
+                    countQuery.where(builder.and(criteria.toArray(new Predicate[0])));
+                }
+                Long totalCount = em.createQuery(countQuery).getSingleResult();
+                resultList.setTotalCount(totalCount.intValue());
+            }
+            if (list == null || list) {
+                query = query.select(root);
+                if (criteria.isEmpty()) {
+                    throw new RuntimeException("no criteria");
+                } else if (criteria.size() == 1) {
+                    query.where(criteria.get(0));
+                } else {
+                    query.where(builder.and(criteria.toArray(new Predicate[0])));
+                }
+                query.orderBy(builder.desc(root.get("payDate")));
+                TypedQuery<Vip> typeQuery = em.createQuery(query);
+                if (page != null && page) {
+                    int startIndex = (pageIndex - 1) * maxPerPage;
+                    typeQuery.setFirstResult(startIndex);
+                    typeQuery.setMaxResults(maxPerPage);
+                    resultList.setPageIndex(pageIndex);
+                    resultList.setStartIndex(startIndex);
+                    resultList.setMaxPerPage(maxPerPage);
+                }
+                List<Vip> dataList = typeQuery.getResultList();
                 resultList.addAll(dataList);
             }
         } catch (NoResultException ex) {

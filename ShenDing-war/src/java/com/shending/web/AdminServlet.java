@@ -199,7 +199,7 @@ public class AdminServlet extends BaseServlet {
     public static enum PageEnum {
 
         INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
-        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, USER_LIST,ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION;
+        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, USER_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION;
 
     }
 
@@ -1101,12 +1101,10 @@ public class AdminServlet extends BaseServlet {
             }
         }
         List<String[]> resultList = adminService.findWageTotalListAll(startDate, endDate);
-        String[] headLine = new String[14];
+        String[] headLine = new String[15];
         headLine[0] = "用户";
         headLine[1] = "便民余额";
         headLine[2] = "便民押金";
-//        headLine[3] = "交友余额";
-//        headLine[4] = "交友押金";
         headLine[3] = "银行类型";
         headLine[4] = "银行卡号";
         headLine[5] = "广告工资";
@@ -1115,9 +1113,10 @@ public class AdminServlet extends BaseServlet {
         headLine[8] = "化妆品工资";
         headLine[9] = "大满贯工资";
         headLine[10] = "民生银行工资";
-        headLine[11] = "总工资";
-        headLine[12] = "代理的平台";
-        headLine[13] = "含有回收";
+        headLine[11] = "会员工资";
+        headLine[12] = "总工资";
+        headLine[13] = "代理的平台";
+        headLine[14] = "含有回收";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);
@@ -1191,24 +1190,26 @@ public class AdminServlet extends BaseServlet {
         List<PlaceWages> resultList = adminService.findWageTotalListAllByPlace(startDate, endDate);
         List<String[]> placeWagesStr = new ArrayList<>();
         for (PlaceWages ps : resultList) {
-            String[] strs = new String[7];
+            String[] strs = new String[8];
             strs[0] = ps.getGoodsName();
             strs[1] = ps.getAdAmount();
             strs[2] = ps.getRecommendAmount();
             strs[3] = ps.getPorducetAmount();
             strs[4] = ps.getCosmeticsAmount();
             strs[5] = ps.getGrandSlamAmount();
-            strs[6] = ps.getTotalAmount();
+            strs[6] = ps.getVipAmount();
+            strs[7] = ps.getTotalAmount();
             placeWagesStr.add(strs);
         }
-        String[] headLine = new String[7];
+        String[] headLine = new String[8];
         headLine[0] = "地区";
         headLine[1] = "广告工资";
         headLine[2] = "加盟提成工资";
         headLine[3] = "产品工资";
         headLine[4] = "化妆品工资";
         headLine[5] = "大满贯工资";
-        headLine[6] = "总工资";
+        headLine[6] = "会员工资";
+        headLine[7] = "总工资";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(placeWagesStr);
@@ -2241,17 +2242,16 @@ public class AdminServlet extends BaseServlet {
         //***************************************
         return FORWARD_TO_ANOTHER_URL;
     }
-    
-    
+
     /**
      * 下载返还完的用户
-     * 
+     *
      * @param request
      * @param response
      * @return
      * @throws ServletException
      * @throws IOException
-     * @throws NoSessionException 
+     * @throws NoSessionException
      */
     private boolean loadUserList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
         try {

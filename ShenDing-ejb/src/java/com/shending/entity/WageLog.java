@@ -85,6 +85,10 @@ public class WageLog implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     //民生銀行
     private ProductMinShengBank productMinShengBank;
+    @JoinColumn(name = "vip_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    //会员
+    private Vip vip;
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 255)
     private WageLogTypeEnum type = WageLogTypeEnum.SEND;
@@ -229,6 +233,14 @@ public class WageLog implements Serializable {
 
     public void setProductGrandSlam(ProductGrandSlam productGrandSlam) {
         this.productGrandSlam = productGrandSlam;
+    }
+
+    public Vip getVip() {
+        return vip;
+    }
+
+    public void setVip(Vip vip) {
+        this.vip = vip;
     }
 
 }

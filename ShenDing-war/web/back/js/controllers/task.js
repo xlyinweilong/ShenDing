@@ -551,6 +551,71 @@ app.controller('MyProductMinShengBankController', ['$scope', '$http', '$modal', 
     }]);
 
 
+app.controller('MyProductVipController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
+        $scope.list = null;
+        $scope.listLoading = false;
+        $scope.listLoadingData = false;
+        $scope.search = "";
+        /**
+         * pagination
+         */
+        $scope.totalItems = 0;
+        $scope.currentPage = 1;
+        $scope.maxSize = 5;
+        $scope.startDateOpened = false;
+        $scope.endDateOpened = false;
+        $scope.totalAmount = null;
+        $scope.openStart = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.startDateOpened = true;
+        };
+        $scope.openEnd = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.endDateOpened = true;
+        };
+        $scope.dateOptions = {
+            class: 'datepicker'
+        };
+        
+        $scope.pageChanged = function () {
+            $scope.getList($scope.currentPage, false);
+        };
+        $scope.getList = function (page, isInit) {
+            $scope.currentPage = page;
+            if (!isInit) {
+                $scope.listLoadingData = true;
+            } else {
+                $scope.listLoading = true;
+            }
+            var start = "";
+            var end = "";
+            if ($scope.startDate instanceof Date) {
+                start = $scope.startDate.getFullYear() + "-" + ($scope.startDate.getMonth() + 1) + "-" + $scope.startDate.getDate();
+            }
+            if ($scope.endDate instanceof Date) {
+                end = $scope.endDate.getFullYear() + "-" + ($scope.endDate.getMonth() + 1) + "-" + $scope.endDate.getDate();
+            }
+            $http.get("/webservice/product/my_vip_list?pageIndex=" + $scope.currentPage + "&start=" + start + "&end=" + end).success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $scope.list = responseData.data;
+                    $scope.totalItems = responseData.totalCount;
+                    $scope.totalAmount = responseData.totalAmount;
+                }
+                $scope.listLoadingData = false;
+                $scope.listLoading = false;
+            });
+        };
+        $scope.getList(1, true);
+    }]);
+
+
 app.controller('ModifyOrderDateController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
 
         $scope.opened = false;

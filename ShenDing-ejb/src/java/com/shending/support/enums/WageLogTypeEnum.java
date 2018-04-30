@@ -13,6 +13,7 @@ public enum WageLogTypeEnum {
     RECOMMEND,//推荐代理
     GRAND_SLAM,//大满贯
     MIN_SHENG_BANK,//民生銀行
+    VIP,//会员
     SEND_AND_ACCEPT,//发送，接受
     SEND, //发送者
     ACCEPT; //接广告的人，业务员

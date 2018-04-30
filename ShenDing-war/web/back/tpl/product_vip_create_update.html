@@ -1,0 +1,136 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">会员创建/更新</h1>
+</div>
+<div class="wrapper-md" ng-controller="CreateUpdateProductVipController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading font-bold">
+                创建/更新会员
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>到款日期<i class="text-danger">*不填默认今天</i></label>
+                    <p class="input-group" style="max-width: 350px">
+                        <input type="text" class="form-control no-border" placeholder="到款日期" datepicker-popup="yyyy-MM-dd" ng-model="payDate" is-open="opened" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>会员到期时间<i class="text-danger">*</i></label>
+                    <p class="input-group" style="max-width: 350px">
+                        <input type="text" class="form-control no-border" placeholder="会员到期时间" datepicker-popup="yyyy-MM-dd" ng-model="endDate" is-open="openedEndDate" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="openEndDate($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchUser()">
+                    <div class="form-group">
+                        <label>地区经理<i class="text-danger">*</i> <span class="label label-success" ng-show="checkedEle != null">已选择:{{checkedEle.name}}</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchUserMsg" placeholder="输入帐号、姓名或身份号查找">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="searchList != null && searchListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="searchList != null && searchTotalItems < 1 && !searchListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="searchList != null && searchTotalItems > 0 && !searchListLoadingData">
+                            <a ng-repeat="ele in searchList" class="list-group-item" ng-click="checkEle(ele)">{{ele.name}} ({{ele.roleString}}) {{ele.idCard}}</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>省份<i class="text-danger">*</i></label>
+                    <select id="province"  class="form-control" ng-model="product.province" required>
+                        <option ng-repeat="ele in provinceList" value="{{ele.code}}">{{ele.name}} {{ele.pinyin}}</option>
+                    </select>
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <form role="form" name="form" ng-submit="searchOrderList()">
+                    <div class="form-group" style="max-width: 350px">
+                        <label>分成代理 <i class="text-danger">*</i><span class="label label-success" ng-show="checkedOrder != null">已选择:{{checkedOrder.goods.name}} ({{checkedOrder.goods.provinceStr}}) {{checkedOrder.categoryMean}} (代理：{{checkedOrder.agentUser.name}})</span></label>
+                        <div class="input-group">
+                            <input class="form-control" type="text" ng-model="searchOrderMsg" placeholder="输入平台，如：CC1、长春">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">查找</button>
+                            </span>
+                        </div>
+                        <div class="text-center" ng-show="orderList != null && orderListLoadingData">
+                            <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                        </div>
+                        <div class="text-center" ng-show="orderList != null && orderListTotalItems < 1 && !orderListLoadingData">
+                            <alert type="warning">无数据</alert>
+                        </div>
+                        <div class="list-group bg-white" ng-show="orderList != null && orderListTotalItems > 0 && !orderListLoadingData">
+                            <a ng-repeat="ele in orderList" class="list-group-item" ng-click="checkOrder(ele)">{{ele.goods.name}} ({{ele.goods.provinceStr}}) {{ele.categoryMean}} (代理：{{ele.agentUser.name}})</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>到款金额<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="金额" ng-model="product.amount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>代理提成<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="金额" ng-model="product.divideUserAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>公益<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="金额" ng-model="product.welfareAmount">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>会员姓名<i class="text-danger">*</i></label>
+                    <input type="text" class="form-control" placeholder="会员姓名" ng-model="product.vipName">
+                </div>
+                 <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>会员生日</label>
+                    <p class="input-group" style="max-width: 350px">
+                        <input type="text" class="form-control no-border" placeholder="生日" datepicker-popup="yyyy-MM-dd" ng-model="vipBirthday" is-open="openedVipBirthday" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="openVipBirthday($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        </span>
+                    </p>
+                </div>
+                  <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>会员微信号</label>
+                    <input type="text" class="form-control" placeholder="会员微信号" ng-model="product.vipWechat">
+                </div>
+                   <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>会员电话</label>
+                    <input type="text" class="form-control" placeholder="会员电话" ng-model="product.vipPhone">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <input type="text" class="form-control" placeholder="输入备注，最多100个字" ng-model="product.remark">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm btn-primary" ng-click="submitForm()" ng-disabled="product.submitting || !(product.amount > -1) || product.amount == null || checkedOrder == null || product.divideUserAmount == null || !(product.divideUserAmount > -1)" ng-class="{ 'active' : product.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

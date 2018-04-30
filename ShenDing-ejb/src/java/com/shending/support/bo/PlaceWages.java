@@ -52,6 +52,12 @@ public class PlaceWages {
      * 大满贯提成
      */
     private String grandSlamAmount = "0";
+    
+    
+    /**
+     * 会员提成
+     */
+    private String vipAmount = "0";
 
 
     /**
@@ -69,7 +75,15 @@ public class PlaceWages {
      * @return
      */
     public String getTotalAmount() {
-        return Double.parseDouble(this.getAdAmount()) + Double.parseDouble(porducetAmount) + Double.parseDouble(recommendAmount) + Double.parseDouble(cosmeticsAmount) + Double.parseDouble(grandSlamAmount) + "";
+        return Double.parseDouble(this.getAdAmount()) + Double.parseDouble(porducetAmount) + Double.parseDouble(recommendAmount) + Double.parseDouble(cosmeticsAmount) + Double.parseDouble(grandSlamAmount) + Double.parseDouble(vipAmount) + "";
+    }
+
+    public String getVipAmount() {
+        return vipAmount;
+    }
+
+    public void setVipAmount(String vipAmount) {
+        this.vipAmount = vipAmount;
     }
 
     public String getGrandSlamAmount() {

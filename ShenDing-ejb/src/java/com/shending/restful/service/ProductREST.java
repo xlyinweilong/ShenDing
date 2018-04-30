@@ -4,6 +4,7 @@ import com.shending.entity.*;
 import com.shending.restful.interception.AccountInterceptor;
 import com.shending.service.AdminService;
 import com.shending.service.ConfigService;
+import com.shending.service.ProductService;
 import com.shending.support.*;
 import com.shending.support.enums.*;
 import com.shending.support.exception.EjbMessageException;
@@ -55,6 +56,9 @@ public class ProductREST {
     private AdminService adminService;
     @EJB
     private ConfigService configService;
+    @EJB
+    private ProductService productService;
+
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
 
@@ -904,6 +908,341 @@ public class ProductREST {
     }
 
     /**
+     * 获取会员列表
+     *
+     * @param auth
+     * @param search
+     * @param start
+     * @param end
+     * @param pageIndex
+     * @param maxPerPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("vip_list")
+    public String getVipList(@CookieParam("auth") String auth, @QueryParam("search") String search, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        String category = null;
+        if (Tools.isNotBlank(search)) {
+            search = search.split(" ")[0];
+            searchMap.put("search", search);
+        }
+        if (Tools.isNotBlank(search)) {
+            searchMap.put("search", search);
+        }
+        if (Tools.isNotBlank(start)) {
+            searchMap.put("startDate", Tools.parseDate(start, "yyy-MM-dd"));
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount() && ((Date) searchMap.get("startDate")).before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+        } else {
+            if (!SysUserTypeEnum.SUPER.equals(user.getAdminType()) && !user.isIsFindSelfYearAmount()) {
+                searchMap.put("startDate", Tools.getBeginOfYear(new Date()));
+            }
+        }
+        if (Tools.isNotBlank(end)) {
+            searchMap.put("endDate", Tools.getEndOfDay(Tools.parseDate(end, "yyy-MM-dd")));
+        }
+        ResultList<Vip> list = adminService.findProductVipList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("totalCount", list.getTotalCount());
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 导入会员
+     *
+     * @param servletRequest
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("upload_file_vip")
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    public String uploadFileVip(@CookieParam("auth") String auth, @Context HttpServletRequest servletRequest) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        FileUploadObj fileUploadObj = null;
+        Map map = Tools.getDMap();
+        try {
+            fileUploadObj = Tools.uploadFile(servletRequest, 100, null, null, null);
+        } catch (FileUploadException e) {
+            map.put("msg", e.getMessage());
+            return Tools.caseObjectToJson(map);
+        }
+        for (FileUploadItem item : fileUploadObj.getFileList()) {
+            if ("file1".equals(item.getFieldName())) {
+                File file = new File(item.getUploadFullPath());
+                jxl.Workbook readwb = null;
+                try {
+                    //构建Workbook对象, 只读Workbook对象   
+                    //直接从本地文件创建Workbook   
+                    InputStream instream = new FileInputStream(item.getUploadFullPath());
+                    readwb = Workbook.getWorkbook(instream);
+                    //Sheet的下标是从0开始   
+                    //获取第一张Sheet表   
+                    Sheet readsheet = readwb.getSheet(0);
+                    //获取Sheet表中所包含的总行数   
+                    int rsRows = readsheet.getRows();
+
+                    for (int i = 1; i < rsRows; i++) {
+                        Cell[] cells = readsheet.getRow(i);
+                        //到款日期
+                        String payDateStr = StringUtils.trim(cells[0].getContents());
+                        Date payDate = null;
+                        try {
+                            payDate = Tools.parseDate(payDateStr, "yyyy-MM-dd");
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行到款日期格式错误");
+                        }
+                        if (payDate == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行到款日期格式错误");
+                        }
+                        //会员到期时间
+                        String endDateStr = StringUtils.trim(cells[1].getContents());
+                        Date endDate = null;
+                        try {
+                            endDate = Tools.parseDate(payDateStr, "yyyy-MM-dd");
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行会员到期时间格式错误");
+                        }
+                        if (endDate == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行会员到期时间格式错误");
+                        }
+                        Map searchMap = new HashMap();
+                        //地区经理
+                        String mangerName = StringUtils.trim(cells[2].getContents());
+                        SysUser mangerUser = null;
+                        if (mangerName != null) {
+                            searchMap.clear();
+                            searchMap.put("name", mangerName);
+                            searchMap.put("notStatus", SysUserStatus.PEDING);
+                            searchMap.put("adminType", SysUserTypeEnum.ADMIN);
+                            searchMap.put("roleIdIsNotNull", true);
+                            ResultList<SysUser> userList = adminService.findUserList(searchMap, 1, 10, null, Boolean.TRUE);
+                            if (userList.size() != 1) {
+                                throw new EjbMessageException("第" + (i + 1) + "行地区经理无法唯一定位，请手动录入该条");
+                            }
+                            mangerUser = userList.get(0);
+
+                        }
+
+                        //省份
+                        String provinceStr = StringUtils.trim(cells[3].getContents());
+                        String provinceCode = null;
+                        if (Tools.isNotBlank(provinceStr)) {
+                            TypedQuery<DataProvince> dataProvinceQuery = em.createQuery("SELECT a FROM DataProvince a WHERE a.name = :name", DataProvince.class);
+                            dataProvinceQuery.setParameter("name", provinceStr);
+                            List<DataProvince> dataProvinceList = dataProvinceQuery.getResultList();
+                            if (dataProvinceList.size() != 1) {
+                                throw new EjbMessageException("第" + (i + 1) + "行省份无法唯一定位，请手动录入该条");
+                            }
+                            provinceCode = dataProvinceList.get(0).getCode();
+                        }
+
+                        //分成代理
+                        String placeName = StringUtils.trim(cells[4].getContents());
+                        searchMap.clear();
+                        searchMap.put("category", CategoryEnum.SERVICE_PEOPLE);
+                        searchMap.put("placeName", placeName);
+                        searchMap.put("status", OrderStatusEnum.SUCCESS);
+                        ResultList<GoodsOrder> orderList = adminService.findOrderList(searchMap, 1, 10, Boolean.TRUE, Boolean.FALSE);
+                        if (orderList.size() != 1) {
+                            throw new EjbMessageException("第" + (i + 1) + "获得代理无法唯一定位，请手动录入该条");
+                        }
+                        SysUser divideUser = orderList.get(0).getAgentUser();
+                        Long orderId = orderList.get(0).getId();
+                        Long goodsId = orderList.get(0).getGoods().getId();
+
+                        //到款金额
+                        String amount = StringUtils.trimToNull(cells[5].getContents());
+                        BigDecimal amountBd = null;
+                        if (amount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行到款金额错误");
+                        }
+                        try {
+                            amountBd = new BigDecimal(amount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行到款金额错误");
+                        }
+
+                        //代理提成
+                        String divideUserAmount = StringUtils.trimToNull(cells[6].getContents());
+                        BigDecimal divideUserAmountBd = null;
+                        if (divideUserAmount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行代理提成错误");
+                        }
+                        try {
+                            divideUserAmountBd = new BigDecimal(divideUserAmount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行代理提成错误");
+                        }
+
+                        //公益
+                        String welfareAmount = StringUtils.trimToNull(cells[7].getContents());
+                        BigDecimal welfareAmountBd = null;
+                        if (welfareAmount == null) {
+                            throw new EjbMessageException("第" + (i + 1) + "行代理提成错误");
+                        }
+                        try {
+                            welfareAmountBd = new BigDecimal(welfareAmount);
+                        } catch (Exception e) {
+                            throw new EjbMessageException("第" + (i + 1) + "行代理提成错误");
+                        }
+
+                        //会员姓名
+                        String vipName = StringUtils.trimToNull(cells[8].getContents());
+
+                        //会员生日
+                        String vipBirthday = null;
+                        Date vipBirthdayDate = null;
+                        if (cells.length > 9) {
+                            vipBirthday = StringUtils.trimToNull(cells[9].getContents());
+                            try {
+                                vipBirthdayDate = Tools.parseDate(vipBirthday, "yyyy-MM-dd");
+                            } catch (Exception e) {
+                                throw new EjbMessageException("第" + (i + 1) + "行会员生日格式错误");
+                            }
+                            if (payDate == null) {
+                                throw new EjbMessageException("第" + (i + 1) + "行会员生日格式错误");
+                            }
+                        }
+
+                        //会员微信号
+                        String vipWechat = null;
+                        if (cells.length > 10) {
+                            vipWechat = StringUtils.trimToNull(cells[10].getContents());
+                        }
+
+                        //会员电话
+                        String vipPhone = null;
+                        if (cells.length > 11) {
+                            vipPhone = StringUtils.trimToNull(cells[11].getContents());
+                        }
+                        //备注
+                        String remark = null;
+                        if (cells.length > 12) {
+                            remark = StringUtils.trimToNull(cells[12].getContents());
+                        }
+
+                        try {
+                            productService.createOrUpdateVip(null, payDate, endDate, mangerUser, provinceCode, provinceStr, orderId, goodsId, divideUser, amountBd, divideUserAmountBd, welfareAmountBd, vipName, vipBirthdayDate, vipWechat, vipPhone, remark);
+                        } catch (Exception e) {
+                            map.put("success", "0");
+                            map.put("msg", "第" + (i + 1) + "行，" + e.getMessage());
+                            return Tools.caseObjectToJson(map);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    map.put("success", "0");
+                    map.put("msg", e.getMessage());
+                    return Tools.caseObjectToJson(map);
+                } finally {
+                    readwb.close();
+                }
+                FileUtils.deleteQuietly(file);
+                map.put("msg", "上传成功");
+                map.put("success", "1");
+                map.put("data", "");
+                return Tools.caseObjectToJson(map);
+            }
+        }
+        map.put("msg", "未找到合法数据");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 会员信息列表
+     *
+     * @param auth
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("vip_info")
+    public String getVipInfo(@CookieParam("auth") String auth, @QueryParam("id") Long id) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Vip vip = em.find(Vip.class, id);
+        GoodsOrder goodsOrder = em.find(GoodsOrder.class, vip.getOrderId());
+        vip.setGoodsOrder(goodsOrder);
+        map.put("data", vip);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    @POST
+    @Path("create_or_update_vip")
+    public String createOrUpdateVip(@CookieParam("auth") String auth, @FormParam("id") Long id,
+            @FormParam("payDate") String payDate, @FormParam("endDate") String endDate, @FormParam("orderId") Long orderId, @FormParam("managerId") Long managerId,
+            @FormParam("province") String province, @FormParam("amount") String amount, @FormParam("divideUserAmount") String divideUserAmount, @FormParam("welfareAmount") String welfareAmount,
+            @FormParam("vipName") String vipName, @FormParam("vipBirthday") String vipBirthday, @FormParam("vipWechat") String vipWechat, @FormParam("vipPhone") String vipPhone, @FormParam("remark") String remark) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        Date payDateDate = Tools.parseDate(payDate, "yyyy-MM-dd");
+        Date endDateDate = Tools.parseDate(endDate, "yyyy-MM-dd");
+
+        Date vipBirthdayDate = null;
+        if (Tools.isNotBlank(vipBirthday)) {
+            vipBirthdayDate = Tools.parseDate(vipBirthday, "yyyy-MM-dd");
+        }
+
+        GoodsOrder goodsOrder = em.find(GoodsOrder.class, orderId);
+
+        SysUser manager = em.find(SysUser.class, managerId);
+
+        String provinceStr = null;
+        if (Tools.isNotBlank(province)) {
+            TypedQuery<DataProvince> dataProvinceQuery = em.createQuery("SELECT a FROM DataProvince a WHERE a.code = :code", DataProvince.class);
+            dataProvinceQuery.setParameter("code", province);
+            DataProvince dataProvince = dataProvinceQuery.getSingleResult();
+            provinceStr = dataProvince.getName();
+        }
+
+        productService.createOrUpdateVip(id, payDateDate, endDateDate, manager, province, provinceStr, orderId, goodsOrder.getGoods().getId(), goodsOrder.getAgentUser(), new BigDecimal(amount), new BigDecimal(divideUserAmount), new BigDecimal(welfareAmount), vipName, vipBirthdayDate, vipWechat, vipPhone, remark);
+        map.put("msg", "操作成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
+     * 删除会员
+     *
+     * @param auth
+     * @param ids
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("delete_vip")
+    public String delVip(@CookieParam("auth") String auth, @FormParam("ids") List<Long> ids) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
+            throw new EjbMessageException("您没有权限");
+        }
+        Map map = Tools.getDMap();
+        for (Long id : ids) {
+            Vip vip = em.find(Vip.class, id);
+            vip.setDeleted(true);
+            em.merge(vip);
+            WageLog wageLog = productService.findWageLogByVip(vip);
+            wageLog.setDeleted(Boolean.TRUE);
+            em.merge(wageLog);
+        }
+        map.put("msg", "删除成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    /**
      * 产品查找订单
      *
      * @param auth
@@ -1082,6 +1421,54 @@ public class ProductREST {
         sql += " GROUP BY w.user";
         Query queryTotal = em.createQuery(sql);
         queryTotal.setParameter("user", user).setParameter("type", WageLogTypeEnum.MIN_SHENG_BANK);
+        queryTotal.setParameter("start", Tools.addDay(startDate, -1));
+        if (Tools.isNotBlank(end)) {
+            queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
+        }
+        ResultList<WageLog> list = adminService.findWageLogList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
+        map.put("totalCount", list.getTotalCount());
+        map.put("totalAmount", queryTotal.getResultList().isEmpty() ? null : queryTotal.getSingleResult());
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+    
+     /**
+     * 我的民生銀行列表
+     *
+     * @param auth
+     * @param start
+     * @param end
+     * @param pageIndex
+     * @param maxPerPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("my_vip_list")
+    public String myVipList(@CookieParam("auth") String auth, @QueryParam("start") String start, @QueryParam("end") String end, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("10") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        Map searchMap = new HashMap();
+        searchMap.put("type", WageLogTypeEnum.VIP);
+        searchMap.put("user", user);
+        String sql = "SELECT SUM(w.amount) FROM WageLog w WHERE w.user = :user AND w.deleted = FALSE AND w.type = :type";
+        Date startDate = Tools.getBeginOfYear(new Date());
+        if (Tools.isNotBlank(start)) {
+            startDate = Tools.parseDate(start, "yyyy-MM-dd");
+            if (!configService.findConfigByKey("FIND_ONLY_YEAR").getValue().equals("-1") && startDate.before(Tools.getBeginOfYear(new Date()))) {
+                throw new EjbMessageException("只能查询今年的数据");
+            }
+        }
+        searchMap.put("startDate", startDate);
+        sql += " AND w.payDate > :start";
+        if (Tools.isNotBlank(end)) {
+            searchMap.put("endDate", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
+            sql += " AND w.payDate < :end";
+        }
+        sql += " GROUP BY w.user";
+        Query queryTotal = em.createQuery(sql);
+        queryTotal.setParameter("user", user).setParameter("type", WageLogTypeEnum.VIP);
         queryTotal.setParameter("start", Tools.addDay(startDate, -1));
         if (Tools.isNotBlank(end)) {
             queryTotal.setParameter("end", Tools.addDay(Tools.parseDate(end, "yyyy-MM-dd"), 1));
