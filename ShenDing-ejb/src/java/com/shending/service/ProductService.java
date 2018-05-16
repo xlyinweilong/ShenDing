@@ -88,7 +88,7 @@ public class ProductService {
 
     public Vip createOrUpdateVip(Long id, Date payDate, Date endDate, SysUser mangerUser, String provinceCode, String provinceStr, Long orderId, Long goodsId,
             SysUser divideUser, BigDecimal amountBd, BigDecimal divideUserAmountBd, BigDecimal welfareAmountBd,
-            String vipName, Date vipBirthday, String vipWechat, String vipPhone, String remark) {
+            String vipName, Date vipBirthday,String vipBirthdayNoYear, String vipWechat, String vipPhone, String remark) {
         Vip vip = null;
         if (id == null) {
             vip = new Vip();
@@ -112,6 +112,7 @@ public class ProductService {
         vip.setProvince(provinceCode);
 
         vip.setVipBirthday(vipBirthday);
+        vip.setVipBirthdayNoYear(vipBirthdayNoYear);
         vip.setVipName(vipName);
         vip.setVipPhone(vipPhone);
         vip.setVipWechat(vipWechat);

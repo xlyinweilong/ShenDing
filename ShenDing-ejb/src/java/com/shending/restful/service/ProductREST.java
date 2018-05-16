@@ -1005,7 +1005,7 @@ public class ProductREST {
                         String endDateStr = StringUtils.trim(cells[1].getContents());
                         Date endDate = null;
                         try {
-                            endDate = Tools.parseDate(payDateStr, "yyyy-MM-dd");
+                            endDate = Tools.parseDate(endDateStr, "yyyy-MM-dd");
                         } catch (Exception e) {
                             throw new EjbMessageException("第" + (i + 1) + "行会员到期时间格式错误");
                         }
@@ -1098,16 +1098,21 @@ public class ProductREST {
 
                         //会员生日
                         String vipBirthday = null;
+                        //会员生日
+                        String vipBirthdayNoYear = null;
+                        
                         Date vipBirthdayDate = null;
                         if (cells.length > 9) {
                             vipBirthday = StringUtils.trimToNull(cells[9].getContents());
+                            vipBirthdayNoYear = vipBirthday;
                             try {
                                 vipBirthdayDate = Tools.parseDate(vipBirthday, "yyyy-MM-dd");
                             } catch (Exception e) {
-                                throw new EjbMessageException("第" + (i + 1) + "行会员生日格式错误");
+                                vipBirthdayDate = null;
+//                                throw new EjbMessageException("第" + (i + 1) + "行会员生日格式错误");
                             }
-                            if (payDate == null) {
-                                throw new EjbMessageException("第" + (i + 1) + "行会员生日格式错误");
+                            if (vipBirthdayDate == null && Tools.isBlank(vipBirthdayNoYear)) {
+                                throw new EjbMessageException("第" + (i + 1) + "行会员生日必填");
                             }
                         }
 
@@ -1122,6 +1127,10 @@ public class ProductREST {
                         if (cells.length > 11) {
                             vipPhone = StringUtils.trimToNull(cells[11].getContents());
                         }
+                         if (Tools.isBlank(vipPhone)) {
+                                throw new EjbMessageException("第" + (i + 1) + "行会员电话必填");
+                            }
+                         
                         //备注
                         String remark = null;
                         if (cells.length > 12) {
@@ -1129,7 +1138,7 @@ public class ProductREST {
                         }
 
                         try {
-                            productService.createOrUpdateVip(null, payDate, endDate, mangerUser, provinceCode, provinceStr, orderId, goodsId, divideUser, amountBd, divideUserAmountBd, welfareAmountBd, vipName, vipBirthdayDate, vipWechat, vipPhone, remark);
+                            productService.createOrUpdateVip(null, payDate, endDate, mangerUser, provinceCode, provinceStr, orderId, goodsId, divideUser, amountBd, divideUserAmountBd, welfareAmountBd, vipName, vipBirthdayDate,vipBirthdayNoYear, vipWechat, vipPhone, remark);
                         } catch (Exception e) {
                             map.put("success", "0");
                             map.put("msg", "第" + (i + 1) + "行，" + e.getMessage());
@@ -1181,7 +1190,7 @@ public class ProductREST {
     public String createOrUpdateVip(@CookieParam("auth") String auth, @FormParam("id") Long id,
             @FormParam("payDate") String payDate, @FormParam("endDate") String endDate, @FormParam("orderId") Long orderId, @FormParam("managerId") Long managerId,
             @FormParam("province") String province, @FormParam("amount") String amount, @FormParam("divideUserAmount") String divideUserAmount, @FormParam("welfareAmount") String welfareAmount,
-            @FormParam("vipName") String vipName, @FormParam("vipBirthday") String vipBirthday, @FormParam("vipWechat") String vipWechat, @FormParam("vipPhone") String vipPhone, @FormParam("remark") String remark) throws Exception {
+            @FormParam("vipName") String vipName, @FormParam("vipBirthday") String vipBirthday,@FormParam("vipBirthdayNoYear") String vipBirthdayNoYear,  @FormParam("vipWechat") String vipWechat, @FormParam("vipPhone") String vipPhone, @FormParam("remark") String remark) throws Exception {
         SysUser user = adminService.getUserByLoginCode(auth);
         if (SysUserTypeEnum.MANAGE.equals(user.getAdminType())) {
             throw new EjbMessageException("您没有权限");
@@ -1207,7 +1216,7 @@ public class ProductREST {
             provinceStr = dataProvince.getName();
         }
 
-        productService.createOrUpdateVip(id, payDateDate, endDateDate, manager, province, provinceStr, orderId, goodsOrder.getGoods().getId(), goodsOrder.getAgentUser(), new BigDecimal(amount), new BigDecimal(divideUserAmount), new BigDecimal(welfareAmount), vipName, vipBirthdayDate, vipWechat, vipPhone, remark);
+        productService.createOrUpdateVip(id, payDateDate, endDateDate, manager, province, provinceStr, orderId, goodsOrder.getGoods().getId(), goodsOrder.getAgentUser(), new BigDecimal(amount), new BigDecimal(divideUserAmount), new BigDecimal(welfareAmount), vipName, vipBirthdayDate,vipBirthdayNoYear, vipWechat, vipPhone, remark);
         map.put("msg", "操作成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);

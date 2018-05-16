@@ -3277,7 +3277,14 @@ public class AdminService {
             criteria.add(builder.lessThan(root.get("payDate"), (Date) map.get("endDate")));
         }
         if (map.containsKey("search")) {
-            criteria.add(builder.or(builder.like(root.get("vipPhone"), "%" + (String) map.get("search") + "%"), builder.like(root.get("vipWechat"), "%" + (String) map.get("search") + "%"), builder.like(root.get("vipName"), "%" + (String) map.get("search") + "%"), builder.like(root.get("provinceStr"), "%" + (String) map.get("search") + "%")));
+            criteria.add(builder.or(builder.like(root.get("vipPhone"), "%" + (String) map.get("search") + "%"), 
+                    builder.like(root.get("vipWechat"),  "%" + (String) map.get("search") + "%"), 
+                    builder.like(root.get("vipName"), "%" + (String) map.get("search") + "%"), 
+                    builder.like(root.get("vipName"), "%" + (String) map.get("search") + "%"), 
+                    builder.like(root.get("divideUser").get("name"), "%" + (String) map.get("search") + "%"), 
+                    builder.like(root.get("goods").get("name"), "%" + (String) map.get("search") + "%"), 
+                    builder.like(root.get("provinceStr"), "%" + (String) map.get("search") + "%")
+            ));
         }
         try {
             if (list == null || !list) {

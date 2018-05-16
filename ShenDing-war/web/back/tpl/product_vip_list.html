@@ -101,6 +101,7 @@
                             <th style="width:5%">地区经理</th>
                             <th style="width:5%">省份</th>
                             <th style="width:10%">分成代理</th>
+                            <th style="width:10%">分成地区</th>
                             <th style="width:10%">到款金额</th>
                             <th style="width:10%">代理提成</th>
                             <th style="width:10%">公益</th>
@@ -122,12 +123,20 @@
                             <td>{{item.endDate| date:"yyyy-MM-dd"}}</td>
                             <td>{{item.manager.name}}</td>
                             <td>{{item.provinceStr}}</td>
-                            <td>{{item.divideUser.name}}</td>
+                            <td>
+                            <a class="text-info" href="#/app/user/user_info/{{item.divideUser.id}}">{{item.divideUser.name}}</a>
+                            </td>
+                            <td>
+                                 <a class="text-info" href="#/app/goods/goods_info/{{item.goods.id}}">{{item.goods.name}}</a>
+                            </td>
                             <td>{{item.amount}}</td>
                             <td>{{item.divideUserAmount}}</td>
                             <td>{{item.welfareAmount}}</td>
                             <td>{{item.vipName}}</td>
-                            <td>{{item.vipBirthday | date:"yyyy-MM-dd"}}</td>
+                            <td>
+                                {{item.vipBirthday | date:"yyyy-MM-dd"}}
+                                {{item.vipBirthdayNoYear}}
+                            </td>
                             <td>{{item.vipWechat}}</td>
                             <td>{{item.vipPhone}}</td>
                             <td>{{item.remark}}</td>

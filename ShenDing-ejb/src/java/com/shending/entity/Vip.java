@@ -90,6 +90,8 @@ public class Vip implements Serializable {
     @Column(name = "vip_birthday")
     @Temporal(TemporalType.TIMESTAMP)
     private Date vipBirthday;
+    @Column(name = "vip_birthday_no_year")
+    private String vipBirthdayNoYear;
     @Size(max = 255)
     @Column(name = "vip_wechat")
     private String vipWechat;
@@ -104,8 +106,12 @@ public class Vip implements Serializable {
 
     @Transient
     private Long managerId;
-    @Transient
+    @JoinColumn(name = "order_id", referencedColumnName = "id", updatable = false, insertable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private GoodsOrder goodsOrder;
+    @JoinColumn(name = "goods_id", referencedColumnName = "id", updatable = false, insertable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Goods goods;
 
     public Long getId() {
         return id;
@@ -113,6 +119,25 @@ public class Vip implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getVipBirthdayNoYear() {
+        if (vipBirthday != null) {
+            return null;
+        }
+        return vipBirthdayNoYear;
+    }
+
+    public void setVipBirthdayNoYear(String vipBirthdayNoYear) {
+        this.vipBirthdayNoYear = vipBirthdayNoYear;
+    }
+
+    public Goods getGoods() {
+        return goods;
+    }
+
+    public void setGoods(Goods goods) {
+        this.goods = goods;
     }
 
     public Long getManagerId() {

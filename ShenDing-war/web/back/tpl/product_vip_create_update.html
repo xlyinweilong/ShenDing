@@ -99,7 +99,7 @@
                 </div>
                  <div class="line line-dashed b-b line-lg pull-in"></div>
                 <div class="form-group">
-                    <label>会员生日</label>
+                    <label>会员生日（带年份）</label>
                     <p class="input-group" style="max-width: 350px">
                         <input type="text" class="form-control no-border" placeholder="生日" datepicker-popup="yyyy-MM-dd" ng-model="vipBirthday" is-open="openedVipBirthday" ng-readonly="true" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="关闭" />
                         <span class="input-group-btn">
@@ -109,12 +109,19 @@
                 </div>
                   <div class="line line-dashed b-b line-lg pull-in"></div>
                 <div class="form-group">
+                    <label>会员生日（仅月日）</label>
+                    <p class="input-group" style="max-width: 350px">
+                       <input type="text" class="form-control" placeholder="会员微信号" ng-model="product.vipBirthdayNoYear">
+                    </p>
+                </div>
+                  <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
                     <label>会员微信号</label>
                     <input type="text" class="form-control" placeholder="会员微信号" ng-model="product.vipWechat">
                 </div>
                    <div class="line line-dashed b-b line-lg pull-in"></div>
                 <div class="form-group">
-                    <label>会员电话</label>
+                    <label>会员电话</label><i class="text-danger">*</i>
                     <input type="text" class="form-control" placeholder="会员电话" ng-model="product.vipPhone">
                 </div>
                 <div class="line line-dashed b-b line-lg pull-in"></div>
@@ -123,7 +130,7 @@
                     <input type="text" class="form-control" placeholder="输入备注，最多100个字" ng-model="product.remark">
                 </div>
                 <div class="line line-dashed b-b line-lg pull-in"></div>
-                <button type="button" class="btn btn-sm btn-primary" ng-click="submitForm()" ng-disabled="product.submitting || !(product.amount > -1) || product.amount == null || checkedOrder == null || product.divideUserAmount == null || !(product.divideUserAmount > -1)" ng-class="{ 'active' : product.submitting}">
+                <button type="button" class="btn btn-sm btn-primary" ng-click="submitForm()" ng-disabled="product.submitting || !(product.amount > -1) || product.vipPhone == null || product.amount == null || checkedOrder == null || product.divideUserAmount == null || !(product.divideUserAmount > -1)" ng-class="{ 'active' : product.submitting}">
                     <span class="text">保存</span>
                     <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
                 </button>

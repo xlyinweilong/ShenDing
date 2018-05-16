@@ -617,7 +617,9 @@ app.controller('CreateUpdateProductVipController', ['$scope', '$http', '$modal',
                     $scope.product = responseData.data;
                     $scope.payDate = new Date($scope.product.payDate);
                     $scope.endDate = new Date($scope.product.endDate);
-                    $scope.vipBirthday = new Date($scope.product.vipBirthday);
+                    if($scope.product.vipBirthday != null){
+                        $scope.vipBirthday = new Date($scope.product.vipBirthday);
+                    }
                     $scope.checkedOrder = $scope.product.goodsOrder;
                     $scope.checkedEle = $scope.product.manager;
                 }
