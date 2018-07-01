@@ -8,6 +8,7 @@ import com.shending.entity.ProductLog;
 import com.shending.entity.SysUser;
 import com.shending.entity.WageLog;
 import com.shending.service.AdminService;
+import com.shending.service.AladingWebService;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
 import com.shending.support.bo.PlaceWages;
@@ -70,6 +71,8 @@ public class AdminServlet extends BaseServlet {
 
     @EJB
     private AdminService adminService;
+    @EJB
+    private AladingWebService aladingWebService;
 
     /// <editor-fold defaultstate="collapsed" desc="重要但不常修改的函数. Click on the + sign on the left to edit the code.">
     @Override
@@ -128,6 +131,8 @@ public class AdminServlet extends BaseServlet {
             case ALL_WAGE_PLACE_LIST:
             case DOWN_GOODS_LIST:
             case USER_LIST:
+            case SEARCH:
+            case SUBMIT_RESULT:
                 setLoginLogoutBothAllowed(request);
                 break;
             default:
@@ -152,7 +157,7 @@ public class AdminServlet extends BaseServlet {
 
     public static enum ActionEnum {
 
-        LOGIN, LOGOUT,
+        LOGIN, LOGOUT, SPREAD, APPLY
     }
 
     @Override
@@ -191,6 +196,10 @@ public class AdminServlet extends BaseServlet {
                 return doLogin(request, response);
             case LOGOUT:
                 return doLogout(request, response);
+            case SPREAD:
+                return doSpread(request, response);
+            case APPLY:
+                return doApply(request, response);
             default:
                 throw new BadPostActionException();
         }
@@ -199,7 +208,7 @@ public class AdminServlet extends BaseServlet {
     public static enum PageEnum {
 
         INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
-        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, USER_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION;
+        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, USER_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION, SEARCH, SUBMIT_RESULT;
 
     }
 
@@ -207,6 +216,10 @@ public class AdminServlet extends BaseServlet {
     boolean processPage(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException, BadPageException {
         AdminServlet.PageEnum page = (AdminServlet.PageEnum) request.getAttribute(REQUEST_ATTRIBUTE_PAGE_ENUM);
         switch (page) {
+            case SUBMIT_RESULT:
+                return loadSubmitResult(request, response);
+            case SEARCH:
+                return loadDailiSearch(request, response);
             case INDEX:
                 return KEEP_GOING_WITH_ORIG_URL;
             case VERIFICATION_CODE:
@@ -275,7 +288,45 @@ public class AdminServlet extends BaseServlet {
      * @throws IOException
      */
     private boolean doLogout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        return REDIRECT_TO_ANOTHER_URL;
+        return KEEP_GOING_WITH_ORIG_URL;
+    }
+
+    /**
+     * 全国推广
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     */
+    private boolean doSpread(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String platform = request.getParameter("platform");
+        String product = request.getParameter("product");
+        String name = request.getParameter("name");
+        String wecatCode = request.getParameter("wecatCode");
+        String mobile = request.getParameter("mobile");
+        aladingWebService.createOrUpdateAladingwebSpread(null, mobile, platform, product, name, wecatCode);
+        return KEEP_GOING_WITH_ORIG_URL;
+    }
+
+    /**
+     * 申请
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     */
+    private boolean doApply(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String platform = request.getParameter("platform");
+        String product = request.getParameter("product");
+        String name = request.getParameter("name");
+        String wecatCode = request.getParameter("wecatCode");
+        String mobile = request.getParameter("mobile");
+        aladingWebService.createOrUpdateAladingwebApply(null, mobile, platform, product, name, wecatCode);
+        return KEEP_GOING_WITH_ORIG_URL;
     }
 
     /**
@@ -484,6 +535,43 @@ public class AdminServlet extends BaseServlet {
         g.dispose();
         ImageIO.write(image, "JPEG", response.getOutputStream());
         return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
+     * 加载查询代理页面
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadDailiSearch(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        String code = request.getParameter("condition");
+        request.setAttribute("code", code);
+        if (StringUtils.isBlank(code)) {
+            request.setAttribute("noRs", false);
+            return KEEP_GOING_WITH_ORIG_URL;
+        }
+        code = code.trim();
+        //查询是否存在
+
+        return KEEP_GOING_WITH_ORIG_URL;
+    }
+
+    /**
+     * 查看结果
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadSubmitResult(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        return KEEP_GOING_WITH_ORIG_URL;
     }
 
     /**

@@ -603,6 +603,30 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                             }]
                     }
                 })
+                .state('app.aladingweb', {
+                    url: '/aladingweb',
+                    template: '<div ui-view></div>',
+                    resolve: {
+                        deps: [
+                            'uiLoad',
+                            function (uiLoad) {
+                                return uiLoad.load(['/back/js/controllers/alading_web.js']);
+                            }
+                        ]
+                    }
+                })
+                .state('app.aladingweb.aladingweb_search', {
+                    url: '/search',
+                    templateUrl: '/back/tpl/alading_web_search.html'
+                })
+                 .state('app.aladingweb.aladingweb_apply', {
+                    url: '/apply',
+                    templateUrl: '/back/tpl/alading_web_apply.html'
+                })
+                 .state('app.aladingweb.aladingweb_spread', {
+                    url: '/spread',
+                    templateUrl: '/back/tpl/alading_web_spread.html'
+                })
     }
 ]
         );

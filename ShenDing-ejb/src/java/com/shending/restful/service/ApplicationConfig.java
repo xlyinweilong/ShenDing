@@ -27,6 +27,7 @@ public class ApplicationConfig extends Application {
         resources.add(com.shending.restful.service.AdminREST.class);
         resources.add(com.shending.restful.service.ProductREST.class);
         resources.add(com.shending.restful.service.ConfigREST.class);
+        resources.add(com.shending.restful.service.AladingWebREST.class);
     }
 
 }

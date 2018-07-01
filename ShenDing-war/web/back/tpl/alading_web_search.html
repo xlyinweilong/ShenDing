@@ -1,0 +1,98 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">代理信息</h1>
+</div>
+<div class="wrapper-md" ng-controller="AladingwebSearchController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                代理列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-7 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-danger btn-addon" ng-disabled="list == null || listLoading || listLoadingData || totalItems < 1" ng-click="deleteItems()">
+                            <i class="fa fa-trash-o"></i>
+                            删除
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <form role="form" name="form" ng-submit="getList(1, false)()">
+                        <div class="col-sm-5">
+                            <div class="input-group">
+                                <input class="input-sm form-control" ng-model="listSearch" type="text" placeholder="代理信息">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-default" ng-disabled="list == null || listLoading || listLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="row wrapper">
+                    <form role="form" name="form">
+                        <div class="col-sm-12">
+                            <div class="input-group">
+                                <input class="input-sm form-control" type="file">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-sm btn-default" ng-click="uploadFile()" ng-disabled="listLoading || activeMyFile || listLoadingData" ng-class="{'active' : activeMyFile}">
+                                        <span class="text">上传</span>
+                                        <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>上传中...</span>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:5%"></th>
+                            <th style="width:10%">姓名</th>
+                            <th style="width:10%">微信号</th>
+                            <th style="width:10%">授权开始时间</th>
+                            <th style="width:10%">授权结束时间</th>
+                            <th style="width:10%">合同号</th>
+                            <th style="width:10%">查看证书</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="lableIds" ng-model="item.lableId"><i></i></label></td>
+                            <td>{{item.name}}</td>
+                            <td>{{item.wecatCode}}</td>
+                            <td>{{item.startDate| date:"yyyy-MM-dd"}}</td>
+                            <td>{{item.endDate| date:"yyyy-MM-dd"}}</td>
+                            <td>
+                                {{item.contractCode}}
+                            </td>
+                            <td>
+                                <a href="#/app/product/vip_create_or_update/{{item.id}}" class="text-info">修改</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="list == null || listLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

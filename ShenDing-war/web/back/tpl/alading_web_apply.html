@@ -1,0 +1,75 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">申请代理</h1>
+</div>
+<div class="wrapper-md" ng-controller="AladingwebApplyController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                申请列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-7 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                    <form role="form" name="form" ng-submit="getList(1, false)()">
+                        <div class="col-sm-5">
+                            <div class="input-group">
+                                <input class="input-sm form-control" ng-model="listSearch" type="text" placeholder="姓名">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-default" ng-disabled="list == null || listLoading || listLoadingData" type="submit">搜索</button>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:5%"></th>
+                            <th style="width:10%">时间</th>
+                            <th style="width:10%">姓名</th>
+                            <th style="width:10%">微信号</th>
+                            <th style="width:10%">手机号</th>
+                            <th style="width:10%">微信所在平台名称</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="lableIds" ng-model="item.lableId"><i></i></label></td>
+                            <td>{{item.createDate| date:"yyyy-MM-dd"}}</td>
+                            <td>{{item.name}}</td>
+                            <td>{{item.wecatCode}}</td>
+                            <td>{{item.mobile}}</td>
+                            <td>
+                                {{item.platform}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="list == null || listLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>
