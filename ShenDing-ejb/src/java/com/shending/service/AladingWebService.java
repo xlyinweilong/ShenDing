@@ -23,6 +23,7 @@ import com.shending.entity.SysUser;
 import com.shending.entity.UserWageLog;
 import com.shending.entity.Vip;
 import com.shending.entity.Vote;
+import com.shending.support.ImageEdit;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
 import com.shending.support.Trans2PinYin;
@@ -88,13 +89,41 @@ import org.apache.commons.lang.StringUtils;
 @Stateless
 @LocalBean
 public class AladingWebService {
-
+    
     @EJB
     private AdminService adminService;
-
+    
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
     private static final Logger logger = Logger.getLogger(AladingWebService.class.getName());
+    
+    @Asynchronous
+    public void createPic() {
+        TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a where a.picUrl is null", AladingwebSearch.class);
+        for (AladingwebSearch aladingwebSearch : query.getResultList()) {
+            ImageEdit.createStringMark("/data/pic/main.jpg", "/data/pic/" + aladingwebSearch.getId() + ".jpg", aladingwebSearch.getName(), aladingwebSearch.getWecatCode(), aladingwebSearch.getContractCode(), Tools.formatDate(aladingwebSearch.getStartDate(), "yyyy-MM-dd"), Tools.formatDate(aladingwebSearch.getEndDate(), "yyyy-MM-dd"));
+            aladingwebSearch.setPicUrl("/pic/" + aladingwebSearch.getId());
+            em.merge(aladingwebSearch);
+        }
+    }
+
+    /**
+     * 查询
+     *
+     * @param search
+     * @return
+     */
+    public AladingwebSearch findAladingwebSearch(String search) {
+        AladingwebSearch aladingwebSearch = null;
+        TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a WHERE a.contractCode = :contractCode or a.name = :name or a.wecatCode = :wecatCode", AladingwebSearch.class);
+        query.setParameter("contractCode", search).setParameter("name", search).setParameter("wecatCode", search);
+        try {
+            aladingwebSearch = query.getSingleResult();
+        } catch (Exception e) {
+            aladingwebSearch = null;
+        }
+        return aladingwebSearch;
+    }
 
     /**
      * 创建查询代理
@@ -115,7 +144,7 @@ public class AladingWebService {
         } else {
             aladingwebSearch = em.find(AladingwebSearch.class, id);
         }
-
+        
         aladingwebSearch.setStartDate(startDate);
         aladingwebSearch.setEndDate(endDate);
         aladingwebSearch.setContractCode(contractCode);
@@ -131,7 +160,7 @@ public class AladingWebService {
         }
         return aladingwebSearch;
     }
-
+    
     public AladingwebApply createOrUpdateAladingwebApply(Long id, String mobile, String platform, String product, String name, String wecatCode) {
         AladingwebApply aladingwebApply = null;
         if (id == null) {
@@ -151,7 +180,7 @@ public class AladingWebService {
         }
         return aladingwebApply;
     }
-
+    
     public AladingwebSpread createOrUpdateAladingwebSpread(Long id, String mobile, String platform, String product, String name, String wecatCode) {
         AladingwebSpread aladingwebSpread = null;
         if (id == null) {
@@ -186,7 +215,7 @@ public class AladingWebService {
             em.remove(search);
         }
     }
-
+    
     public void deleteAladingwebSpreadById(List<Long> ids) {
         for (Long id : ids) {
             if (null == id) {
@@ -196,7 +225,7 @@ public class AladingWebService {
             em.remove(search);
         }
     }
-
+    
     public void deleteAladingwebApplyById(List<Long> ids) {
         for (Long id : ids) {
             if (null == id) {
@@ -396,5 +425,5 @@ public class AladingWebService {
         }
         return resultList;
     }
-
+    
 }

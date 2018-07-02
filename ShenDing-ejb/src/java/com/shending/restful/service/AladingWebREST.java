@@ -138,7 +138,6 @@ public class AladingWebREST {
                         if (Tools.isBlank(contractCode)) {
                             throw new EjbMessageException("第" + (i + 1) + "行合同号必填");
                         }
-
                         aladingWebService.createOrUpdateAladingwebSearch(null, startDate, endDate, name, wecatCode, contractCode);
                     }
                 } catch (Exception e) {
@@ -150,6 +149,7 @@ public class AladingWebREST {
                     readwb.close();
                 }
                 FileUtils.deleteQuietly(file);
+                aladingWebService.createPic();
                 map.put("msg", "上传成功");
                 map.put("success", "1");
                 map.put("data", "");

@@ -55,8 +55,8 @@
                             <tr>
                                 <td colspan="5" align="center" style="">
                                     恭喜，您所查询的经销商是【啊啦叮集团】授权正版经销商，<br />您可以放心购买！！
-                                    <p><input id="download" type="button" value="点击下载证书（手机端请点击图片另存为）" onClick="javascript:window.location.href = 'http://query.arrepeat.top/index.php/Home/index/down?wx=zhomgxiao'"></p>
-                                    <p id="p_cert_img" style="margin:15px auto; width:100%; text-align:center;"><img src="http://query.arrepeat.top/Public/logo/zhomgxiao.png" width="80%" /></p>
+                                    <p><input id="download" type="button" value="点击下载证书（手机端请点击图片另存为）" onClick="javascript:window.location.href = '${aladingwebSearch.picUrl}'"></p>
+                                    <p id="p_cert_img" style="margin:15px auto; width:100%; text-align:center;"><img src="${aladingwebSearch.picUrl}" width="80%" /></p>
                                     <p>
                                         &nbsp;<a href="javascript:window.history.go(-1);">返回代理查询页</a>
                                         <br/>

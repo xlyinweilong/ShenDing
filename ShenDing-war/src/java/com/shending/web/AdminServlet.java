@@ -1,5 +1,6 @@
 package com.shending.web;
 
+import com.shending.entity.AladingwebSearch;
 import com.shending.entity.Cosmetics;
 import com.shending.entity.GoodsOrder;
 import com.shending.entity.NewAd;
@@ -556,7 +557,12 @@ public class AdminServlet extends BaseServlet {
         }
         code = code.trim();
         //查询是否存在
-
+        AladingwebSearch aladingwebSearch = aladingWebService.findAladingwebSearch(code);
+        if (aladingwebSearch == null) {
+            request.setAttribute("noRs", false);
+        } else {
+            request.setAttribute("aladingwebSearch", aladingwebSearch);
+        }
         return KEEP_GOING_WITH_ORIG_URL;
     }
 
