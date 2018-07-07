@@ -9,10 +9,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description" content="">
         <meta name="author" content="">
-        <link rel="stylesheet" href="/alading/css/reset.css">
-        <link rel="stylesheet" href="/alading/css/supersized.css">
-        <link rel="stylesheet" href="/alading/css/style.css">
-        <script language="JavaScript" src="/alading/js/tab.js"></script> 
+        <link rel="stylesheet" href="/aladingImg/css/reset.css">
+        <link rel="stylesheet" href="/aladingImg/css/supersized.css">
+        <link rel="stylesheet" href="/aladingImg/css/style.css">
+        <script language="JavaScript" src="/aladingImg/js/tab.js"></script> 
         <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
         <!--[if lt IE 9]>
             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -21,9 +21,9 @@
     <body>
 
         <c:choose>
-            <c:when test="noRs">
+            <c:when test="${noRs}">
                 <div class="page-container">
-                    <h1><img src="/alading/img/gfmpr18tj1431262136.png"/></h1>
+                    <h1><img src="/aladingImg/img/gfmpr18tj1431262136.png"/></h1>
                     <div class="rs_show">
                         <table width="100%" border="0" cellpadding="0" cellspacing="0" style="" valign=center>
                             <tr>
@@ -42,7 +42,7 @@
             </c:when>
             <c:otherwise>
                 <div class="page-container">
-                    <h1><img src="/alading/img/gfmpr18tj1431262136.png"/></h1>
+                    <h1><img src="/aladingImg/img/gfmpr18tj1431262136.png"/></h1>
                     <div class="rs_show">
                         <table width="100%" border="0" cellpadding="0" cellspacing="0" style="" valign=center>
                             <tr>
@@ -69,9 +69,9 @@
             </c:otherwise>
         </c:choose>
         <!--<div class="foot">Powered by ALIKE微营销推广平台 Copyright © 2007 - 2017 </div>-->
-        <script src="/alading/js/jquery-1.8.2.min.js"></script>
-        <script src="/alading/js/supersized.3.2.7.min.js"></script>
-        <script src="/alading/js/scripts.js"></script>
+        <script src="/aladingImg/js/jquery-1.8.2.min.js"></script>
+        <script src="/aladingImg/js/supersized.3.2.7.min.js"></script>
+        <script src="/aladingImg/js/scripts.js"></script>
         <script type="text/javascript">
                                 jQuery(function ($) {
                                     $.supersized({
@@ -93,9 +93,9 @@
                                         // Components
                                         slide_links: 'blank', // Individual links for each slide (Options: false, 'num', 'name', 'blank')
                                         slides: [// Slideshow Images
-                                            {image: '/alading/img/1.jpg'},
-                                            {image: '/alading/img/2.jpg'},
-                                            {image: '/alading/img/3.jpg'}
+                                            {image: '/aladingImg/img/1.jpg'},
+                                            {image: '/aladingImg/img/2.jpg'},
+                                            {image: '/aladingImg/img/3.jpg'}
                                         ]
                                     });
                                 })

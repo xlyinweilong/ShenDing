@@ -55,6 +55,8 @@ public class AladingWebREST {
     @EJB
     private AdminService adminService;
     @EJB
+    private ConfigService configService;
+    @EJB
     private AladingWebService aladingWebService;
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
@@ -149,7 +151,7 @@ public class AladingWebREST {
                     readwb.close();
                 }
                 FileUtils.deleteQuietly(file);
-                aladingWebService.createPic();
+//                aladingWebService.createPic();
                 map.put("msg", "上传成功");
                 map.put("success", "1");
                 map.put("data", "");
@@ -157,6 +159,45 @@ public class AladingWebREST {
             }
         }
         map.put("msg", "未找到合法数据");
+        return Tools.caseObjectToJson(map);
+    }
+
+    @POST
+    @Path("upload_file_alading_web_config")
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    public String config(@CookieParam("auth") String auth, @Context HttpServletRequest servletRequest) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        FileUploadObj fileUploadObj = null;
+        Map map = Tools.getDMap();
+        try {
+            fileUploadObj = Tools.uploadFile(servletRequest, 100, null, null, null);
+        } catch (FileUploadException e) {
+            map.put("msg", e.getMessage());
+            return Tools.caseObjectToJson(map);
+        }
+        for (FileUploadItem item : fileUploadObj.getFileList()) {
+            if ("file1".equals(item.getFieldName())) {
+                String exe = item.getOrigFileExtName();
+                File file = new File(item.getUploadFullPath());
+                String name = UUID.randomUUID().toString();
+                File newFile = new File("/data/pic/" + name + exe);
+                FileUtils.copyFile(file, newFile);
+                FileUtils.deleteQuietly(file);
+                configService.saveConfig("ALADING_FILE_LOGO", "/pic/" + name + exe);
+            }
+            if ("file2".equals(item.getFieldName())) {
+                String exe = item.getOrigFileExtName();
+                File file = new File(item.getUploadFullPath());
+                String name = UUID.randomUUID().toString();
+                File newFile = new File("/data/pic/" + name + exe);
+                FileUtils.copyFile(file, newFile);
+                FileUtils.deleteQuietly(file);
+                configService.saveConfig("ALADING_FILE_BG_URL", "/pic/" + name + exe);
+
+            }
+        }
+        map.put("msg", "上传成功");
+        map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
 
@@ -262,6 +303,16 @@ public class AladingWebREST {
         ResultList<AladingwebSpread> list = aladingWebService.findAladingwebSpreadList(searchMap, pageIndex, maxPerPage, null, Boolean.TRUE);
         map.put("totalCount", list.getTotalCount());
         map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+
+    @GET
+    @Path("createPic")
+    public String createPic(@CookieParam("auth") String auth) throws Exception {
+        Map map = Tools.getDMap();
+        SysUser user = adminService.getUserByLoginCode(auth);
+        aladingWebService.createPic();
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }

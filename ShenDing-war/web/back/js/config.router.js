@@ -627,6 +627,10 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/spread',
                     templateUrl: '/back/tpl/alading_web_spread.html'
                 })
+                 .state('app.aladingweb.aladingweb_config', {
+                    url: '/config',
+                    templateUrl: '/back/tpl/alading_web_config.html'
+                })
     }
 ]
         );

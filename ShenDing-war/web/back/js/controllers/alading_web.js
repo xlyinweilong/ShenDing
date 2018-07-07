@@ -101,6 +101,21 @@ app.controller('AladingwebSearchController', ['$scope', '$http', '$modal', '$loc
         };
         $scope.getList($scope.currentPage, false);
 
+        $scope.add = function () {
+            $scope.listLoading = true;
+            $http.get("/webservice/aldingweb/createPic").success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $.scojs_message("生成成功", $.scojs_message.TYPE_OK);
+                }
+                $scope.getList(1,10);
+            });
+        };
+
         $scope.deleteItems = function () {
             var checkedList = new Array();
             for (var i = 0; i < $scope.list.length; i++) {
@@ -279,5 +294,43 @@ app.controller('AladingwebSpreadController', ['$scope', '$http', '$modal', '$loc
             });
         };
         $scope.getList($scope.currentPage, false);
+
+    }]);
+
+
+app.controller('AladingwebConfigController', ['$scope', '$http', '$modal', '$location', "$state", function ($scope, $http, $modal, $location, $state) {
+
+        //上传文件
+        $scope.myFile = null;
+        $scope.activeMyFile = false;//正在上传
+        //上传方法
+        $scope.submitForm = function () {
+            $scope.activeMyFile = true;
+            var fd = new FormData();
+            var file = document.querySelector('input[type=file][name=a1]').files[0];
+            var file2 = document.querySelector('input[type=file][name=a2]').files[0];
+            if (file == null || file.length < 1 || file2 == null || file2.length < 1) {
+                $.scojs_message("请选择文件", $.scojs_message.TYPE_ERROR);
+                $scope.activeMyFile = false;
+            } else {
+                fd.append('file1', file);
+                fd.append('file2', file2);
+                $http({
+                    method: 'POST',
+                    url: "/webservice/aldingweb/upload_file_alading_web_config",
+                    data: fd,
+                    headers: {'Content-Type': undefined},
+                    transformRequest: angular.identity
+                }).success(function (response) {
+                    if (response.success == 1) {
+                        //上传成功的操作
+                        $.scojs_message(response.msg, $.scojs_message.TYPE_OK);
+                    } else {
+                        $.scojs_message(response.msg, $.scojs_message.TYPE_ERROR);
+                    }
+                    $scope.activeMyFile = false;
+                });
+            }
+        }
 
     }]);

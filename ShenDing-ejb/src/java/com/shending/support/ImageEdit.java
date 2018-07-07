@@ -12,9 +12,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.FileOutputStream;
 import javax.swing.ImageIcon;
-import com.sun.image.codec.jpeg.JPEGCodec;
-import com.sun.image.codec.jpeg.JPEGEncodeParam;
-import com.sun.image.codec.jpeg.JPEGImageEncoder;
+import javax.imageio.ImageIO;
 
 /**
  *
@@ -34,10 +32,15 @@ public class ImageEdit {
      */
     //给jpg添加文字
     public static boolean createStringMark(String filePath, String outPath, String name, String wecatCode, String contractCode, String start, String end) {
+        System.out.println("****************************1");
+        System.out.println("filePath="+filePath);
+        System.out.println("outPath="+outPath);
+        System.out.println(name);
         ImageIcon imgIcon = new ImageIcon(filePath);
         Image theImg = imgIcon.getImage();
         int width = theImg.getWidth(null) == -1 ? 100 : theImg.getWidth(null);
         int height = theImg.getHeight(null) == -1 ? 100 : theImg.getHeight(null);
+        System.out.println("****************************2");
         System.out.println(width);
         System.out.println(height);
         System.out.println(theImg);
@@ -48,21 +51,35 @@ public class ImageEdit {
         g.setColor(mycolor);
 //        g.setBackground(Color.red);
         g.drawImage(theImg, 0, 0, null);
-        g.setFont(new Font("宋体", Font.PLAIN, 20)); //字体、字型、字号 
+        g.setFont(new Font("黑体", Font.PLAIN, 20)); //字体、字型、字号 
         g.drawString(name, 275, 322);
         g.drawString(wecatCode, 485, 322);
         g.drawString(contractCode, 350, 415);
         g.drawString(start, 286, 382);
         g.drawString(end, 423, 382);
+        System.out.println("****************************3");
         g.dispose();
+        System.out.println("****************************4");
         try {
-            FileOutputStream out = new FileOutputStream(outPath); //先用一个特定的输出文件名 
-            JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
-            JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(bimage);
-            param.setQuality(50, true);  //
-            encoder.encode(bimage, param);
-            out.close();
+             // 输出图片  
+            FileOutputStream outImgStream = new FileOutputStream(outPath);
+            ImageIO.write(bimage, "jpg", outImgStream);
+            System.out.println("添加水印完成");
+            outImgStream.flush();
+            outImgStream.close();
+            
+//            FileOutputStream out = new FileOutputStream(outPath); //先用一个特定的输出文件名 
+//            System.out.println("****************************5");
+//            JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
+//            System.out.println("****************************6");
+//            JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(bimage);
+//            System.out.println("****************************7");
+//            param.setQuality(50, true);  //
+//            encoder.encode(bimage, param);
+//            out.close();
+            System.out.println("****************************8");
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
         return true;

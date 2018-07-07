@@ -7,6 +7,7 @@ import com.shending.entity.NewAd;
 import com.shending.entity.OrderRecord;
 import com.shending.entity.ProductLog;
 import com.shending.entity.SysUser;
+import com.shending.entity.Vip;
 import com.shending.entity.WageLog;
 import com.shending.service.AdminService;
 import com.shending.service.AladingWebService;
@@ -123,6 +124,7 @@ public class AdminServlet extends BaseServlet {
             case CONTRACT_LIST:
             case PRODUCT_LOG_WAGE_LIST:
             case PRODUCT_LOG_LIST:
+            case VIP_LIST:
             case COSMETICS_LIST:
             case COSMETICS_WAGE_LIST:
             case ALL_WAGE_LIST:
@@ -209,7 +211,7 @@ public class AdminServlet extends BaseServlet {
     public static enum PageEnum {
 
         INDEX, VERIFICATION_CODE, FEEDBACK_CSV, LOGIN, LOGOUT, SIGNUP, AD_LIST, WAGE_LIST, ORDER_WAGE_LIST, WAGE_LOG_LIST, USER_WAGE_LOG_TOTAL_LIST, USER_WAGE_LOG_LIST, WAGE_TOTAL_LIST, ORDER_RECORD_LIST, CONTRACT_LIST, PRODUCT_LOG_LIST, PRODUCT_LOG_WAGE_LIST, ALL_WAGE_LIST,
-        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, USER_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION, SEARCH, SUBMIT_RESULT;
+        COSMETICS_LIST, COSMETICS_WAGE_LIST, COSMETICS_USER_WAGE_LIST, PRODUCT_USER_WAGE_LIST, USER_LIST, ALL_WAGE_PLACE_LIST, DOWN_GOODS_LIST, FRANCHISE_DEPARTMENT_COMMISSION, SEARCH, SUBMIT_RESULT, VIP_LIST;
 
     }
 
@@ -253,6 +255,8 @@ public class AdminServlet extends BaseServlet {
                 return loadOrderRecordList(request, response);
             case CONTRACT_LIST:
                 return loadContractList(request, response);
+            case VIP_LIST:
+                return loadVipList(request, response);
             case PRODUCT_LOG_LIST:
                 return loadProductLogList(request, response);
             case COSMETICS_LIST:
@@ -552,14 +556,14 @@ public class AdminServlet extends BaseServlet {
         String code = request.getParameter("condition");
         request.setAttribute("code", code);
         if (StringUtils.isBlank(code)) {
-            request.setAttribute("noRs", false);
+            request.setAttribute("noRs", true);
             return KEEP_GOING_WITH_ORIG_URL;
         }
         code = code.trim();
         //查询是否存在
         AladingwebSearch aladingwebSearch = aladingWebService.findAladingwebSearch(code);
         if (aladingwebSearch == null) {
-            request.setAttribute("noRs", false);
+            request.setAttribute("noRs", true);
         } else {
             request.setAttribute("aladingwebSearch", aladingwebSearch);
         }
@@ -1648,6 +1652,112 @@ public class AdminServlet extends BaseServlet {
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (String[] s : resultList) {
+            vecCsvData.add(s);
+        }
+        //Exporting vector to csv file
+        StringBuilder strOut = new StringBuilder();
+        for (Object vecCsvData1 : vecCsvData) {
+            String[] strLine = (String[]) vecCsvData1;
+            int colNum = strLine.length;
+            for (int j = 0; j < colNum; j++) {
+                strOut.append(strLine[j]);
+                if (j < colNum - 1) {
+                    strOut.append(",");
+                }
+            }
+            strOut.append("\n");
+        }
+        //***** Output strOut to Response ******
+        response.reset();// Reset the response
+        response.setContentType("application/octet-stream;charset=GB2312");// the encoding of this example is GB2312 
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        PrintWriter out;
+        try {
+            out = response.getWriter();
+            out.write(strOut.toString());
+        } catch (IOException e) {
+//            e.printStackTrace();
+        }
+        //***************************************
+        return FORWARD_TO_ANOTHER_URL;
+    }
+
+    /**
+     * 下载会员
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     * @throws NoSessionException
+     */
+    private boolean loadVipList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, NoSessionException {
+        try {
+            SysUser user = adminService.getUserByLoginCode(super.getCookieValue(request, response, "auth"));
+        } catch (AccountNotExistException | EjbMessageException ex) {
+            return FORWARD_TO_ANOTHER_URL;
+        }
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        String fileName = "vip_list.csv";//default file name
+        List vecCsvData = new ArrayList();
+        String start = super.getRequestString(request, "startDate");
+        String end = super.getRequestString(request, "endDate");
+        Date startDate = null;
+        Date endDate = null;
+        if (Tools.isNotBlank(start)) {
+            try {
+                startDate = Tools.getBeginOfDay(Tools.parseDate(start, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                startDate = null;
+            }
+        }
+        if (Tools.isNotBlank(end)) {
+            try {
+                endDate = Tools.getEndOfDay(Tools.parseDate(end, "yyyy-MM-dd"));
+            } catch (Exception e) {
+                endDate = null;
+            }
+        }
+        Map searchMap = new HashMap();
+        searchMap.put("startDate", startDate);
+        searchMap.put("endDate", endDate);
+        List<Vip> resultList = adminService.findProductVipList(searchMap, 0, 0, true, false);
+        String[] headLine = new String[14];
+        headLine[0] = "到款日期";
+        headLine[1] = "会员到期时间";
+        headLine[2] = "地区经理";
+        headLine[3] = "省份";
+        headLine[4] = "分成代理";
+        headLine[5] = "分成地区";
+        headLine[6] = "到款金额";
+        headLine[7] = "代理提成";
+        headLine[8] = "公益";
+        headLine[9] = "会员姓名";
+        headLine[10] = "会员生日";
+        headLine[11] = "会员微信号";
+        headLine[12] = "会员电话";
+        headLine[13] = "备注";
+        vecCsvData.add(headLine);
+        //sets the data to be exported
+        for (Vip vip : resultList) {
+            String[] s = new String[14];
+            s[0] = Tools.formatDate(vip.getPayDate(), "yyyy-MM-dd");
+            s[1] = Tools.formatDate(vip.getEndDate(), "yyyy-MM-dd");
+            s[2] = vip.getManager() == null ? "" : vip.getManager().getName();
+            s[3] = vip.getProvinceStr();
+            s[4] = vip.getDivideUser() == null ? "" : vip.getDivideUser().getName();
+            s[5] = vip.getGoods() == null ? "" : vip.getGoods().getName();
+            s[6] = vip.getAmount().toPlainString();
+            s[7] = vip.getDivideUserAmount().toPlainString();
+            s[8] = vip.getWelfareAmount().toPlainString();
+            s[9] = vip.getVipName();
+            s[10] = vip.getVipBirthday() == null ? vip.getVipBirthdayNoYear() : Tools.formatDate(vip.getVipBirthday(), "yyyy-MM-dd");
+            s[11] = vip.getVipWechat();
+            s[12] = vip.getVipPhone();
+            s[13] = vip.getRemark();
             vecCsvData.add(s);
         }
         //Exporting vector to csv file

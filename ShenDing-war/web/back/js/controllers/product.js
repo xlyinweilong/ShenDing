@@ -553,6 +553,23 @@ app.controller('ProductVipListController', ['$scope', '$http', '$modal', '$locat
         $scope.add = function () {
             $state.go('app.product.vip_create_or_update');
         };
+        
+        $scope.downLoad = function () {
+            var start = "";
+            var end = "";
+            if ($scope.startDate instanceof Date) {
+                start = $scope.startDate.getFullYear() + "-" + ($scope.startDate.getMonth() + 1) + "-" + $scope.startDate.getDate();
+            } else {
+            }
+            if ($scope.endDate instanceof Date) {
+                end = $scope.endDate.getFullYear() + "-" + ($scope.endDate.getMonth() + 1) + "-" + $scope.endDate.getDate();
+            }
+            if (start == "" || end == "") {
+                $.scojs_message("请输入完整的时间段", $.scojs_message.TYPE_ERROR);
+                return;
+            }
+            window.open("/admin/VIP_LIST?startDate=" + start + "&endDate=" + end);
+        };
 
         $scope.deleteItems = function () {
             var checkedList = new Array();

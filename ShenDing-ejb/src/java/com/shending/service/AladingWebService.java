@@ -57,6 +57,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Logger;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
@@ -89,20 +90,20 @@ import org.apache.commons.lang.StringUtils;
 @Stateless
 @LocalBean
 public class AladingWebService {
-    
+
     @EJB
     private AdminService adminService;
-    
+
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
     private static final Logger logger = Logger.getLogger(AladingWebService.class.getName());
-    
-    @Asynchronous
+
+//    @Asynchronous
     public void createPic() {
         TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a where a.picUrl is null", AladingwebSearch.class);
         for (AladingwebSearch aladingwebSearch : query.getResultList()) {
             ImageEdit.createStringMark("/data/pic/main.jpg", "/data/pic/" + aladingwebSearch.getId() + ".jpg", aladingwebSearch.getName(), aladingwebSearch.getWecatCode(), aladingwebSearch.getContractCode(), Tools.formatDate(aladingwebSearch.getStartDate(), "yyyy-MM-dd"), Tools.formatDate(aladingwebSearch.getEndDate(), "yyyy-MM-dd"));
-            aladingwebSearch.setPicUrl("/pic/" + aladingwebSearch.getId());
+            aladingwebSearch.setPicUrl("/pic/" + aladingwebSearch.getId() + ".jpg");
             em.merge(aladingwebSearch);
         }
     }
@@ -144,7 +145,7 @@ public class AladingWebService {
         } else {
             aladingwebSearch = em.find(AladingwebSearch.class, id);
         }
-        
+
         aladingwebSearch.setStartDate(startDate);
         aladingwebSearch.setEndDate(endDate);
         aladingwebSearch.setContractCode(contractCode);
@@ -152,15 +153,16 @@ public class AladingWebService {
         aladingwebSearch.setName(name);
         if (id == null) {
             //生产图片
-            String picUrl = null;
-            aladingwebSearch.setPicUrl(picUrl);
+//            String picUrl = "/data/pic/" + UUID.randomUUID() + ".jpg";
+//            aladingwebSearch.setPicUrl(picUrl);
             em.persist(aladingwebSearch);
+//            ImageEdit.createStringMark("/data/pic/main.jpg", picUrl, aladingwebSearch.getName(), aladingwebSearch.getWecatCode(), aladingwebSearch.getContractCode(), Tools.formatDate(aladingwebSearch.getStartDate(), "yyyy-MM-dd"), Tools.formatDate(aladingwebSearch.getEndDate(), "yyyy-MM-dd"));
         } else {
             em.merge(aladingwebSearch);
         }
         return aladingwebSearch;
     }
-    
+
     public AladingwebApply createOrUpdateAladingwebApply(Long id, String mobile, String platform, String product, String name, String wecatCode) {
         AladingwebApply aladingwebApply = null;
         if (id == null) {
@@ -180,7 +182,7 @@ public class AladingWebService {
         }
         return aladingwebApply;
     }
-    
+
     public AladingwebSpread createOrUpdateAladingwebSpread(Long id, String mobile, String platform, String product, String name, String wecatCode) {
         AladingwebSpread aladingwebSpread = null;
         if (id == null) {
@@ -215,7 +217,7 @@ public class AladingWebService {
             em.remove(search);
         }
     }
-    
+
     public void deleteAladingwebSpreadById(List<Long> ids) {
         for (Long id : ids) {
             if (null == id) {
@@ -225,7 +227,7 @@ public class AladingWebService {
             em.remove(search);
         }
     }
-    
+
     public void deleteAladingwebApplyById(List<Long> ids) {
         for (Long id : ids) {
             if (null == id) {
@@ -425,5 +427,5 @@ public class AladingWebService {
         }
         return resultList;
     }
-    
+
 }
