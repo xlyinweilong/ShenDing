@@ -38,9 +38,10 @@
                             <th style="width:5%"></th>
                             <th style="width:10%">时间</th>
                             <th style="width:10%">姓名</th>
-                            <th style="width:10%">产品</th>
+                             <th style="width:10%">微信号</th>
+                            <th style="width:10%">加盟地区</th>
                             <th style="width:10%">手机</th>
-                            <th style="width:10%">平台</th>
+                            <th style="width:10%">微信所在平台名称</th>
                         </tr>
                     </thead>
                     <div class="text-center" ng-show="listLoadingData">
@@ -51,6 +52,7 @@
                             <td><label class="i-checks m-b-none"><input type="checkbox" name="lableIds" ng-model="item.lableId"><i></i></label></td>
                             <td>{{item.createDate| date:"yyyy-MM-dd"}}</td>
                             <td>{{item.name}}</td>
+                            <td>{{item.wecatCode}}</td>
                             <td>{{item.product}}</td>
                             <td>{{item.mobile}}</td>
                             <td>

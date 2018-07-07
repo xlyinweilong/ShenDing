@@ -28,7 +28,7 @@
                     </tr>            
                     <tr>
                         <td colspan="5" align="center"><h1>
-                                不要着急，稍后我们会有工作人员练习您</h1>
+                                不要着急，稍后我们会有工作人员联系您</h1>
                             <p>
                                 &nbsp;<a href="javascript:window.history.go(-1);">返回代理查询页</a>
                             </p>      

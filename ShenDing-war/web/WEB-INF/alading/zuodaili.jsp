@@ -16,7 +16,9 @@
             form table td.left{width:40%;text-align:right;}
             .sqtj{width:95%;text-align:left;font-size:14px;line-height:20px;margin-top:10px;}
         </style>
-        <style type="text/css">.fancybox-margin{margin-right:17px;}</style></head>
+        <style type="text/css">.fancybox-margin{margin-right:17px;}</style>
+        <script src="https://cdn.bootcss.com/jquery/1.10.1/jquery.min.js"></script>
+    </head>
     <body class="app">
         <div class="app-content">
             <img src="${ALADING_FILE_BG_URL}" class="bg">
@@ -38,7 +40,7 @@
                                 <td><input type="text" name="mobile" id="UserTest" class="input1"></td>
                             </tr>
                             <tr>
-                                <td class='left' style="color:#E0E0E0">产品名称：</td>
+                                <td class='left' style="color:#E0E0E0">加盟哪个地区：</td>
                                 <td>
                                     <input type="text" name="product" class='input1'>
                                 </td>
@@ -60,6 +62,17 @@
             window.onload = function () {
                 $(".bg").css("height", $(window).height());
                 $(".bg").css("width", $(window).width());
+            }
+            function Search() {
+                if ($.trim($("#UserName").val()) == "") {
+                    alert("请填写姓名");
+                    return false;
+                }
+                if ($.trim($("#UserTest").val()) == "") {
+                    alert("请填写手机号");
+                    return false;
+                }
+                return true;
             }
         </script>
     </body>
