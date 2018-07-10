@@ -648,7 +648,7 @@ public class AdminServlet extends BaseServlet {
             searchMap.put("endDate", endDate);
         }
         ResultList<NewAd> resultList = adminService.findAdList(searchMap, 1, Integer.MAX_VALUE, null, Boolean.FALSE);
-        String[] headLine = new String[14];
+        String[] headLine = new String[15];
         headLine[0] = "日期";
         headLine[1] = "类型";
         headLine[2] = "平台";
@@ -663,10 +663,11 @@ public class AdminServlet extends BaseServlet {
         headLine[11] = "提成";
         headLine[12] = "备注";
         headLine[13] = "是否回收";
+        headLine[14] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (NewAd log : resultList) {
-            String[] strLine = new String[14];
+            String[] strLine = new String[15];
             strLine[0] = Tools.formatDate(log.getPayDate(), "yyyy-MM-dd");
             if ("AD_DEPARTMENT".equals(log.getCategoryPlus())) {
                 strLine[1] = log.getGoods().getCategoryMean() + "(广告部)";
@@ -685,6 +686,7 @@ public class AdminServlet extends BaseServlet {
             strLine[11] = log.getUserAmount().toString();
             strLine[12] = log.getRemark() == null ? "" : log.getRemark();
             strLine[13] = log.getBacked() ? "被回收" : "";
+            strLine[14] = log.getGoods().getProvinceStr();
             vecCsvData.add(strLine);
         }
         //Exporting vector to csv file

@@ -40,7 +40,7 @@
                                 <td><input type="text" name="mobile" id="UserTest" class="input1"></td>
                             </tr>
                             <tr>
-                                <td class='left' style="color:#E0E0E0">加盟哪个地区：</td>
+                                <td class='left' style="color:#E0E0E0">推广产品类型：</td>
                                 <td>
                                     <input type="text" name="product" class='input1'>
                                 </td>
