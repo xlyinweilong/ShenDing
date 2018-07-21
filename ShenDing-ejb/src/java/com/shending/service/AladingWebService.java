@@ -102,7 +102,7 @@ public class AladingWebService {
     public void createPic() {
         TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a where a.picUrl is null", AladingwebSearch.class);
         for (AladingwebSearch aladingwebSearch : query.getResultList()) {
-            ImageEdit.createStringMark("/data/pic/main.jpg", "/data/pic/" + aladingwebSearch.getId() + ".jpg", aladingwebSearch.getName(), aladingwebSearch.getWecatCode(), aladingwebSearch.getContractCode(), Tools.formatDate(aladingwebSearch.getStartDate(), "yyyy-MM-dd"), Tools.formatDate(aladingwebSearch.getEndDate(), "yyyy-MM-dd"));
+            ImageEdit.createStringMark("/data/pic/main.jpg", "/data/pic/" + aladingwebSearch.getId() + ".jpg", aladingwebSearch.getName(), aladingwebSearch.getWecatCode(), aladingwebSearch.getProvince(), aladingwebSearch.getAgentArea());
             aladingwebSearch.setPicUrl("/pic/" + aladingwebSearch.getId() + ".jpg");
             em.merge(aladingwebSearch);
         }
@@ -116,8 +116,8 @@ public class AladingWebService {
      */
     public AladingwebSearch findAladingwebSearch(String search) {
         AladingwebSearch aladingwebSearch = null;
-        TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a WHERE a.contractCode = :contractCode or a.name = :name or a.wecatCode = :wecatCode", AladingwebSearch.class);
-        query.setParameter("contractCode", search).setParameter("name", search).setParameter("wecatCode", search);
+        TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a WHERE a.wecatCode = :wecatCode", AladingwebSearch.class);
+        query.setParameter("wecatCode", search);
         try {
             aladingwebSearch = query.getSingleResult();
         } catch (Exception e) {
@@ -137,18 +137,15 @@ public class AladingWebService {
      * @param contractCode
      * @return
      */
-    public AladingwebSearch createOrUpdateAladingwebSearch(Long id, Date startDate, Date endDate, String name, String wecatCode,
-            String contractCode) {
+    public AladingwebSearch createOrUpdateAladingwebSearch(Long id, String province, String agentArea, String name, String wecatCode) {
         AladingwebSearch aladingwebSearch = null;
         if (id == null) {
             aladingwebSearch = new AladingwebSearch();
         } else {
             aladingwebSearch = em.find(AladingwebSearch.class, id);
         }
-
-        aladingwebSearch.setStartDate(startDate);
-        aladingwebSearch.setEndDate(endDate);
-        aladingwebSearch.setContractCode(contractCode);
+        aladingwebSearch.setAgentArea(agentArea);
+        aladingwebSearch.setProvince(province);
         aladingwebSearch.setWecatCode(wecatCode);
         aladingwebSearch.setName(name);
         if (id == null) {
@@ -321,7 +318,10 @@ public class AladingWebService {
         if (map.containsKey("search")) {
             criteria.add(
                     builder.or(
-                            builder.like(root.get("name"), "%" + (String) map.get("search") + "%"))
+                            builder.like(root.get("name"), "%" + (String) map.get("search") + "%"),
+                            builder.like(root.get("province"), "%" + (String) map.get("search") + "%"),
+                            builder.like(root.get("agentArea"), "%" + (String) map.get("search") + "%"),
+                            builder.like(root.get("wecatCode"), "%" + (String) map.get("search") + "%"))
             );
         }
         try {

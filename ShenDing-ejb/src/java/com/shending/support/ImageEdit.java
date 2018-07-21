@@ -22,7 +22,7 @@ public class ImageEdit {
 
     public static void main(String[] a) {
 
-        ImageEdit.createStringMark("e://1.jpg", "e://2.jpg", "小明", "web123", "888", "2018-05-19", "2022-07-08");
+        ImageEdit.createStringMark("e://1.jpg", "e://2.jpg", "小明", "web123", "吉林省","长春1");
     }
 
     /**
@@ -31,7 +31,7 @@ public class ImageEdit {
      * @param outPath 输出图片路径 字体颜色等在函数内部实现的
      */
     //给jpg添加文字
-    public static boolean createStringMark(String filePath, String outPath, String name, String wecatCode, String contractCode, String start, String end) {
+    public static boolean createStringMark(String filePath, String outPath, String name, String wecatCode, String province, String agentArea) {
         System.out.println("****************************1");
         System.out.println("filePath="+filePath);
         System.out.println("outPath="+outPath);
@@ -54,9 +54,7 @@ public class ImageEdit {
         g.setFont(new Font("黑体", Font.PLAIN, 20)); //字体、字型、字号 
         g.drawString(name, 275, 322);
         g.drawString(wecatCode, 485, 322);
-        g.drawString(contractCode, 350, 415);
-        g.drawString(start, 286, 382);
-        g.drawString(end, 423, 382);
+        g.drawString(agentArea + "(" + province+")", 272, 383);
         System.out.println("****************************3");
         g.dispose();
         System.out.println("****************************4");

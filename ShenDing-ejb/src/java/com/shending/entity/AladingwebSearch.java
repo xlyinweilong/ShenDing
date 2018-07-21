@@ -37,15 +37,13 @@ public class AladingwebSearch implements Serializable {
     @Size(max = 255)
     @Column(name = "wecat_code")
     private String wecatCode;
+    //省份
     @Size(max = 255)
-    @Column(name = "contract_code")
-    private String contractCode;
-    @Column(name = "start_date")
-    @Temporal(TemporalType.DATE)
-    private Date startDate;
-    @Column(name = "end_date")
-    @Temporal(TemporalType.DATE)
-    private Date endDate;
+    @Column(name = "province")
+    private String province;
+    //代理地区
+    @Column(name = "agent_area")
+    private String agentArea;
     @Size(max = 255)
     @Column(name = "pic_url")
     private String picUrl;
@@ -81,29 +79,22 @@ public class AladingwebSearch implements Serializable {
         this.wecatCode = wecatCode;
     }
 
-    public String getContractCode() {
-        return contractCode;
+    public String getProvince() {
+        return province;
     }
 
-    public void setContractCode(String contractCode) {
-        this.contractCode = contractCode;
+    public void setProvince(String province) {
+        this.province = province;
     }
 
-    public Date getStartDate() {
-        return startDate;
+    public String getAgentArea() {
+        return agentArea;
     }
 
-    public void setStartDate(Date startDate) {
-        this.startDate = startDate;
+    public void setAgentArea(String agentArea) {
+        this.agentArea = agentArea;
     }
 
-    public Date getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(Date endDate) {
-        this.endDate = endDate;
-    }
 
     public String getPicUrl() {
         return picUrl;

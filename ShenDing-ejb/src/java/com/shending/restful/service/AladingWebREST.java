@@ -111,36 +111,18 @@ public class AladingWebREST {
                             throw new EjbMessageException("第" + (i + 1) + "行微信号必填");
                         }
 
-                        //授权开始时间
-                        String startDateStr = StringUtils.trim(cells[2].getContents());
-                        Date startDate = null;
-                        try {
-                            startDate = Tools.parseDate(startDateStr, "yyyy-MM-dd");
-                        } catch (Exception e) {
-                            throw new EjbMessageException("第" + (i + 1) + "行授权开始时间格式错误");
+                        //省份
+                        String province = StringUtils.trimToNull(cells[2].getContents());
+                        if (Tools.isBlank(province)) {
+                            throw new EjbMessageException("第" + (i + 1) + "行省份必填");
                         }
-                        if (startDate == null) {
-                            throw new EjbMessageException("第" + (i + 1) + "行授权开始时间格式错误");
+                        //代理地区
+                        String agentArea = StringUtils.trimToNull(cells[3].getContents());
+                        if (Tools.isBlank(agentArea)) {
+                            throw new EjbMessageException("第" + (i + 1) + "行代理地区必填");
                         }
-
-                        //授权结束时间
-                        String endDateStr = StringUtils.trim(cells[3].getContents());
-                        Date endDate = null;
-                        try {
-                            endDate = Tools.parseDate(endDateStr, "yyyy-MM-dd");
-                        } catch (Exception e) {
-                            throw new EjbMessageException("第" + (i + 1) + "行授权结束时间格式错误");
-                        }
-                        if (endDate == null) {
-                            throw new EjbMessageException("第" + (i + 1) + "行授权结束时间格式错误");
-                        }
-
-                        //合同号
-                        String contractCode = StringUtils.trimToNull(cells[4].getContents());
-                        if (Tools.isBlank(contractCode)) {
-                            throw new EjbMessageException("第" + (i + 1) + "行合同号必填");
-                        }
-                        aladingWebService.createOrUpdateAladingwebSearch(null, startDate, endDate, name, wecatCode, contractCode);
+                        
+                        aladingWebService.createOrUpdateAladingwebSearch(null, province, agentArea, name, wecatCode);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
