@@ -1077,7 +1077,9 @@ public class AdminService {
         CriteriaQuery<com.shending.entity.GoodsOrder> query = builder.createQuery(com.shending.entity.GoodsOrder.class);
         Root root = query.from(com.shending.entity.GoodsOrder.class);
         List<Predicate> criteria = new ArrayList<>();
-        criteria.add(builder.equal(root.get("deleted"), false));
+        if (!map.containsKey("hasDeleted")) {
+            criteria.add(builder.equal(root.get("deleted"), false));
+        }
         if (map.containsKey("search")) {
             if (map.containsKey("uids")) {
                 criteria.add(builder.or(builder.equal(root.get("agentUser").get("name"), map.get("search").toString()), builder.equal(root.get("contractSerialId"), map.get("search").toString()), builder.equal(root.get("serialId"), map.get("search").toString()), builder.like(root.get("goods").get("name"), "%" + (String) map.get("search") + "%"), builder.like(root.get("goods").get("namePinyin"), "%" + (String) map.get("search") + "%")));
@@ -1126,7 +1128,7 @@ public class AdminService {
                 CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
                 countQuery.select(builder.count(root));
                 if (criteria.isEmpty()) {
-                    throw new RuntimeException("no criteria");
+//                    throw new RuntimeException("no criteria");
                 } else if (criteria.size() == 1) {
                     countQuery.where(criteria.get(0));
                 } else {
@@ -1138,7 +1140,7 @@ public class AdminService {
             if (list == null || list) {
                 query = query.select(root);
                 if (criteria.isEmpty()) {
-                    throw new RuntimeException("no criteria");
+//                    throw new RuntimeException("no criteria");
                 } else if (criteria.size() == 1) {
                     query.where(criteria.get(0));
                 } else {
