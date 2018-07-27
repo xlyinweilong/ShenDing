@@ -230,6 +230,18 @@ public class AladingWebREST {
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
+    
+    
+    @POST
+    @Path("delete_alading_web_search_all")
+    public String deleteAladingWebSearchAll(@CookieParam("auth") String auth) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        aladingWebService.deleteAladingwebSearchAll();
+        map.put("msg", "操作成功！");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
 
     /**
      * 查询代理申请

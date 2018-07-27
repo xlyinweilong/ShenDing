@@ -116,8 +116,8 @@ public class AladingWebService {
      */
     public AladingwebSearch findAladingwebSearch(String search) {
         AladingwebSearch aladingwebSearch = null;
-        TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a WHERE a.wecatCode = :wecatCode", AladingwebSearch.class);
-        query.setParameter("wecatCode", search);
+        TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a WHERE upper(a.wecatCode) = :wecatCode", AladingwebSearch.class);
+        query.setParameter("wecatCode", search.toUpperCase());
         try {
             aladingwebSearch = query.getSingleResult();
         } catch (Exception e) {
@@ -213,6 +213,11 @@ public class AladingWebService {
             AladingwebSearch search = em.find(AladingwebSearch.class, id);
             em.remove(search);
         }
+    }
+    
+    public void deleteAladingwebSearchAll() {
+        TypedQuery<AladingwebSearch> query = em.createQuery("delete FROM AladingwebSearch a", AladingwebSearch.class);
+        query.executeUpdate();
     }
 
     public void deleteAladingwebSpreadById(List<Long> ids) {

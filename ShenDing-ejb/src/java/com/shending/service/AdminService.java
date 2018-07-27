@@ -1177,6 +1177,12 @@ public class AdminService {
         }
         return resultList;
     }
+    
+    public Long findGoodsOrderCount(Long goodsId) {
+        TypedQuery<Long> nameQuery = em.createQuery("SELECT count(g) FROM GoodsOrder g WHERE g.deleted = true AND g.goods.id = :goodsId", Long.class);
+        nameQuery.setParameter("goodsId", goodsId);
+        return nameQuery.getSingleResult();
+    }
 
     public List<SysUser> findSysUserList() {
         TypedQuery<SysUser> nameQuery = em.createQuery("SELECT su FROM SysUser su WHERE su.deleted = FALSE AND su.adminType = :adminType and su.balance = 0 and su.deposit > 0", SysUser.class);

@@ -2400,7 +2400,7 @@ public class AdminServlet extends BaseServlet {
         searchMap.put("category", CategoryEnum.SERVICE_PEOPLE);
         searchMap.put("status", OrderStatusEnum.SUCCESS);
         searchMap.put("orderBy", "GOODS_NAME_ASC");
-        searchMap.put("hasDeleted", true);
+//        searchMap.put("hasDeleted", true);
         ResultList<GoodsOrder> orderList = adminService.findOrderList(searchMap, 1, 1, Boolean.TRUE, Boolean.FALSE);
         for (GoodsOrder goodsOrder : orderList) {
             String[] rs = new String[7];
@@ -2410,7 +2410,7 @@ public class AdminServlet extends BaseServlet {
             rs[3] = goodsOrder.getGoods().getProvinceStr() == null ? "" : goodsOrder.getGoods().getProvinceStr();
             rs[4] = goodsOrder.getGoods().getWeChatCode() == null ? "" : goodsOrder.getGoods().getWeChatCode();
             rs[5] = goodsOrder.getPaidPrice() == null ? "" : goodsOrder.getPaidPrice().toString();
-            rs[6] = goodsOrder.getDeleted() ?"已经回收":"正在代理";
+            rs[6] = adminService.findGoodsOrderCount(goodsOrder.getGoods().getId()).toString();
             resultList.add(rs);
         }
         String[] headLine = new String[7];
@@ -2420,7 +2420,7 @@ public class AdminServlet extends BaseServlet {
         headLine[3] = "省份";
         headLine[4] = "微信";
         headLine[5] = "价钱";
-        headLine[6] = "已经回收";
+        headLine[6] = "回收次数";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);

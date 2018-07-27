@@ -112,7 +112,7 @@ app.controller('AladingwebSearchController', ['$scope', '$http', '$modal', '$loc
                 } else {
                     $.scojs_message("生成成功", $.scojs_message.TYPE_OK);
                 }
-                $scope.getList(1,10);
+                $scope.getList(1, 10);
             });
         };
 
@@ -152,6 +152,31 @@ app.controller('AladingwebSearchController', ['$scope', '$http', '$modal', '$loc
                     }
                 });
             }
+        };
+
+
+        $scope.deleteItemsAll = function () {
+            var modalInstance = $modal.open({
+                templateUrl: 'confirm.html',
+                controller: 'ConfirmCtrl', resolve: {
+                    modal: function () {
+                        return {title: "作废确认", content: "确定要删除所有的元素吗？", ok: "确定", cancel: "取消"};
+                    }
+                }
+            });
+            modalInstance.result.then(function (confirm) {
+                if (confirm) {
+                    $scope.listLoadingData = true;
+                    $http.post("/webservice/aldingweb/delete_alading_web_search_all", {}).success(function (responseData) {
+                        if (responseData.success !== "1") {
+                            $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                        } else {
+                            $scope.pageChanged();
+                        }
+                        $scope.listLoadingData = false;
+                    });
+                }
+            });
         };
     }]);
 
