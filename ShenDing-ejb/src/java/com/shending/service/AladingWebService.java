@@ -119,7 +119,7 @@ public class AladingWebService {
         TypedQuery<AladingwebSearch> query = em.createQuery("SELECT a FROM AladingwebSearch a WHERE upper(a.wecatCode) = :wecatCode", AladingwebSearch.class);
         query.setParameter("wecatCode", search.toUpperCase());
         try {
-            aladingwebSearch = query.getSingleResult();
+            aladingwebSearch = query.getResultList().get(0);
         } catch (Exception e) {
             aladingwebSearch = null;
         }

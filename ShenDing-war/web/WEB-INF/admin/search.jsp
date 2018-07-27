@@ -12,14 +12,13 @@
         <link rel="stylesheet" href="/aladingImg/css/reset.css">
         <link rel="stylesheet" href="/aladingImg/css/supersized.css">
         <link rel="stylesheet" href="/aladingImg/css/style.css">
-        <script language="JavaScript" src="/aladingImg/js/tab.js"></script> 
+        <!--<script language="JavaScript" src="/aladingImg/js/tab.js"></script>--> 
         <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
         <!--[if lt IE 9]>
             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
         <![endif]-->
     </head>
     <body>
-
         <c:choose>
             <c:when test="${noRs}">
                 <div class="page-container">
