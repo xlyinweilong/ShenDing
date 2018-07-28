@@ -2398,19 +2398,25 @@ public class AdminServlet extends BaseServlet {
         List<String[]> resultList = new ArrayList<>();
         Map searchMap = new HashMap();
         searchMap.put("category", CategoryEnum.SERVICE_PEOPLE);
-        searchMap.put("status", OrderStatusEnum.SUCCESS);
+        List<OrderStatusEnum> orderStatusList = new ArrayList<>();
+        orderStatusList.add(OrderStatusEnum.SUCCESS);
+        orderStatusList.add(OrderStatusEnum.TERMINATION);
+        searchMap.put("statuss", orderStatusList);
         searchMap.put("orderBy", "GOODS_NAME_ASC");
 //        searchMap.put("hasDeleted", true);
         ResultList<GoodsOrder> orderList = adminService.findOrderList(searchMap, 1, 1, Boolean.TRUE, Boolean.FALSE);
         for (GoodsOrder goodsOrder : orderList) {
+            if(goodsOrder.getGoods() == null){
+                continue;
+            }
             String[] rs = new String[7];
             rs[0] = goodsOrder.getGoods().getName();
-            rs[1] = goodsOrder.getAgentUser().getName();
+            rs[1] = goodsOrder.getAgentUser() == null ? "" :goodsOrder.getAgentUser().getName();
             rs[2] = goodsOrder.getGoods().getPeopleCount() == null ? "" : goodsOrder.getGoods().getPeopleCount().toString();
             rs[3] = goodsOrder.getGoods().getProvinceStr() == null ? "" : goodsOrder.getGoods().getProvinceStr();
             rs[4] = goodsOrder.getGoods().getWeChatCode() == null ? "" : goodsOrder.getGoods().getWeChatCode();
             rs[5] = goodsOrder.getPaidPrice() == null ? "" : goodsOrder.getPaidPrice().toString();
-            rs[6] = adminService.findGoodsOrderCount(goodsOrder.getGoods().getId()).toString();
+            rs[6] = goodsOrder.getStatusMean();
             resultList.add(rs);
         }
         String[] headLine = new String[7];
@@ -2420,7 +2426,7 @@ public class AdminServlet extends BaseServlet {
         headLine[3] = "省份";
         headLine[4] = "微信";
         headLine[5] = "价钱";
-        headLine[6] = "回收次数";
+        headLine[6] = "状态";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);
