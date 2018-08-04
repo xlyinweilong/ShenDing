@@ -758,7 +758,7 @@ public class AdminServlet extends BaseServlet {
         searchMap.put("type", WageLogTypeEnum.RECOMMEND);
         ResultList<WageLog> resultList = adminService.findWageLogList(searchMap, 1, Integer.MAX_VALUE, null, Boolean.FALSE);
         adminService.setGoodsNamesWageLog(resultList);
-        String[] headLine = new String[10];
+        String[] headLine = new String[11];
         headLine[0] = "日期";
         headLine[1] = "类型";
         headLine[2] = "平台";
@@ -769,10 +769,11 @@ public class AdminServlet extends BaseServlet {
         headLine[7] = "业务员平台";
         headLine[8] = "平台已付款";
         headLine[9] = "是否回收";
+        headLine[10] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (WageLog log : resultList) {
-            String[] strLine = new String[10];
+            String[] strLine = new String[11];
             strLine[0] = Tools.formatDate(log.getPayDate(), "yyyy-MM-dd");
             strLine[1] = log.getGoodsOrder().getGoods().getCategoryMean();
             strLine[2] = log.getGoodsOrder().getGoods().getName();
@@ -783,6 +784,7 @@ public class AdminServlet extends BaseServlet {
             strLine[7] = log.getGoodsNames();
             strLine[8] = log.getGoodsOrder().getPaidPrice().toString();
             strLine[9] = log.getBacked() ? "被回收" : "";
+            strLine[10] = log.getGoodsOrder() == null ? "" : log.getGoodsOrder().getGoods().getName();
             vecCsvData.add(strLine);
         }
         //Exporting vector to csv file
@@ -2401,17 +2403,19 @@ public class AdminServlet extends BaseServlet {
         List<OrderStatusEnum> orderStatusList = new ArrayList<>();
         orderStatusList.add(OrderStatusEnum.SUCCESS);
         orderStatusList.add(OrderStatusEnum.TERMINATION);
+        orderStatusList.add(OrderStatusEnum.WAIT_SIGN_CONTRACT);
+        orderStatusList.add(OrderStatusEnum.EARNEST);
         searchMap.put("statuss", orderStatusList);
         searchMap.put("orderBy", "GOODS_NAME_ASC");
 //        searchMap.put("hasDeleted", true);
         ResultList<GoodsOrder> orderList = adminService.findOrderList(searchMap, 1, 1, Boolean.TRUE, Boolean.FALSE);
         for (GoodsOrder goodsOrder : orderList) {
-            if(goodsOrder.getGoods() == null){
+            if (goodsOrder.getGoods() == null) {
                 continue;
             }
             String[] rs = new String[7];
             rs[0] = goodsOrder.getGoods().getName();
-            rs[1] = goodsOrder.getAgentUser() == null ? "" :goodsOrder.getAgentUser().getName();
+            rs[1] = goodsOrder.getAgentUser() == null ? "" : goodsOrder.getAgentUser().getName();
             rs[2] = goodsOrder.getGoods().getPeopleCount() == null ? "" : goodsOrder.getGoods().getPeopleCount().toString();
             rs[3] = goodsOrder.getGoods().getProvinceStr() == null ? "" : goodsOrder.getGoods().getProvinceStr();
             rs[4] = goodsOrder.getGoods().getWeChatCode() == null ? "" : goodsOrder.getGoods().getWeChatCode();
