@@ -86,6 +86,11 @@ public class UserWages {
      * 代理的地区
      */
     private String userOrderNames;
+    
+    /**
+     * 代理的省份
+     */
+    private String userProvinceNames;
 
     /**
      * 是否含有回收
@@ -116,6 +121,14 @@ public class UserWages {
 
     public void setVipAmount(String vipAmount) {
         this.vipAmount = vipAmount;
+    }
+
+    public String getUserProvinceNames() {
+        return userProvinceNames;
+    }
+
+    public void setUserProvinceNames(String userProvinceNames) {
+        this.userProvinceNames = userProvinceNames;
     }
 
     public String getUserOrderNames() {

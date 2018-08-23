@@ -864,7 +864,7 @@ public class AdminServlet extends BaseServlet {
         CategoryEnum category = CategoryEnum.valueOf(super.getRequestString(request, "category"));
         searchMap.put("category", category);
         ResultList<OrderRecord> resultList = adminService.findOrderRecordList(searchMap, 1, Integer.MAX_VALUE, null, Boolean.FALSE);
-        String[] headLine = new String[12];
+        String[] headLine = new String[13];
         headLine[0] = "日期";
         headLine[1] = "平台类型";
         headLine[2] = "推荐人";//推荐人
@@ -879,6 +879,7 @@ public class AdminServlet extends BaseServlet {
         headLine[9] = "手续费";//手续费
         headLine[10] = "实际提成";
         headLine[11] = "备注";
+        headLine[12] = "省份";
 
         vecCsvData.add(headLine);
         //sets the data to be exported
@@ -886,7 +887,7 @@ public class AdminServlet extends BaseServlet {
             if (record.getOrder() == null || record.getDeleted() || record.getOrder().getDeleted()) {
                 continue;
             }
-            String[] strLine = new String[12];
+            String[] strLine = new String[13];
             strLine[0] = Tools.formatDate(record.getPayDate(), "yyyy-MM-dd");
             strLine[1] = record.getGoods().getCategoryMean();
             strLine[2] = adminService.getGoodsOrderRecommendOrderNames(record.getOrder());
@@ -928,6 +929,7 @@ public class AdminServlet extends BaseServlet {
                 strLine[10] = Double.parseDouble(strLine[8]) - Double.parseDouble(strLine[9]) + "";
             }
             strLine[11] = record.getOrder().getRemark() == null ? "" : record.getOrder().getRemark();
+            strLine[12] = record.getGoods().getProvinceStr();
             vecCsvData.add(strLine);
         }
         //Exporting vector to csv file
@@ -1008,7 +1010,7 @@ public class AdminServlet extends BaseServlet {
         searchMap.put("category", category);
         searchMap.put("status", OrderStatusEnum.SUCCESS);
         ResultList<GoodsOrder> resultList = adminService.findOrderList(searchMap, 0, 0, true, Boolean.FALSE);
-        String[] headLine = new String[15];
+        String[] headLine = new String[16];
         headLine[0] = "日期";
         headLine[1] = "序列号";
         headLine[2] = "合同编号";
@@ -1024,10 +1026,11 @@ public class AdminServlet extends BaseServlet {
         headLine[12] = "银行卡号码";
         headLine[13] = "人数";
         headLine[14] = "备注";
+        headLine[15] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (GoodsOrder order : resultList) {
-            String[] strLine = new String[15];
+            String[] strLine = new String[16];
             strLine[0] = Tools.formatDate(order.getLastPayDate(), "yyyy-MM-dd");
             strLine[1] = order.getSerialId();
             strLine[2] = order.getContractSerialId() == null ? "" : order.getContractSerialId();
@@ -1043,6 +1046,7 @@ public class AdminServlet extends BaseServlet {
             strLine[12] = order.getAgentUser().getBankCardCodeOutput();
             strLine[13] = order.getGoods().getPeopleCount() == null ? "0" : order.getGoods().getPeopleCount() + "";
             strLine[14] = order.getRemark() == null ? "" : order.getRemark();
+            strLine[15] = order.getGoods().getProvinceStr();
             vecCsvData.add(strLine);
         }
         //Exporting vector to csv file
@@ -1119,7 +1123,7 @@ public class AdminServlet extends BaseServlet {
         } else if (category.equals(CategoryEnum.MAKE_FRIENDS)) {
             resultList = adminService.findWageListMF(startDate, endDate);
         }
-        String[] headLine = new String[10];
+        String[] headLine = new String[11];
         headLine[0] = "用户";
         headLine[1] = "余额";
         headLine[2] = "总押金";
@@ -1130,6 +1134,7 @@ public class AdminServlet extends BaseServlet {
         headLine[7] = "广告总工资";
         headLine[8] = "代理的平台";
         headLine[9] = "含有回收";
+        headLine[10] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (String[] s : resultList) {
@@ -1203,7 +1208,7 @@ public class AdminServlet extends BaseServlet {
             }
         }
         List<String[]> resultList = adminService.findWageTotalListAll(startDate, endDate);
-        String[] headLine = new String[15];
+        String[] headLine = new String[16];
         headLine[0] = "用户";
         headLine[1] = "便民余额";
         headLine[2] = "便民押金";
@@ -1219,6 +1224,7 @@ public class AdminServlet extends BaseServlet {
         headLine[12] = "总工资";
         headLine[13] = "代理的平台";
         headLine[14] = "含有回收";
+        headLine[15] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);
@@ -1292,7 +1298,7 @@ public class AdminServlet extends BaseServlet {
         List<PlaceWages> resultList = adminService.findWageTotalListAllByPlace(startDate, endDate);
         List<String[]> placeWagesStr = new ArrayList<>();
         for (PlaceWages ps : resultList) {
-            String[] strs = new String[8];
+            String[] strs = new String[9];
             strs[0] = ps.getGoodsName();
             strs[1] = ps.getAdAmount();
             strs[2] = ps.getRecommendAmount();
@@ -1301,9 +1307,10 @@ public class AdminServlet extends BaseServlet {
             strs[5] = ps.getGrandSlamAmount();
             strs[6] = ps.getVipAmount();
             strs[7] = ps.getTotalAmount();
+            strs[8] = adminService.getGoodsById(ps.getGoodsId()).getProvinceStr();
             placeWagesStr.add(strs);
         }
-        String[] headLine = new String[8];
+        String[] headLine = new String[9];
         headLine[0] = "地区";
         headLine[1] = "广告工资";
         headLine[2] = "加盟提成工资";
@@ -1312,6 +1319,7 @@ public class AdminServlet extends BaseServlet {
         headLine[5] = "大满贯工资";
         headLine[6] = "会员工资";
         headLine[7] = "总工资";
+        headLine[8] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(placeWagesStr);
@@ -1463,7 +1471,7 @@ public class AdminServlet extends BaseServlet {
         }
         CategoryEnum category = CategoryEnum.valueOf(super.getRequestString(request, "category"));
         List<String[]> resultList = adminService.findUserWageLogList(startDate, endDate, category);
-        String[] headLine = new String[11];
+        String[] headLine = new String[12];
         headLine[0] = "日期";
         headLine[1] = "姓名";
         headLine[2] = "类型";
@@ -1475,6 +1483,7 @@ public class AdminServlet extends BaseServlet {
         headLine[8] = "推荐人代理地区";
         headLine[9] = "支付方式";
         headLine[10] = "价钱";
+        headLine[11] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (String[] s : resultList) {
@@ -1554,7 +1563,7 @@ public class AdminServlet extends BaseServlet {
         } else if (category.equals(CategoryEnum.MAKE_FRIENDS)) {
             resultList = adminService.findOrderWageListMf(startDate, endDate);
         }
-        String[] headLine = new String[8];
+        String[] headLine = new String[9];
         headLine[0] = "用户";
         headLine[1] = "余额";
         headLine[2] = "总押金";
@@ -1563,6 +1572,7 @@ public class AdminServlet extends BaseServlet {
         headLine[5] = "工资";
         headLine[6] = "含有回收";
         headLine[7] = "代理的平台";
+        headLine[8] = "代理的平台省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (String[] s : resultList) {
@@ -1729,7 +1739,7 @@ public class AdminServlet extends BaseServlet {
         searchMap.put("startDate", startDate);
         searchMap.put("endDate", endDate);
         List<Vip> resultList = adminService.findProductVipList(searchMap, 0, 0, true, false);
-        String[] headLine = new String[14];
+        String[] headLine = new String[15];
         headLine[0] = "到款日期";
         headLine[1] = "会员到期时间";
         headLine[2] = "地区经理";
@@ -1744,10 +1754,11 @@ public class AdminServlet extends BaseServlet {
         headLine[11] = "会员微信号";
         headLine[12] = "会员电话";
         headLine[13] = "备注";
+        headLine[14] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (Vip vip : resultList) {
-            String[] s = new String[14];
+            String[] s = new String[15];
             s[0] = Tools.formatDate(vip.getPayDate(), "yyyy-MM-dd");
             s[1] = Tools.formatDate(vip.getEndDate(), "yyyy-MM-dd");
             s[2] = vip.getManager() == null ? "" : vip.getManager().getName();
@@ -1762,6 +1773,7 @@ public class AdminServlet extends BaseServlet {
             s[11] = vip.getVipWechat();
             s[12] = vip.getVipPhone();
             s[13] = vip.getRemark();
+            s[14] = vip.getGoods() == null ? "" : vip.getGoods().getProvinceStr();
             vecCsvData.add(s);
         }
         //Exporting vector to csv file
@@ -1837,7 +1849,7 @@ public class AdminServlet extends BaseServlet {
         searchMap.put("type", WageLogTypeEnum.PRODUCT);
         searchMap.put("cosmeticsIsNull", true);
         List<WageLog> resultList = adminService.findWageLogList(searchMap, 0, 0, true, false);
-        String[] headLine = new String[7];
+        String[] headLine = new String[8];
         headLine[0] = "时间";
         headLine[1] = "产品";
         headLine[2] = "价格";
@@ -1845,11 +1857,12 @@ public class AdminServlet extends BaseServlet {
         headLine[4] = "购买平台";
         headLine[5] = "提成";
         headLine[6] = "备注";
+        headLine[7] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (WageLog log : resultList) {
             ProductLog productLog = log.getProductLog();
-            String[] s = new String[7];
+            String[] s = new String[8];
             s[0] = Tools.formatDate(log.getPayDate(), "yyyy-MM-dd");
             s[1] = productLog.getProductStr();
             s[2] = productLog.getIncomeAmount().toString();
@@ -1857,6 +1870,7 @@ public class AdminServlet extends BaseServlet {
             s[4] = productLog.getGoods().getName();
             s[5] = log.getAmount().toString();//对账用这个
             s[6] = productLog.getRemark() == null ? "" : productLog.getRemark();
+            s[7] = productLog.getGoods().getProvinceStr();
             vecCsvData.add(s);
         }
         //Exporting vector to csv file
@@ -1932,7 +1946,7 @@ public class AdminServlet extends BaseServlet {
         searchMap.put("type", WageLogTypeEnum.PRODUCT);
         searchMap.put("cosmeticsIsNotNull", true);
         List<WageLog> resultList = adminService.findWageLogList(searchMap, 0, 0, true, false);
-        String[] headLine = new String[9];
+        String[] headLine = new String[10];
         headLine[0] = "时间";
         headLine[1] = "产品";
         headLine[2] = "价格";
@@ -1942,11 +1956,12 @@ public class AdminServlet extends BaseServlet {
         headLine[6] = "备注";
         headLine[7] = "分成大区经理";
         headLine[8] = "大区经理分成金额";
+        headLine[9] = "省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         for (WageLog log : resultList) {
             Cosmetics cosmetics = log.getCosmetics();
-            String[] s = new String[9];
+            String[] s = new String[10];
             s[0] = Tools.formatDate(log.getPayDate(), "yyyy-MM-dd");
             s[1] = cosmetics.getProductStr();
             s[2] = cosmetics.getIncomeAmount().toString();
@@ -1956,6 +1971,7 @@ public class AdminServlet extends BaseServlet {
             s[6] = cosmetics.getRemark() == null ? "" : cosmetics.getRemark();
             s[7] = cosmetics.getRegionalManager() == null ? "" : cosmetics.getRegionalManager().getName();
             s[8] = cosmetics.getRegionalManagerAmount() == null ? "" : cosmetics.getRegionalManagerAmount().toString();
+            s[9] = cosmetics.getGoods().getProvinceStr();
             vecCsvData.add(s);
         }
         //Exporting vector to csv file
@@ -2026,7 +2042,7 @@ public class AdminServlet extends BaseServlet {
             }
         }
         List<String[]> resultList = adminService.findWageLogProductList(startDate, endDate);
-        String[] headLine = new String[8];
+        String[] headLine = new String[9];
         headLine[0] = "用户";
         headLine[1] = "平台";
         headLine[2] = "银行";
@@ -2035,6 +2051,7 @@ public class AdminServlet extends BaseServlet {
         headLine[5] = "交易次数";
         headLine[6] = "产品数量";
         headLine[7] = "代理全部平台";
+        headLine[8] = "代理全部平台省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);
@@ -2106,7 +2123,7 @@ public class AdminServlet extends BaseServlet {
             }
         }
         List<String[]> resultList = adminService.findWageLogCosmeticsList(startDate, endDate);
-        String[] headLine = new String[8];
+        String[] headLine = new String[9];
         headLine[0] = "用户";
         headLine[1] = "平台";
         headLine[2] = "银行";
@@ -2115,6 +2132,7 @@ public class AdminServlet extends BaseServlet {
         headLine[5] = "交易次数";
         headLine[6] = "产品数量";
         headLine[7] = "代理全部平台";
+        headLine[8] = "代理全部平台省份";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(resultList);

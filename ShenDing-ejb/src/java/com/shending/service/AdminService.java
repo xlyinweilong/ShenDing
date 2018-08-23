@@ -1177,7 +1177,7 @@ public class AdminService {
         }
         return resultList;
     }
-    
+
     public Long findGoodsOrderCount(Long goodsId) {
         TypedQuery<Long> nameQuery = em.createQuery("SELECT count(g) FROM GoodsOrder g WHERE g.deleted = true AND g.goods.id = :goodsId", Long.class);
         nameQuery.setParameter("goodsId", goodsId);
@@ -1482,6 +1482,16 @@ public class AdminService {
         return goodsNames;
     }
 
+    public String getUserGoodsProvinceNames(Long uid) {
+        TypedQuery<Goods> nameQuery = em.createQuery("SELECT go.goods FROM GoodsOrder go WHERE go.deleted = FALSE AND go.status = :status AND go.agentUser.id = :user", Goods.class);
+        nameQuery.setParameter("user", uid).setParameter("status", OrderStatusEnum.SUCCESS);
+        String provinceNames = "";
+        for (int i = 0; i < nameQuery.getResultList().size(); i++) {
+            provinceNames += nameQuery.getResultList().get(i).getProvinceStr() + " ";
+        }
+        return provinceNames;
+    }
+
     /**
      * 通过订单获取工资日志
      *
@@ -1521,7 +1531,7 @@ public class AdminService {
         query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("category", CategoryEnum.SERVICE_PEOPLE);
         for (Object o : query.getResultList()) {
             Object[] os = (Object[]) o;
-            String[] str = new String[10];
+            String[] str = new String[11];
             str[0] = os[0].toString();
             str[1] = os[1].toString();
             str[2] = os[2].toString();
@@ -1538,6 +1548,7 @@ public class AdminService {
             TypedQuery<Long> queryBack = em.createQuery("SELECT COUNT(go) FROM GoodsOrder go WHERE go.category = :category AND go.deleted = FALSE AND go.status = :status AND go.agentUser.id = :user AND go.lastPayDate > :startDate AND go.lastPayDate < :endDate", Long.class);
             queryBack.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", uid).setParameter("status", OrderStatusEnum.TERMINATION).setParameter("category", CategoryEnum.SERVICE_PEOPLE);
             str[9] = queryBack.getSingleResult() > 0 ? "含有" : "";
+            str[10] = this.getUserGoodsProvinceNames(uid);
             list.add(str);
         }
         return list;
@@ -1549,7 +1560,7 @@ public class AdminService {
         query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("category", CategoryEnum.MAKE_FRIENDS);
         for (Object o : query.getResultList()) {
             Object[] os = (Object[]) o;
-            String[] str = new String[10];
+            String[] str = new String[11];
             str[0] = os[0].toString();
             str[1] = os[1].toString();
             str[2] = os[2].toString();
@@ -1567,6 +1578,7 @@ public class AdminService {
             TypedQuery<Long> queryBack = em.createQuery("SELECT COUNT(go) FROM GoodsOrder go WHERE go.category = :category AND go.deleted = FALSE AND go.status = :status AND go.agentUser.id = :user AND go.lastPayDate > :startDate AND go.lastPayDate < :endDate", Long.class);
             queryBack.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", uid).setParameter("status", OrderStatusEnum.TERMINATION).setParameter("category", CategoryEnum.MAKE_FRIENDS);
             str[9] = queryBack.getSingleResult() > 0 ? "含有" : "";
+            str[10] = this.getUserGoodsProvinceNames(uid);
             list.add(str);
         }
         return list;
@@ -1578,7 +1590,7 @@ public class AdminService {
         query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("category", CategoryEnum.SERVICE_PEOPLE);
         for (Object o : query.getResultList()) {
             Object[] os = (Object[]) o;
-            String[] str = new String[8];
+            String[] str = new String[9];
             str[0] = os[0].toString();
             str[1] = os[1].toString();
             str[2] = os[2].toString();
@@ -1592,6 +1604,7 @@ public class AdminService {
             queryBack.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", os[6].toString()).setParameter("status", OrderStatusEnum.TERMINATION).setParameter("category", CategoryEnum.SERVICE_PEOPLE);
             str[6] = queryBack.getSingleResult() > 0 ? "含有" : "";
             str[7] = this.getUserOrderNames((long) os[6]);
+            str[8] = this.getUserGoodsProvinceNames((long) os[6]);
             list.add(str);
         }
         return list;
@@ -1603,7 +1616,7 @@ public class AdminService {
         query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("category", CategoryEnum.MAKE_FRIENDS);
         for (Object o : query.getResultList()) {
             Object[] os = (Object[]) o;
-            String[] str = new String[8];
+            String[] str = new String[9];
             str[0] = os[0].toString();
             str[1] = os[1].toString();
             str[2] = os[2].toString();
@@ -1617,6 +1630,7 @@ public class AdminService {
             queryBack.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", os[6].toString()).setParameter("status", OrderStatusEnum.TERMINATION).setParameter("category", CategoryEnum.MAKE_FRIENDS);
             str[6] = queryBack.getSingleResult() > 0 ? "含有" : "";
             str[7] = this.getUserOrderNames((long) os[6]);;
+            str[8] = this.getUserGoodsProvinceNames((long) os[6]);;
             list.add(str);
         }
         return list;
@@ -1705,6 +1719,10 @@ public class AdminService {
             list.add(str);
         }
         return list;
+    }
+
+    public Goods getGoodsById(Long id) {
+        return em.find(Goods.class, id);
     }
 
     public List<String[]> findWageTotalListMf(Date startDate, Date endDate) {
@@ -2188,6 +2206,7 @@ public class AdminService {
         for (Long uid : userMap.keySet()) {
             UserWages userWages = userMap.get(uid);
             userWages.setUserOrderNames(this.getUserOrderNames(uid));
+            userWages.setUserProvinceNames(this.getUserGoodsProvinceNames(uid));
             TypedQuery<Long> queryBack = em.createQuery("SELECT COUNT(go) FROM GoodsOrder go WHERE go.category = :category AND go.deleted = FALSE AND go.status = :status AND go.recommendIds = :user AND go.lastPayDate > :startDate AND go.lastPayDate < :endDate", Long.class);
             queryBack.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("user", uid.toString()).setParameter("status", OrderStatusEnum.TERMINATION).setParameter("category", CategoryEnum.MAKE_FRIENDS);
             userWages.setBack(queryBack.getSingleResult() > 0 ? "含有" : "");
@@ -2196,7 +2215,7 @@ public class AdminService {
         List returnList = new ArrayList();
         for (Long uid : userMap.keySet()) {
             UserWages userWages = userMap.get(uid);
-            String[] newStr = new String[15];
+            String[] newStr = new String[16];
             newStr[0] = userWages.getName();//用户
             newStr[1] = userWages.getBalance();//便民余额
             newStr[2] = userWages.getDeposit();//便民押金
@@ -2212,6 +2231,7 @@ public class AdminService {
             newStr[12] = userWages.getTotalAmount();//总工资
             newStr[13] = userWages.getUserOrderNames();//代理的平台
             newStr[14] = userWages.getBack();//含有回收
+            newStr[15] = userWages.getUserProvinceNames();//省份
             returnList.add(newStr);
         }
         return returnList;
@@ -2374,7 +2394,7 @@ public class AdminService {
             if (userWageLog.getGoodsOrder().getDeleted()) {
                 continue;
             }
-            String[] str = new String[11];
+            String[] str = new String[12];
             str[0] = Tools.formatDate(userWageLog.getPayDate(), "yyyy-MM-dd");
             str[1] = userWageLog.getUser().getName();
             str[2] = userWageLog.getGoodsOrder().getGoods().getCategoryMean();
@@ -2386,6 +2406,7 @@ public class AdminService {
             str[8] = this.getGoodsOrderRecommendOrderNames(userWageLog.getGoodsOrder());
             str[9] = userWageLog.getGoodsOrder().getGatewayType().getMean();
             str[10] = userWageLog.getGoodsOrder().getPaidPrice().toString();
+            str[11] = userWageLog.getGoodsOrder().getGoods().getProvinceStr();
             list.add(str);
         }
         return list;
@@ -2404,7 +2425,7 @@ public class AdminService {
         query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("type", WageLogTypeEnum.PRODUCT);
         for (Object o : query.getResultList()) {
             Object[] os = (Object[]) o;
-            String[] str = new String[8];
+            String[] str = new String[9];
             str[0] = os[0].toString();
             str[1] = os[1].toString();
             str[2] = os[2] == null ? "" : os[2].toString();
@@ -2419,6 +2440,7 @@ public class AdminService {
             str[6] = os[6].toString();
             long uid = (long) os[7];
             str[7] = this.getUserOrderNames(uid);
+            str[9] = this.getUserGoodsProvinceNames(uid);
             list.add(str);
         }
         return list;
@@ -2437,7 +2459,7 @@ public class AdminService {
         query.setParameter("startDate", Tools.addDay(startDate, -1)).setParameter("endDate", Tools.addDay(endDate, 0)).setParameter("type", WageLogTypeEnum.PRODUCT);
         for (Object o : query.getResultList()) {
             Object[] os = (Object[]) o;
-            String[] str = new String[8];
+            String[] str = new String[9];
             str[0] = os[0].toString();
             str[1] = os[1].toString();
             str[2] = os[2] == null ? "" : os[2].toString();
@@ -2452,6 +2474,7 @@ public class AdminService {
             str[6] = os[6].toString();
             long uid = (long) os[7];
             str[7] = this.getUserOrderNames(uid);
+            str[8] = this.getUserGoodsProvinceNames(uid);
             list.add(str);
         }
         return list;
@@ -3285,12 +3308,12 @@ public class AdminService {
             criteria.add(builder.lessThan(root.get("payDate"), (Date) map.get("endDate")));
         }
         if (map.containsKey("search")) {
-            criteria.add(builder.or(builder.like(root.get("vipPhone"), "%" + (String) map.get("search") + "%"), 
-                    builder.like(root.get("vipWechat"),  "%" + (String) map.get("search") + "%"), 
-                    builder.like(root.get("vipName"), "%" + (String) map.get("search") + "%"), 
-                    builder.like(root.get("vipName"), "%" + (String) map.get("search") + "%"), 
-                    builder.like(root.get("divideUser").get("name"), "%" + (String) map.get("search") + "%"), 
-                    builder.like(root.get("goods").get("name"), "%" + (String) map.get("search") + "%"), 
+            criteria.add(builder.or(builder.like(root.get("vipPhone"), "%" + (String) map.get("search") + "%"),
+                    builder.like(root.get("vipWechat"), "%" + (String) map.get("search") + "%"),
+                    builder.like(root.get("vipName"), "%" + (String) map.get("search") + "%"),
+                    builder.like(root.get("vipName"), "%" + (String) map.get("search") + "%"),
+                    builder.like(root.get("divideUser").get("name"), "%" + (String) map.get("search") + "%"),
+                    builder.like(root.get("goods").get("name"), "%" + (String) map.get("search") + "%"),
                     builder.like(root.get("provinceStr"), "%" + (String) map.get("search") + "%")
             ));
         }
