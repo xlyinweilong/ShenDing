@@ -599,6 +599,20 @@ public class AdminService {
         }
         return user;
     }
+    
+    
+    public GoodsOrder findGoodsLastOrder(Long goodsId){
+        GoodsOrder goodsOrder = null;
+        try {
+            TypedQuery<GoodsOrder> query = em.createQuery("SELECT g FROM GoodsOrder g WHERE g.goods.id = :goodsId and g.deleted = false order by g.lastPayDate desc", GoodsOrder.class);
+            query.setParameter("goodsId", goodsId);
+            query.setMaxResults(1);
+            goodsOrder = query.getSingleResult();
+        } catch (NoResultException ex) {
+            goodsOrder = null;
+        }
+        return goodsOrder;
+    }
 
     /**
      * 通过帐号获得后台用户对象
@@ -1437,6 +1451,25 @@ public class AdminService {
             String goodsNames = "";
             for (int i = 0; i < nameQuery.getResultList().size(); i++) {
                 goodsNames += nameQuery.getResultList().get(i).getCategoryName() + " ";
+            }
+            names += goodsNames + ";";
+        }
+        return names;
+    }
+    
+    
+    public String getGoodsOrderRecommendOrderProvinceNames(GoodsOrder order) {
+        if (order.getRecommendIdList() == null || order.getRecommendIdList().isEmpty()) {
+            return "";
+        }
+        String names = "";
+        for (String id : order.getRecommendIdList()) {
+            //根据用户获取用户的订单
+            TypedQuery<Goods> nameQuery = em.createQuery("SELECT go.goods FROM GoodsOrder go WHERE go.deleted = FALSE AND go.status = :status AND go.agentUser.id = :user ORDER BY go.agentUser.id ASC", Goods.class);
+            nameQuery.setParameter("user", Long.parseLong(id)).setParameter("status", OrderStatusEnum.SUCCESS);
+            String goodsNames = "";
+            for (int i = 0; i < nameQuery.getResultList().size(); i++) {
+                goodsNames += nameQuery.getResultList().get(i).getProvinceStr()+ " ";
             }
             names += goodsNames + ";";
         }
@@ -2817,7 +2850,7 @@ public class AdminService {
      * @return
      * @throws EjbMessageException
      */
-    public NewAd createOrUpdateNewAd(Long id, Goods goods, BigDecimal amount, Date payDate, AdLimitTypeEnum limitType,
+    public NewAd createOrUpdateNewAd(Long id, Goods goods, BigDecimal amount, Date payDate, String limitType,
             String name, String ownerWeChat, PaymentGatewayTypeEnum gatewayType, SysUser createUser, BigDecimal userBalanceAmount, BigDecimal userAmount, AdLevelEnum adLevel, String remark, WageLogTypeEnum sendType, CategoryEnum category, String categoryPlus) throws EjbMessageException {
         NewAd ad = new NewAd();
         if (id != null) {
@@ -2884,15 +2917,15 @@ public class AdminService {
         ad.setLimitType(limitType);
         ad.setPayDate(payDate);
         ad.setCategoryPlus(categoryPlus);
-        if (AdLimitTypeEnum.MONTH_1.equals(ad.getLimitType())) {
+        if (AdLimitTypeEnum.MONTH_1.name().equals(ad.getLimitType())) {
             ad.setEndDate(Tools.addMonth(ad.getPayDate(), 1));
-        } else if (AdLimitTypeEnum.MONTH_2.equals(ad.getLimitType())) {
+        } else if (AdLimitTypeEnum.MONTH_2.name().equals(ad.getLimitType())) {
             ad.setEndDate(Tools.addMonth(ad.getPayDate(), 2));
-        } else if (AdLimitTypeEnum.MONTH_3.equals(ad.getLimitType())) {
+        } else if (AdLimitTypeEnum.MONTH_3.name().equals(ad.getLimitType())) {
             ad.setEndDate(Tools.addMonth(ad.getPayDate(), 3));
-        } else if (AdLimitTypeEnum.DAY_15.equals(ad.getLimitType())) {
+        } else if (AdLimitTypeEnum.DAY_15.name().equals(ad.getLimitType())) {
             ad.setEndDate(Tools.addDay(ad.getPayDate(), 15));
-        } else if (AdLimitTypeEnum.DAY_10.equals(ad.getLimitType())) {
+        } else if (AdLimitTypeEnum.DAY_10.name().equals(ad.getLimitType())) {
             ad.setEndDate(Tools.addDay(ad.getPayDate(), 10));
         }
         ad.setOwnerWeChat(ownerWeChat);

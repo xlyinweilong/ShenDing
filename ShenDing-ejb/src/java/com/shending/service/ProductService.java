@@ -1,5 +1,7 @@
 package com.shending.service;
 
+import com.shending.entity.AdLimitConfig;
+import com.shending.entity.Config;
 import com.shending.entity.Cosmetics;
 import com.shending.entity.WageLog;
 import com.shending.entity.DataArea;
@@ -88,7 +90,7 @@ public class ProductService {
 
     public Vip createOrUpdateVip(Long id, Date payDate, Date endDate, SysUser mangerUser, String provinceCode, String provinceStr, Long orderId, Long goodsId,
             SysUser divideUser, BigDecimal amountBd, BigDecimal divideUserAmountBd, BigDecimal welfareAmountBd,
-            String vipName, Date vipBirthday,String vipBirthdayNoYear, String vipWechat, String vipPhone, String remark) {
+            String vipName, Date vipBirthday, String vipBirthdayNoYear, String vipWechat, String vipPhone, String remark) {
         Vip vip = null;
         if (id == null) {
             vip = new Vip();
@@ -162,7 +164,7 @@ public class ProductService {
         }
         return wageLog;
     }
-    
+
     /**
      * 根据会员获取工资
      *
@@ -179,6 +181,33 @@ public class ProductService {
             log = null;
         }
         return log;
+    }
+
+    public AdLimitConfig findConfigByKey(String key) {
+        AdLimitConfig config = null;
+        TypedQuery<AdLimitConfig> query = em.createQuery("SELECT w FROM AdLimitConfig w WHERE w.key = :key", AdLimitConfig.class);
+        query.setParameter("key", key);
+        try {
+            config = query.getSingleResult();
+        } catch (NoResultException e) {
+            config = null;
+        }
+        return config;
+    }
+    
+    public AdLimitConfig findConfigByValue(String name) {
+        if(Tools.isBlank(name)){
+            return null;
+        }
+        AdLimitConfig config = null;
+        TypedQuery<AdLimitConfig> query = em.createQuery("SELECT w FROM AdLimitConfig w WHERE w.name = :name", AdLimitConfig.class);
+        query.setParameter("name", name);
+        try {
+            config = query.getSingleResult();
+        } catch (NoResultException e) {
+            config = null;
+        }
+        return config;
     }
 
 }

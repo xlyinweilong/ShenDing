@@ -54,11 +54,12 @@
                     <div class="form-group">
                         <label>持续时间<i class="text-danger">*</i></label>
                         <select class="form-control" ng-model="ad.limitType" ng-init="ad.limitType = 'MONTH_1'" ng-keyup="myKeyup($event)">
-                            <option value="DAY_10">10天</option>
-                            <option value="DAY_15">半月</option>
+                            <!--<option value="DAY_10">10天</option>-->
+                            <option ng-repeat="adLimit in adLimitList" ng-selected="ad.limitType == adLimit.key" ng-value="adLimit.key">{{adLimit.name}}</option>
+<!--                            <option value="DAY_15">半月</option>
                             <option ng-selected="ad.limitType == null || ad.limitType == 'MONTH_1'" value="MONTH_1">一月</option>
                             <option value="MONTH_2">两月</option>
-                            <option value="MONTH_3">季度</option>
+                            <option value="MONTH_3">季度</option>-->
                         </select>
                     </div>
                     <div class="line line-dashed b-b line-lg pull-in"></div>

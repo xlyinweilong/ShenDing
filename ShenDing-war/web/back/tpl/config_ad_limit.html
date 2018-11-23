@@ -1,0 +1,94 @@
+<div class="bg-light lter b-b wrapper-md">
+    <h1 class="m-n font-thin h3">产品配置</h1>
+</div>
+<div class="wrapper-md" ng-controller="ConfigAdLimitController">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                广告时间配置列表
+            </div>
+            <div class="panel-body">
+                <div class="row wrapper">
+                    <div class="col-sm-7 m-b-xs">
+                        <button class="btn m-b-xs btn-sm btn-primary btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="add()">
+                            <i class="fa fa-trash-o"></i>
+                            增加
+                        </button>
+                        <button class="btn m-b-xs btn-sm btn-success btn-addon" ng-disabled="list == null || listLoading || listLoadingData" ng-click="getList(1, true)">
+                            <i class="fa fa-refresh"></i>
+                            刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="text-center" ng-show="list == null || listLoading">
+                    <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                </div>
+                <div class="text-center" ng-show="list != null && !listLoading && !listLoadingData && totalItems < 1">
+                    <alert type="warning">无数据</alert>
+                </div>
+                <table class="table table-striped m-b-none" ng-hide="list == null || listLoading || listLoadingData || totalItems < 1">
+                    <thead>
+                        <tr>
+                            <th style="width:10%"></th>
+                            <th style="width:40%">KEY</th>
+                            <th style="width:40%">名称</th>
+                        </tr>
+                    </thead>
+                    <div class="text-center" ng-show="listLoadingData">
+                        <i class="fa fa-spin fa-spinner hide show inline"></i>加载中... 
+                    </div>
+                    <tbody ng-hide="listLoadingData">
+                        <tr ng-repeat="item in list">
+                            <td><label class="i-checks m-b-none"><input type="checkbox" name="userLableIds" ng-model="item.lableId"><i></i></label></td>
+                            <td>{{item.key}}</td>
+                            <td>{{item.name}}</td>
+                            <td>
+                                <a ng-click="edit(item)" class="text-info">修改</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <footer class="panel-footer" ng-hide="list == null || listLoading || totalItems < 1">
+                    <div class="row">
+                        <div class="text-center">
+                            <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged()"  max-size="maxSize" class="pagination-sm m-t-none m-b" boundary-links="true" rotate="false"></pagination>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <a name="contract"></a>
+        <div class="panel panel-default" ng-show="order.show">
+            <div class="panel-heading font-bold">
+                <span class="label pull-right m-t-xs">
+                    <a href="" ng-click="order.show = false">
+                        <i class="fa fa-times text-danger text"></i>
+                    </a>
+                </span>
+                增加/修改
+            </div>
+            <div class="panel-body">
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <div class="form-group">
+                    <label>KEY</label>
+                    <input type="number" class="form-control" placeholder="输入KEY，必须是数字，并且不能重复，不能修改" ng-model="order.key">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                  <div class="form-group">
+                    <label>名称</label>
+                    <input type="text" class="form-control" placeholder="分类名称" ng-model="order.name">
+                </div>
+                <div class="line line-dashed b-b line-lg pull-in"></div>
+                <button type="button" class="btn btn-sm btn-info" ng-click="submitForm()" ng-disabled="order.submitting" ng-class="{'active' : order.submitting}">
+                    <span class="text">保存</span>
+                    <span class="text-active"><i class="fa fa-spin fa-spinner hide show inline"></i>保存中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/ng-template" id="confirm.html">
+    <div ng-include="'/back/tpl/confirm.html'"></div>
+</script>

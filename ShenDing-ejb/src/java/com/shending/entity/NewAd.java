@@ -100,9 +100,9 @@ public class NewAd implements Serializable {
     //级别
     private AdLevelEnum adLevel;
     @Column(name = "limit_type")
-    @Enumerated(EnumType.STRING)
+//    @Enumerated(EnumType.STRING)
     //期限
-    private AdLimitTypeEnum limitType;
+    private String limitType;
     @Column(name = "remark")
     //备注
     private String remark;
@@ -287,11 +287,11 @@ public class NewAd implements Serializable {
         this.adLevel = adLevel;
     }
 
-    public AdLimitTypeEnum getLimitType() {
+    public String getLimitType() {
         return limitType;
     }
 
-    public void setLimitType(AdLimitTypeEnum limitType) {
+    public void setLimitType(String limitType) {
         this.limitType = limitType;
     }
 

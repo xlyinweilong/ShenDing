@@ -1219,6 +1219,17 @@ app.controller('AdController', ['$scope', '$http', '$modal', '$location', "$stat
 app.controller('CreateAdController', ['$scope', '$http', '$modal', '$location', "$state", "$stateParams", function ($scope, $http, $modal, $location, $state, $stateParams) {
         $scope.ad = {submitting: false, payType: 'BANK_TRANSFER', amount: 0, userBalanceAmount: 0, userAmount: 0, categoryPlus: 'NORMAL'};
         $scope.goodsList = null;
+        $scope.adLimitList = null;
+        $http.get("/webservice/product/ad_limit_config_list").success(function (responseData) {
+                if (responseData.success !== "1") {
+                    $.scojs_message(responseData.msg, $.scojs_message.TYPE_ERROR);
+                    if (responseData.success == "-1") {
+                        $state.go('access.signin');
+                    }
+                } else {
+                    $scope.adLimitList = responseData.data;
+                }
+            });
         $scope.goodsListLoadingData = null;
         $scope.goodsListTotalItems = null;
         $scope.checkedGoods = null;

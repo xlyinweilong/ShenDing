@@ -1983,6 +1983,19 @@ public class ProductREST {
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
     }
+    
+    @GET
+    @Path("ad_limit_config_list")
+    public String adLimitConfigList(@CookieParam("auth") String auth, @DefaultValue("1") @QueryParam("pageIndex") Integer pageIndex, @DefaultValue("100") @QueryParam("maxPerPage") Integer maxPerPage) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        String sql = "SELECT p FROM AdLimitConfig p";
+        TypedQuery<ProductTypeConfig> queryTotal = em.createQuery(sql, ProductTypeConfig.class);
+        List<ProductTypeConfig> list = queryTotal.getResultList();
+        map.put("data", (List) list);
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
 
     @POST
     @Path("save_product_type_config")
@@ -2011,6 +2024,39 @@ public class ProductREST {
             em.persist(productTypeConfig);
         } else {
             em.merge(productTypeConfig);
+        }
+        map.put("msg", "操作成功");
+        map.put("success", "1");
+        return Tools.caseObjectToJson(map);
+    }
+    
+    
+    @POST
+    @Path("save_ad_limit_config")
+    public String saveAdLimitConfig(@CookieParam("auth") String auth, @FormParam("name") String name, @FormParam("key") String key) throws Exception {
+        SysUser user = adminService.getUserByLoginCode(auth);
+        Map map = Tools.getDMap();
+        String sql = "SELECT p FROM AdLimitConfig p WHERE p.key = :key";
+        TypedQuery<AdLimitConfig> queryTotal = em.createQuery(sql, AdLimitConfig.class);
+        queryTotal.setParameter("key", key);
+        List<AdLimitConfig> list = queryTotal.getResultList();
+        AdLimitConfig adLimitConfig = null;
+        if (list == null || list.isEmpty()) {
+            adLimitConfig = new AdLimitConfig();
+        } else {
+            adLimitConfig = list.get(0);
+            if (!key.equals(adLimitConfig.getKey())) {
+                map.put("msg", "不能KEY相同");
+                map.put("success", "0");
+                return Tools.caseObjectToJson(map);
+            }
+        }
+        adLimitConfig.setKey(key);
+        adLimitConfig.setName(name);
+        if (list == null || list.isEmpty()) {
+            em.persist(adLimitConfig);
+        } else {
+            em.merge(adLimitConfig);
         }
         map.put("msg", "操作成功");
         map.put("success", "1");

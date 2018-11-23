@@ -11,6 +11,7 @@ import com.shending.entity.Vip;
 import com.shending.entity.WageLog;
 import com.shending.service.AdminService;
 import com.shending.service.AladingWebService;
+import com.shending.service.ProductService;
 import com.shending.support.ResultList;
 import com.shending.support.Tools;
 import com.shending.support.bo.PlaceWages;
@@ -75,6 +76,8 @@ public class AdminServlet extends BaseServlet {
     private AdminService adminService;
     @EJB
     private AladingWebService aladingWebService;
+    @EJB
+    private ProductService productService;
 
     /// <editor-fold defaultstate="collapsed" desc="重要但不常修改的函数. Click on the + sign on the left to edit the code.">
     @Override
@@ -678,7 +681,7 @@ public class AdminServlet extends BaseServlet {
             strLine[3] = log.getUser().getName();
             strLine[4] = log.getName();
             strLine[5] = log.getOwnerWeChat() == null ? "" : log.getOwnerWeChat();
-            strLine[6] = log.getLimitType() == null ? "" : log.getLimitType().getMean();
+            strLine[6] = log.getLimitType() == null ? "" : productService.findConfigByKey(log.getLimitType()).getName();
             strLine[7] = log.getAdLevel() == null ? "" : log.getAdLevel().getMean();
             strLine[8] = log.getAmount().toString();
             strLine[9] = log.getGatewayTypeStr();
@@ -929,7 +932,7 @@ public class AdminServlet extends BaseServlet {
                 strLine[10] = Double.parseDouble(strLine[8]) - Double.parseDouble(strLine[9]) + "";
             }
             strLine[11] = record.getOrder().getRemark() == null ? "" : record.getOrder().getRemark();
-            strLine[12] = record.getGoods().getProvinceStr();
+            strLine[12] = adminService.getGoodsOrderRecommendOrderProvinceNames(record.getOrder());
             vecCsvData.add(strLine);
         }
         //Exporting vector to csv file
@@ -1298,7 +1301,7 @@ public class AdminServlet extends BaseServlet {
         List<PlaceWages> resultList = adminService.findWageTotalListAllByPlace(startDate, endDate);
         List<String[]> placeWagesStr = new ArrayList<>();
         for (PlaceWages ps : resultList) {
-            String[] strs = new String[9];
+            String[] strs = new String[12];
             strs[0] = ps.getGoodsName();
             strs[1] = ps.getAdAmount();
             strs[2] = ps.getRecommendAmount();
@@ -1308,9 +1311,16 @@ public class AdminServlet extends BaseServlet {
             strs[6] = ps.getVipAmount();
             strs[7] = ps.getTotalAmount();
             strs[8] = adminService.getGoodsById(ps.getGoodsId()).getProvinceStr();
+            GoodsOrder goodsOrder = adminService.findGoodsLastOrder(ps.getGoodsId());
+            if(goodsOrder == null || !goodsOrder.getStatus().equals(OrderStatusEnum.SUCCESS)){
+                continue;
+            }
+            strs[9] = goodsOrder == null ? "" : (goodsOrder.getAgentUser() == null ? "" : goodsOrder.getAgentUser().getName());
+            strs[10] =goodsOrder == null ? "" : (goodsOrder.getAgentUser() == null ? "" : goodsOrder.getAgentUser().getMobile());
+            strs[11] = goodsOrder == null ? "" :Tools.formatDate(goodsOrder.getLastPayDate(), "yyyy-MM-dd");
             placeWagesStr.add(strs);
         }
-        String[] headLine = new String[9];
+        String[] headLine = new String[12];
         headLine[0] = "地区";
         headLine[1] = "广告工资";
         headLine[2] = "加盟提成工资";
@@ -1320,6 +1330,9 @@ public class AdminServlet extends BaseServlet {
         headLine[6] = "会员工资";
         headLine[7] = "总工资";
         headLine[8] = "省份";
+        headLine[9] = "姓名";
+        headLine[10] = "代理电话";
+        headLine[11] = "加盟时间";
         vecCsvData.add(headLine);
         //sets the data to be exported
         vecCsvData.addAll(placeWagesStr);

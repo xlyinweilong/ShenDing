@@ -137,6 +137,10 @@ angular.module('app').run(['$rootScope', '$state', '$stateParams',
                     url: '/product',
                     templateUrl: '/back/tpl/config_product.html'
                 })
+                .state('app.config.ad_limit', {
+                    url: '/ad_limit',
+                    templateUrl: '/back/tpl/config_ad_limit.html'
+                })
                 .state('app.goods', {
                     url: '/goods',
                     template: '<div ui-view></div>',

@@ -1,6 +1,7 @@
 package com.shending.restful.service;
 
 import com.shending.config.Config;
+import com.shending.entity.AdLimitConfig;
 import com.shending.entity.DataArea;
 import com.shending.entity.DataCity;
 import com.shending.entity.DataProvince;
@@ -21,6 +22,7 @@ import com.shending.entity.WageLog;
 import com.shending.restful.interception.AccountInterceptor;
 import com.shending.service.AdminService;
 import com.shending.service.ConfigService;
+import com.shending.service.ProductService;
 import com.shending.support.FileUploadItem;
 import com.shending.support.FileUploadObj;
 import com.shending.support.ResultList;
@@ -107,6 +109,8 @@ public class AdminREST {
     @EJB
     private AdminService adminService;
     @EJB
+    private ProductService productService;
+    @EJB
     private ConfigService configService;
     @PersistenceContext(unitName = "ShenDing-PU")
     private EntityManager em;
@@ -178,7 +182,8 @@ public class AdminREST {
                         String ownerWeChat = StringUtils.trimToNull(cells[3].getContents());
                         //持续时间
                         String limitTypeStr = StringUtils.trimToNull(cells[4].getContents());
-                        AdLimitTypeEnum limitType = AdLimitTypeEnum.getEnum(limitTypeStr);
+//                        AdLimitTypeEnum limitType = AdLimitTypeEnum.getEnum(limitTypeStr);
+                        AdLimitConfig limitType = productService.findConfigByValue(limitTypeStr);
                         if (limitType == null) {
                             throw new EjbMessageException("第" + (i + 1) + "行持续时间错误");
                         }
@@ -247,7 +252,7 @@ public class AdminREST {
                             throw new EjbMessageException("第" + (i + 1) + "行类型错误");
                         }
                         try {
-                            adminService.createOrUpdateNewAd(null, goods, amountBd, payDate, limitType, name, ownerWeChat, gatewayType, user, userBalanceAmountBd, userAmountBd, adLevel, remark, sendType, CategoryEnum.SERVICE_PEOPLE, categoryPlus);
+                            adminService.createOrUpdateNewAd(null, goods, amountBd, payDate, limitType.getKey(), name, ownerWeChat, gatewayType, user, userBalanceAmountBd, userAmountBd, adLevel, remark, sendType, CategoryEnum.SERVICE_PEOPLE, categoryPlus);
                         } catch (EjbMessageException e) {
                             map.put("success", "0");
                             map.put("msg", "第" + (i + 1) + "行，" + e.getMessage());
@@ -3042,7 +3047,7 @@ public class AdminREST {
         adminService.saveLog(user, "创建更新广告", " category：" + Tools.getString(category) + " amount：" + Tools.getString(amount) + " payDate：" + Tools.getString(payDate) + " limitType：" + Tools.getString(limitType) + " name：" + Tools.getString(name)
                 + " ownerWeChat：" + Tools.getString(ownerWeChat) + " gatewayType：" + Tools.getString(gatewayType) + " userBalanceAmount：" + Tools.getString(userBalanceAmount) + " userAmount：" + Tools.getString(userAmount)
                 + " adLevel：" + Tools.getString(adLevel) + " remark：" + Tools.getString(remark) + " sendType：" + Tools.getString(sendType) + " categoryPlus：" + Tools.getString(categoryPlus) + "goodsId:" + (goodsId == null ? "" : goodsId));
-        map.put("data", adminService.createOrUpdateNewAd(id, em.find(Goods.class, goodsId), new BigDecimal(amount), Tools.parseDate(payDate, "yyyy-MM-dd"), AdLimitTypeEnum.valueOf(limitType), name, ownerWeChat, PaymentGatewayTypeEnum.valueOf(gatewayType), user, new BigDecimal(userBalanceAmount), new BigDecimal(userAmount), AdLevelEnum.valueOf(adLevel), remark, WageLogTypeEnum.valueOf(sendType), CategoryEnum.valueOf(category), categoryPlus));
+        map.put("data", adminService.createOrUpdateNewAd(id, em.find(Goods.class, goodsId), new BigDecimal(amount), Tools.parseDate(payDate, "yyyy-MM-dd"), productService.findConfigByKey(limitType).getKey(), name, ownerWeChat, PaymentGatewayTypeEnum.valueOf(gatewayType), user, new BigDecimal(userBalanceAmount), new BigDecimal(userAmount), AdLevelEnum.valueOf(adLevel), remark, WageLogTypeEnum.valueOf(sendType), CategoryEnum.valueOf(category), categoryPlus));
         map.put("msg", "保存成功！");
         map.put("success", "1");
         return Tools.caseObjectToJson(map);
